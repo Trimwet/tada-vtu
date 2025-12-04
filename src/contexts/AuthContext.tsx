@@ -53,28 +53,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: string, newSession: Session | null) => {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        if (newSession?.user) {
-          await fetchProfile(newSession.user.id);
-        } else {
-          setProfile(null);
+      async (event: string, newSession: Session | null) => {
+        try {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          
+          if (newSession?.user) {
+            await fetchProfile(newSession.user.id);
+          } else {
+            setProfile(null);
+          }
+          
+          // Handle sign out event
+          if (event === 'SIGNED_OUT') {
+            setProfile(null);
+          }
+        } catch (err) {
+          console.error('Auth state change error:', err);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     // Initial session check
     const initSession = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      if (initialSession?.user) {
-        await fetchProfile(initialSession.user.id);
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error.message);
+          // Clear any stale session data
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        if (initialSession?.user) {
+          await fetchProfile(initialSession.user.id);
+        }
+      } catch (err) {
+        console.error('Error initializing session:', err);
+        // Clear state on error
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initSession();
 
@@ -104,9 +134,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+    // Always clear local state
+    setSession(null);
+    setUser(null);
     setProfile(null);
+    
+    // Clear any stale Supabase data from localStorage
+    if (typeof window !== 'undefined') {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
   };
 
   const refreshProfile = async () => {

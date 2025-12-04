@@ -25,9 +25,13 @@
 // Airtime discount from Inlomax (you get 2% discount)
 export const AIRTIME_DISCOUNT = 0.02; // 2%
 
-// Service fees
+// Service fees and discounts
 export const SERVICE_FEES = {
-  electricity: 50,  // ₦50 per transaction
+  // Electricity: You get ~2% discount from provider, user pays face value
+  // Example: User buys ₦5000, you pay ₦4900, profit = ₦100
+  electricity: {
+    discount: 0.02, // 2% discount from provider
+  },
   cable: {
     small: 50,      // Plans under ₦5000
     medium: 75,     // Plans ₦5000-₦15000

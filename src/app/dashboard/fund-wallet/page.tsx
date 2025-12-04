@@ -25,7 +25,7 @@ const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
 export default function FundWalletPage() {
   const searchParams = useSearchParams();
-  const { user, creditWallet } = useSupabaseUser();
+  const { user } = useSupabaseUser();
   const { transactions } = useSupabaseTransactions(10);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -39,33 +39,43 @@ export default function FundWalletPage() {
   // Handle payment callback
   useEffect(() => {
     const status = searchParams.get("status");
-    const tx_ref =
-      searchParams.get("tx_ref") || searchParams.get("transaction_id");
-
+    const tx_ref = searchParams.get("tx_ref") || searchParams.get("transaction_id");
     const pending = localStorage.getItem("pending_payment");
 
-    if (status === "successful" && pending) {
-      const { amount: paidAmount, tx_ref: pendingRef } = JSON.parse(pending);
+    const handlePaymentCallback = async () => {
+      if (status === "successful" && tx_ref) {
+        // Verify payment with backend
+        try {
+          const response = await fetch(`/api/flutterwave/verify?tx_ref=${tx_ref}`);
+          const result = await response.json();
+          
+          if (result.status === "success") {
+            // Payment verified - webhook should have credited wallet
+            // Just refresh user data and show success
+            toast.success(`Payment successful! Your wallet has been credited.`);
+            // Refresh to get updated balance
+            window.location.href = "/dashboard/fund-wallet";
+          } else {
+            toast.error("Payment verification failed. Please contact support if amount was deducted.");
+          }
+        } catch {
+          // If verification fails, the webhook should still handle it
+          toast.info("Payment is being processed. Your wallet will be credited shortly.");
+        }
+        
+        localStorage.removeItem("pending_payment");
+        window.history.replaceState({}, "", "/dashboard/fund-wallet");
+      } else if (status === "cancelled") {
+        toast.error("Payment was cancelled");
+        localStorage.removeItem("pending_payment");
+        window.history.replaceState({}, "", "/dashboard/fund-wallet");
+      }
+    };
 
-      // Credit the wallet
-      creditWallet(
-        paidAmount,
-        pendingRef || tx_ref || "FLW_" + Date.now(),
-        "Wallet funding via Flutterwave",
-      );
-      toast.success(`₦${paidAmount.toLocaleString()} added to your wallet!`);
-
-      // Clear pending payment
-      localStorage.removeItem("pending_payment");
-
-      // Clear URL params
-      window.history.replaceState({}, "", "/dashboard/fund-wallet");
-    } else if (status === "cancelled") {
-      toast.error("Payment was cancelled");
-      localStorage.removeItem("pending_payment");
-      window.history.replaceState({}, "", "/dashboard/fund-wallet");
+    if (status) {
+      handlePaymentCallback();
     }
-  }, [searchParams, creditWallet]);
+  }, [searchParams]);
 
   const handleQuickAmount = (value: number) => {
     setAmount(value.toString());

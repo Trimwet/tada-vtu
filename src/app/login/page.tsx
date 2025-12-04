@@ -68,7 +68,7 @@ export default function LoginPage() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-background border-border text-foreground"
                     required
                   />
                 </div>
@@ -89,7 +89,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-background border-border text-foreground"
                     required
                   />
                   <button

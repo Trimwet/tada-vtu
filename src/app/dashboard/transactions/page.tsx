@@ -110,14 +110,14 @@ export default function TransactionsPage() {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="h-9 px-3 py-1 rounded-md border border-input bg-background text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+                  className="h-9 px-3 py-1 rounded-md border border-border bg-card text-foreground text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
                 >
-                  <option value="all">All Types</option>
-                  <option value="deposit">Fund Wallet</option>
-                  <option value="airtime">Airtime</option>
-                  <option value="data">Data</option>
-                  <option value="cable">Cable TV</option>
-                  <option value="electricity">Electricity</option>
+                  <option value="all" className="bg-card text-foreground">All Types</option>
+                  <option value="deposit" className="bg-card text-foreground">Fund Wallet</option>
+                  <option value="airtime" className="bg-card text-foreground">Airtime</option>
+                  <option value="data" className="bg-card text-foreground">Data</option>
+                  <option value="cable" className="bg-card text-foreground">Cable TV</option>
+                  <option value="electricity" className="bg-card text-foreground">Electricity</option>
                 </select>
 
                 {["all", "success", "failed"].map((status) => (
