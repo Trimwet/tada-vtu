@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getInlomaxBalance } from '@/lib/api/inlomax';
+import { NextResponse } from 'next/server';
+import { getWalletBalance } from '@/lib/api/inlomax';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const balance = await getInlomaxBalance();
+    const balance = await getWalletBalance();
     return NextResponse.json(balance);
   } catch (error) {
     console.error('Error fetching Inlomax balance:', error);

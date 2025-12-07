@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
+import { LogoutDialog } from "@/components/logout-dialog";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -36,14 +37,12 @@ export default function SettingsPage() {
   }) => (
     <button
       onClick={onChange}
-      className={`relative w-11 h-6 rounded-full transition-colors border ${
-        enabled
-          ? "bg-green-500 border-green-500"
-          : "bg-zinc-700 border-zinc-600"
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
+        enabled ? "bg-green-500" : "bg-zinc-600"
       }`}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
           enabled ? "translate-x-5" : "translate-x-0"
         }`}
       />
@@ -131,8 +130,8 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              <div
-                onClick={() => toast.info("Change PIN coming soon")}
+              <Link
+                href="/dashboard/settings/change-pin"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -157,9 +156,9 @@ export default function SettingsPage() {
                   size="18px"
                   className="text-muted-foreground"
                 />
-              </div>
-              <div
-                onClick={() => toast.info("Reset PIN coming soon")}
+              </Link>
+              <Link
+                href="/dashboard/settings/reset-pin"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -184,9 +183,9 @@ export default function SettingsPage() {
                   size="18px"
                   className="text-muted-foreground"
                 />
-              </div>
-              <div
-                onClick={() => toast.info("Change Password coming soon")}
+              </Link>
+              <Link
+                href="/dashboard/settings/change-password"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -211,7 +210,34 @@ export default function SettingsPage() {
                   size="18px"
                   className="text-muted-foreground"
                 />
-              </div>
+              </Link>
+              <Link
+                href="/dashboard/settings/change-pin"
+                className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                    <IonIcon
+                      name="keypad-outline"
+                      size="18px"
+                      color="#f97316"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-foreground font-medium">
+                      Change PIN
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      Update your transaction PIN
+                    </p>
+                  </div>
+                </div>
+                <IonIcon
+                  name="chevron-forward-outline"
+                  size="18px"
+                  className="text-muted-foreground"
+                />
+              </Link>
               <div
                 onClick={() =>
                   toast.info("Identity Verification", {
@@ -481,16 +507,21 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <LogoutDialog
+              trigger={
+                <Button
+                  variant="outline"
+                  className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-500"
+                >
+                  <IonIcon name="log-out-outline" size="18px" className="mr-2" />
+                  Log Out
+                </Button>
+              }
+            />
             <Button
               variant="outline"
               className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-500"
-            >
-              <IonIcon name="log-out-outline" size="18px" className="mr-2" />
-              Log Out
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-500"
+              onClick={() => toast.info("Account deletion is not available yet")}
             >
               <IonIcon name="trash-outline" size="18px" className="mr-2" />
               Delete Account

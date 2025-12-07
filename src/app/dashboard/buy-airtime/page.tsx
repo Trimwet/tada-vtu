@@ -19,8 +19,6 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
-import type { NetworkProvider } from "@/types";
-
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
@@ -36,9 +34,7 @@ export default function BuyAirtimePage() {
     onPinCreated,
   } = useTransactionPin();
 
-  const [selectedNetwork, setSelectedNetwork] = useState<NetworkProvider | "">(
-    "",
-  );
+  const [selectedNetwork, setSelectedNetwork] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -119,19 +115,17 @@ export default function BuyAirtimePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link
-              href="/dashboard"
-              className="p-2 -ml-2 hover:bg-muted rounded-lg transition-smooth lg:hidden"
-            >
-              <IonIcon name="arrow-back-outline" size="20px" />
-            </Link>
-            <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
-              Buy Airtime
-            </h1>
-          </div>
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+        <div className="flex items-center h-14 px-4">
+          <Link
+            href="/dashboard"
+            className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target"
+          >
+            <IonIcon name="arrow-back-outline" size="20px" />
+          </Link>
+          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
+            Buy Airtime
+          </h1>
         </div>
       </header>
 
@@ -187,9 +181,7 @@ export default function BuyAirtimePage() {
                     <button
                       key={network.value}
                       type="button"
-                      onClick={() =>
-                        setSelectedNetwork(network.value as NetworkProvider)
-                      }
+                      onClick={() => setSelectedNetwork(network.value)}
                       className={`p-3 rounded-xl border-2 transition-smooth ${
                         selectedNetwork === network.value
                           ? "border-green-500 bg-green-500/10"
@@ -382,7 +374,7 @@ export default function BuyAirtimePage() {
                   type="button"
                   onClick={() => {
                     setPhoneNumber(beneficiary.number);
-                    setSelectedNetwork(beneficiary.network as NetworkProvider);
+                    setSelectedNetwork(beneficiary.network.toUpperCase());
                     toast.info(`Selected ${beneficiary.name}`);
                   }}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:border-green-500/50 hover:bg-muted/50 transition-smooth text-left"

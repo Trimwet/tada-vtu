@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,18 +14,28 @@ import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "sonner";
-import { NETWORKS, DATA_PLANS } from "@/lib/constants";
+import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
-import type { NetworkProvider } from "@/types";
+interface DataPlan {
+  id: string;
+  name: string;
+  size: string;
+  price: number;
+  validity: string;
+  type: string;
+}
 
-const DATA_TYPES = [
-  { value: "sme", label: "SME", description: "Cheapest rates" },
-  { value: "gifting", label: "Gifting", description: "Standard data" },
-  { value: "corporate", label: "Corporate", description: "Business plans" },
-];
+// Data type labels for display
+const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> = {
+  sme: { label: "SME/Share", description: "Cheapest rates" },
+  corporate: { label: "Corporate/CG", description: "Corporate gifting" },
+  direct: { label: "Direct", description: "Standard plans" },
+  awoof: { label: "Awoof/Gifting", description: "Special offers" },
+  social: { label: "Social", description: "Social bundles" },
+};
 
 export default function BuyDataPage() {
   const { user, refreshUser } = useSupabaseUser();
@@ -40,22 +50,74 @@ export default function BuyDataPage() {
     onPinVerified,
   } = useTransactionPin();
 
-  const [selectedNetwork, setSelectedNetwork] = useState<NetworkProvider | "">(
-    "",
-  );
-  const [selectedType, setSelectedType] = useState("sme");
+  const [selectedNetwork, setSelectedNetwork] = useState("");
+  const [selectedType, setSelectedType] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
-  const availablePlans = selectedNetwork
-    ? DATA_PLANS[selectedNetwork as NetworkProvider]?.filter(
-        (plan) => plan.type === selectedType,
-      ) || []
-    : [];
-  const selectedPlanDetails = availablePlans.find(
-    (plan) => plan.id === selectedPlan,
-  );
+
+  // Extract unique data types from fetched plans
+  const availableTypes = useMemo(() => {
+    const types = [...new Set(dataPlans.map((plan) => plan.type))];
+    return types.map((type) => ({
+      value: type,
+      label: DATA_TYPE_LABELS[type]?.label || type.toUpperCase(),
+      description: DATA_TYPE_LABELS[type]?.description || "",
+      count: dataPlans.filter((p) => p.type === type).length,
+    }));
+  }, [dataPlans]);
+
+  // Fetch data plans when network changes
+  useEffect(() => {
+    if (!selectedNetwork) {
+      setDataPlans([]);
+      setSelectedType("");
+      return;
+    }
+
+    const fetchPlans = async () => {
+      setLoadingPlans(true);
+      setSelectedType("");
+      setSelectedPlan("");
+      
+      try {
+        const response = await fetch(`/api/inlomax/data-plans?network=${selectedNetwork}`);
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data) {
+          setDataPlans(result.data);
+          
+          // Auto-select first available type
+          const types = [...new Set(result.data.map((p: DataPlan) => p.type))];
+          if (types.length > 0) {
+            setSelectedType(types[0] as string);
+          }
+        } else {
+          setDataPlans([]);
+          toast.error("Failed to load data plans");
+        }
+      } catch (error) {
+        console.error('Error fetching data plans:', error);
+        setDataPlans([]);
+        toast.error("Network error loading plans");
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    fetchPlans();
+  }, [selectedNetwork]);
+
+  // Filter plans by selected type
+  const availablePlans = useMemo(() => {
+    if (!selectedType) return [];
+    return dataPlans.filter((plan) => plan.type === selectedType);
+  }, [dataPlans, selectedType]);
+
+  const selectedPlanDetails = dataPlans.find((plan) => plan.id === selectedPlan);
 
   // Execute the actual purchase after PIN verification
   const executePurchase = async () => {
@@ -71,7 +133,6 @@ export default function BuyDataPage() {
           network: selectedNetwork,
           phone: phoneNumber,
           planId: selectedPlan,
-          type: selectedType,
           amount: selectedPlanDetails.price,
           planName: selectedPlanDetails.size,
           userId: user?.id,
@@ -81,7 +142,6 @@ export default function BuyDataPage() {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh user data to get updated balance
         await refreshUser();
         toast.success("Data purchase successful!", {
           description: `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`,
@@ -103,17 +163,11 @@ export default function BuyDataPage() {
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !selectedNetwork ||
-      !phoneNumber ||
-      !selectedPlan ||
-      !selectedPlanDetails
-    ) {
+    if (!selectedNetwork || !phoneNumber || !selectedPlan || !selectedPlanDetails) {
       toast.error("Please fill all fields");
       return;
     }
 
-    // Check wallet balance
     if (!user || (user.balance || 0) < selectedPlanDetails.price) {
       toast.error("Insufficient balance", {
         description: `You need ₦${selectedPlanDetails.price.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`,
@@ -121,26 +175,24 @@ export default function BuyDataPage() {
       return;
     }
 
-    // Require PIN verification before purchase
     requirePin(executePurchase);
   };
+
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link
-              href="/dashboard"
-              className="p-2 -ml-2 hover:bg-muted rounded-lg transition-smooth lg:hidden"
-            >
-              <IonIcon name="arrow-back-outline" size="20px" />
-            </Link>
-            <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
-              Buy Data
-            </h1>
-          </div>
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+        <div className="flex items-center h-14 px-4">
+          <Link
+            href="/dashboard"
+            className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target"
+          >
+            <IonIcon name="arrow-back-outline" size="20px" />
+          </Link>
+          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
+            Buy Data
+          </h1>
         </div>
       </header>
 
@@ -169,6 +221,25 @@ export default function BuyDataPage() {
           </CardHeader>
 
           <CardContent>
+            {/* Important Notice */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
+              <div className="flex gap-3">
+                <IonIcon
+                  name="warning"
+                  size="20px"
+                  color="#f59e0b"
+                  className="shrink-0 mt-0.5"
+                />
+                <div className="text-sm">
+                  <p className="font-semibold text-amber-500 mb-1">Important Notice</p>
+                  <p className="text-amber-200/80">
+                    Please, don&apos;t send Airtel Awoof and Gifting to any number owing Airtel. 
+                    It will not deliver and you will not be refunded. Thank you for choosing TADA VTU.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Service Switcher */}
             <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-xl mb-6">
               <Link
@@ -197,7 +268,7 @@ export default function BuyDataPage() {
                       key={network.value}
                       type="button"
                       onClick={() => {
-                        setSelectedNetwork(network.value as NetworkProvider);
+                        setSelectedNetwork(network.value);
                         setSelectedPlan("");
                       }}
                       className={`p-3 rounded-xl border-2 transition-smooth ${
@@ -216,12 +287,13 @@ export default function BuyDataPage() {
                 </div>
               </div>
 
-              {/* Data Type Selection */}
-              {selectedNetwork && (
+
+              {/* Data Type Selection - Dynamic based on available plans */}
+              {selectedNetwork && !loadingPlans && availableTypes.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium">Select Type</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {DATA_TYPES.map((type) => (
+                  <Label className="text-sm font-medium">Select Data Type</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {availableTypes.map((type) => (
                       <button
                         key={type.value}
                         type="button"
@@ -240,7 +312,7 @@ export default function BuyDataPage() {
                             {type.label}
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            {type.description}
+                            {type.count} plan{type.count !== 1 ? 's' : ''}
                           </div>
                         </div>
                       </button>
@@ -272,13 +344,23 @@ export default function BuyDataPage() {
                 </div>
               </div>
 
-              {/* Data Plans */}
+              {/* Data Plans - Dynamic from API */}
               {selectedNetwork && (
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">
                     Select Data Plan
+                    {dataPlans.length > 0 && (
+                      <span className="text-muted-foreground font-normal ml-2">
+                        ({dataPlans.length} plans available)
+                      </span>
+                    )}
                   </Label>
-                  {availablePlans.length === 0 ? (
+                  {loadingPlans ? (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                      <p className="text-muted-foreground">Loading plans from Inlomax...</p>
+                    </div>
+                  ) : availablePlans.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <IonIcon
                         name="cloud-offline-outline"
@@ -286,11 +368,14 @@ export default function BuyDataPage() {
                         className="mx-auto mb-2"
                       />
                       <p>
-                        No {selectedType} plans available for {selectedNetwork}
+                        {dataPlans.length === 0 
+                          ? `No plans available for ${selectedNetwork}`
+                          : `No ${selectedType} plans for ${selectedNetwork}`
+                        }
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
                       {availablePlans.map((plan) => (
                         <button
                           key={plan.id}
@@ -318,7 +403,7 @@ export default function BuyDataPage() {
                             {plan.validity}
                           </div>
                           <div className="font-semibold text-green-500 mt-1">
-                            ₦{plan.price}
+                            ₦{plan.price.toLocaleString()}
                           </div>
                         </button>
                       ))}
@@ -326,6 +411,7 @@ export default function BuyDataPage() {
                   )}
                 </div>
               )}
+
 
               {/* Summary */}
               {selectedNetwork && selectedPlanDetails && phoneNumber && (
@@ -348,13 +434,11 @@ export default function BuyDataPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Type</span>
                       <span className="font-medium text-foreground capitalize">
-                        {selectedType}
+                        {DATA_TYPE_LABELS[selectedType]?.label || selectedType}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Phone Number
-                      </span>
+                      <span className="text-muted-foreground">Phone Number</span>
                       <span className="font-medium text-foreground">
                         {phoneNumber}
                       </span>
@@ -373,11 +457,9 @@ export default function BuyDataPage() {
                     </div>
                     <div className="border-t border-border pt-2 mt-2">
                       <div className="flex justify-between">
-                        <span className="font-semibold text-foreground">
-                          Total
-                        </span>
+                        <span className="font-semibold text-foreground">Total</span>
                         <span className="font-bold text-green-500 text-lg">
-                          ₦{selectedPlanDetails.price}
+                          ₦{selectedPlanDetails.price.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -393,7 +475,8 @@ export default function BuyDataPage() {
                   !selectedNetwork ||
                   !phoneNumber ||
                   !selectedPlan ||
-                  isProcessing
+                  isProcessing ||
+                  loadingPlans
                 }
               >
                 {isProcessing ? (

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, X, Star, TrendingUp, Shield, Clock, Users, Award } from "lucide-react"
+import { CheckCircle, X, Star, TrendingUp, Shield, Clock, Users, Award, Zap } from "lucide-react"
 import Link from "next/link"
 
 export default function PricingPage() {

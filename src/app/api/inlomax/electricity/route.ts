@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateMeter, payElectricity, ServiceUnavailableError } from '@/lib/api/inlomax';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,49 +12,56 @@ function getSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, disco, meterNumber, meterType, amount, userId } = body;
+    const { action, serviceID, meterNum, meterType, amount, userId, discoName } = body;
 
     const useSandbox = process.env.INLOMAX_SANDBOX !== 'false';
 
-    // Get DISCOs list
-    if (action === 'get_discos') {
-      if (useSandbox) {
-        return NextResponse.json({ status: true, data: [] });
-      }
-      const { getElectricityDiscos } = await import('@/lib/api/inlomax');
-      const discos = await getElectricityDiscos();
-      return NextResponse.json({ status: true, data: discos });
-    }
-
     // Verify meter
     if (action === 'verify') {
-      if (!disco || !meterNumber || !meterType) {
-        return NextResponse.json({ status: false, message: 'DISCO, meter number and type required' }, { status: 400 });
+      if (!serviceID || !meterNum || meterType === undefined) {
+        return NextResponse.json(
+          { status: false, message: 'Service ID, meter number and type required' },
+          { status: 400 }
+        );
       }
+
+      // meterType: 1=prepaid, 2=postpaid
+      const meterTypeNum = meterType === 'prepaid' ? 1 : 2;
 
       if (useSandbox) {
         return NextResponse.json({
           status: true,
           message: 'Meter verified (sandbox)',
-          data: { customerName: 'Test Customer', meterNumber, disco, meterType }
+          data: { customerName: 'Test Customer' }
         });
       }
 
-      const { verifyMeter } = await import('@/lib/api/inlomax');
-      const result = await verifyMeter({ disco, meterNumber, meterType });
-      return NextResponse.json({ status: result.status === 'success', message: result.message, data: result.data });
+      const result = await validateMeter({ serviceID, meterNum, meterType: meterTypeNum as 1 | 2 });
+      return NextResponse.json({
+        status: result.status === 'success',
+        message: result.message,
+        data: result.data
+      });
     }
 
     // Purchase electricity
-    if (!disco || !meterNumber || !amount || !meterType) {
-      return NextResponse.json({ status: false, message: 'Missing required fields' }, { status: 400 });
+    if (!serviceID || !meterNum || !amount || meterType === undefined) {
+      return NextResponse.json(
+        { status: false, message: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const numAmount = Number(amount);
     if (numAmount < 500 || numAmount > 500000) {
-      return NextResponse.json({ status: false, message: 'Amount must be between ₦500 and ₦500,000' }, { status: 400 });
+      return NextResponse.json(
+        { status: false, message: 'Amount must be between ₦500 and ₦500,000' },
+        { status: 400 }
+      );
     }
 
+
+    const meterTypeNum = meterType === 'prepaid' ? 1 : 2;
     const supabase = getSupabaseAdmin();
 
     if (userId) {
@@ -68,6 +76,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: false, message: 'Insufficient balance' }, { status: 400 });
       }
 
+      // Generate reference
+      const reference = `ELEC_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
       const { data: transaction, error: txnError } = await supabase
         .from('transactions')
         .insert({
@@ -75,13 +86,16 @@ export async function POST(request: NextRequest) {
           type: 'electricity',
           amount: -numAmount,
           status: 'pending',
-          description: `${disco} Electricity (${meterType}) - ${meterNumber}`,
-          metadata: { disco, meterNumber, meterType }
+          reference: reference,
+          description: `${discoName || 'Electricity'} (${meterType}) - ${meterNum}`,
         })
         .select().single();
 
       if (txnError) {
-        return NextResponse.json({ status: false, message: 'Failed to create transaction' }, { status: 500 });
+        return NextResponse.json(
+          { status: false, message: 'Failed to create transaction: ' + txnError.message },
+          { status: 500 }
+        );
       }
 
       try {
@@ -91,26 +105,38 @@ export async function POST(request: NextRequest) {
             status: 'success' as const,
             message: `Electricity purchase successful (sandbox) - ₦${numAmount}`,
             data: { 
-              reference: 'SANDBOX_' + Date.now(), 
-              token: '1234-5678-9012-3456-7890', 
-              disco, meterNumber, amount: numAmount 
+              reference,
+              token: '1234-5678-9012-3456-7890',
+              customerName: 'Test Customer',
+              amount: numAmount,
+              amountCharged: numAmount,
+              meterNum,
+              disco: discoName,
+              status: 'success'
             }
           };
         } else {
-          const { purchaseElectricity } = await import('@/lib/api/inlomax');
-          result = await purchaseElectricity({ disco, meterNumber, amount: numAmount, meterType });
+          result = await payElectricity({
+            serviceID,
+            meterNum,
+            meterType: meterTypeNum as 1 | 2,
+            amount: numAmount
+          });
         }
 
         if (result.status === 'success') {
-          await supabase.from('profiles').update({ balance: profile.balance - numAmount }).eq('id', userId);
+          const newBalance = profile.balance - numAmount;
+          
+          await supabase.from('profiles').update({ balance: newBalance }).eq('id', userId);
           await supabase.from('transactions').update({ 
-            status: 'success', 
-            reference: (result.data as Record<string, unknown>)?.reference as string 
+            status: 'success',
+            external_reference: result.data?.reference
           }).eq('id', transaction.id);
 
           return NextResponse.json({
-            status: true, message: result.message,
-            data: { ...(result.data || {}), transactionId: transaction.id, newBalance: profile.balance - numAmount }
+            status: true,
+            message: result.message,
+            data: { ...result.data, transactionId: transaction.id, newBalance }
           });
         } else {
           await supabase.from('transactions').update({ status: 'failed' }).eq('id', transaction.id);
@@ -127,16 +153,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         status: true,
         message: 'Electricity purchase successful (sandbox)',
-        data: { reference: 'SANDBOX_' + Date.now(), token: '1234-5678-9012-3456-7890', disco, meterNumber, amount: numAmount }
+        data: {
+          reference: 'SANDBOX_' + Date.now(),
+          token: '1234-5678-9012-3456-7890',
+          meterNum,
+          amount: numAmount
+        }
       });
     }
 
-    const { purchaseElectricity } = await import('@/lib/api/inlomax');
-    const result = await purchaseElectricity({ disco, meterNumber, amount: numAmount, meterType });
-    return NextResponse.json({ status: result.status === 'success', message: result.message, data: result.data });
+    const result = await payElectricity({
+      serviceID,
+      meterNum,
+      meterType: meterTypeNum as 1 | 2,
+      amount: numAmount
+    });
+    return NextResponse.json({
+      status: result.status === 'success',
+      message: result.message,
+      data: result.data
+    });
 
   } catch (error) {
     console.error('Electricity purchase error:', error);
-    return NextResponse.json({ status: false, message: error instanceof Error ? error.message : 'Purchase failed' }, { status: 500 });
+    
+    // Handle insufficient admin balance gracefully
+    if (error instanceof ServiceUnavailableError) {
+      return NextResponse.json(
+        { status: false, message: 'Service is unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+    
+    return NextResponse.json(
+      { status: false, message: error instanceof Error ? error.message : 'Purchase failed' },
+      { status: 500 }
+    );
   }
 }

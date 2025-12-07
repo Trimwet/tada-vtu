@@ -41,17 +41,16 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
-  const [hideBalance, setHideBalance] = useState(false);
+  const [hideBalance, setHideBalance] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("hideBalance") === "true";
+    }
+    return false;
+  });
   const [referralCount, setReferralCount] = useState(0);
   const [allTransactions, setAllTransactions] = useState<
     typeof recentTransactions
   >([]);
-
-  // Load hide balance preference from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("hideBalance");
-    if (saved === "true") setHideBalance(true);
-  }, []);
 
   // Fetch all transactions for this month and referral count
   useEffect(() => {
@@ -144,39 +143,10 @@ export default function DashboardPage() {
     }
   };
 
-  // Only show loading on first load when we don't have user data yet
-  if (userLoading && !user) {
+  // Show loading while user data is being fetched
+  // AuthGuard handles the redirect if user is not authenticated
+  if (userLoading || !user) {
     return <LoadingScreen message="Loading your dashboard..." />;
-  }
-
-  // If not loading but no user, show error (auth guard should handle redirect)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border">
-          <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto">
-              <IonIcon
-                name="alert-circle-outline"
-                size="32px"
-                color="#eab308"
-              />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground">
-              Session expired
-            </h2>
-            <p className="text-muted-foreground">
-              Please log in again to continue.
-            </p>
-            <Link href="/login">
-              <Button className="bg-green-500 hover:bg-green-600 text-white">
-                Go to Login
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   const services = [
@@ -198,53 +168,36 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="hover:opacity-90 transition-opacity">
-              <LogoInline size="md" />
-            </Link>
-
-            <div className="flex items-center gap-1">
-              <Link href="/dashboard/notifications">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative hover:bg-muted transition-smooth"
-                >
-                  <IonIcon name="notifications-outline" size="22px" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full pulse-green"></span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/settings">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-muted transition-smooth"
-                >
-                  <IonIcon name="settings-outline" size="22px" />
-                </Button>
-              </Link>
-              <Link
-                href="/dashboard/profile"
-                className="w-10 h-10 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full flex items-center justify-center ml-1 hover:from-green-500/30 hover:to-emerald-500/30 transition-smooth ring-2 ring-green-500/20"
+    <div className="overflow-x-hidden">
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border lg:hidden safe-top">
+        <div className="flex items-center justify-between h-14 px-4">
+          <LogoInline size="sm" />
+          <div className="flex items-center gap-1">
+            <Link href="/dashboard/notifications">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-muted transition-smooth h-10 w-10"
               >
-                <span className="text-green-500 font-semibold text-sm">
-                  {(user.full_name || "U")
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
-                </span>
-              </Link>
-            </div>
+                <IonIcon name="notifications-outline" size="22px" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full pulse-green"></span>
+              </Button>
+            </Link>
+            <Link href="/dashboard/settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted transition-smooth h-10 w-10"
+              >
+                <IonIcon name="settings-outline" size="22px" />
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 lg:px-8 py-6 space-y-6">
+      <main className="px-4 lg:px-8 py-4 lg:py-6 space-y-5 lg:space-y-6 lg:max-w-7xl lg:mx-auto">
         {/* Greeting */}
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
@@ -261,63 +214,60 @@ export default function DashboardPage() {
         </div>
 
         {/* Wallet Card */}
-        <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0 overflow-hidden shadow-xl shadow-green-500/20 hover-lift animate-slide-up glow-green">
-          <CardContent className="p-6 relative">
+        <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0 overflow-hidden shadow-lg shadow-green-500/20 animate-slide-up">
+          <CardContent className="p-4 sm:p-6 relative">
             {/* Background pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute top-0 right-0 w-32 sm:w-40 h-32 sm:h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-24 sm:w-32 h-24 sm:h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
             </div>
 
             <div className="relative">
               <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="text-green-100 text-sm font-medium flex items-center gap-2">
-                    <IonIcon name="wallet-outline" size="16px" />
+                <div className="space-y-0.5">
+                  <p className="text-green-100 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                    <IonIcon name="wallet-outline" size="14px" />
                     Available Balance
                     <button
                       onClick={toggleHideBalance}
-                      className="ml-1 p-1 hover:bg-white/10 rounded-full transition-smooth"
+                      className="p-1 hover:bg-white/10 rounded-full transition-smooth active:bg-white/20"
                       title={hideBalance ? "Show balance" : "Hide balance"}
                     >
                       <IonIcon
                         name={hideBalance ? "eye-off-outline" : "eye-outline"}
-                        size="16px"
+                        size="14px"
                         color="white"
                       />
                     </button>
                   </p>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
                     {hideBalance
                       ? "₦••••••"
                       : `₦${(user.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`}
                   </h2>
                 </div>
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <IonIcon name="card-outline" size="24px" color="white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <IonIcon name="card-outline" size="20px" color="white" />
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
-                <Link
-                  href="/dashboard/fund-wallet"
-                  className="flex-1 sm:flex-none"
-                >
+              <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
+                <Link href="/dashboard/fund-wallet" className="flex-1">
                   <Button
                     size="sm"
-                    className="w-full bg-white text-green-600 hover:bg-white/90 gap-2 font-semibold shadow-lg transition-smooth"
+                    className="w-full bg-white text-green-600 hover:bg-white/90 gap-1.5 sm:gap-2 font-semibold shadow-lg transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
                   >
-                    <IonIcon name="add-circle-outline" size="18px" />
+                    <IonIcon name="add-circle-outline" size="16px" />
                     Add Money
                   </Button>
                 </Link>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 flex-1 sm:flex-none gap-2 font-medium transition-smooth"
+                  className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
                   onClick={() => toast.info("Withdraw feature coming soon!")}
                 >
-                  <IonIcon name="arrow-up-circle-outline" size="18px" />
+                  <IonIcon name="arrow-up-circle-outline" size="16px" />
                   Withdraw
                 </Button>
               </div>
@@ -339,20 +289,20 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
             {services.map((service, index) => (
               <Link key={service.name} href={service.href}>
                 <Card
-                  className={`border-border hover:border-green-500/50 transition-smooth cursor-pointer group card-hover bg-card animate-scale-in stagger-${index + 1} relative overflow-hidden`}
+                  className={`border-border hover:border-green-500/50 active:scale-95 transition-smooth cursor-pointer group bg-card animate-scale-in stagger-${index + 1} relative overflow-hidden`}
                 >
                   {"badge" in service && service.badge && (
-                    <span className="absolute top-1 right-1 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-bold rounded-full">
+                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 sm:px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] sm:text-[9px] font-bold rounded-full">
                       {service.badge}
                     </span>
                   )}
-                  <CardContent className="p-4 flex flex-col items-center text-center">
+                  <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-smooth ${
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${
                         "badge" in service
                           ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
                           : "bg-green-500/10 group-hover:bg-green-500"
@@ -360,12 +310,12 @@ export default function DashboardPage() {
                     >
                       <IonIcon
                         name={service.icon}
-                        size="24px"
+                        size="22px"
                         color={"badge" in service ? "#f59e0b" : "#22c55e"}
                         className="group-hover:!text-white"
                       />
                     </div>
-                    <span className="text-xs font-medium text-foreground">
+                    <span className="text-[11px] sm:text-xs font-medium text-foreground">
                       {service.name}
                     </span>
                   </CardContent>

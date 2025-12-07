@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getInlomaxTransactionDetails } from '@/lib/api/inlomax';
+import { getTransaction } from '@/lib/api/inlomax';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { reference: string } }
+  { params }: { params: Promise<{ reference: string }> }
 ) {
   try {
-    const { reference } = params;
+    const { reference } = await params;
 
     if (!reference) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function GET(
       );
     }
 
-    const transaction = await getInlomaxTransactionDetails(reference);
+    const transaction = await getTransaction(reference);
     return NextResponse.json(transaction);
   } catch (error) {
     console.error('Error fetching Inlomax transaction details:', error);

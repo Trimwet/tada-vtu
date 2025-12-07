@@ -1,9 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-
-const BUTTON_SIZE = 56; // 14 * 4 = 56px (w-14)
-const MARGIN = 24; // Distance from edge
+import { useState, useRef, useEffect } from 'react';
 
 export function WhatsAppButton() {
   const phoneNumber = '2347058748217';
@@ -13,155 +10,71 @@ export function WhatsAppButton() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [hasMoved, setHasMoved] = useState(false);
-  const [isSnapping, setIsSnapping] = useState(false);
   const buttonRef = useRef<HTMLAnchorElement>(null);
   const dragStart = useRef({ x: 0, y: 0 });
   const buttonStart = useRef({ x: 0, y: 0 });
-
-  // Get button's actual position on screen
-  const getButtonRect = useCallback(() => {
-    if (!buttonRef.current) return null;
-    return buttonRef.current.getBoundingClientRect();
-  }, []);
-
-  // Snap to nearest side
-  const snapToSide = useCallback((currentX: number, currentY: number) => {
-    const rect = getButtonRect();
-    if (!rect) return { x: currentX, y: currentY };
-
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Calculate center of button
-    const buttonCenterX = rect.left + BUTTON_SIZE / 2;
-    
-    // Determine which side to snap to
-    const snapToRight = buttonCenterX > viewportWidth / 2;
-    
-    // Calculate new X position (snap to left or right edge)
-    let newX: number;
-    if (snapToRight) {
-      // Snap to right: button should be at right edge with margin
-      // Default position is bottom-right (right-6 = 24px from right)
-      // So x offset of 0 means right edge
-      newX = 0;
-    } else {
-      // Snap to left: need to move button to left edge
-      // Calculate offset needed to place button at left edge with margin
-      newX = -(viewportWidth - BUTTON_SIZE - MARGIN * 2);
-    }
-    
-    // Constrain Y within viewport
-    const minY = -(viewportHeight - BUTTON_SIZE - MARGIN * 2);
-    const maxY = 0;
-    const newY = Math.max(minY, Math.min(maxY, currentY));
-    
-    return { x: newX, y: newY };
-  }, [getButtonRect]);
 
   // Load saved position
   useEffect(() => {
     const saved = localStorage.getItem('whatsapp-btn-pos');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setPosition(parsed);
-      } catch (e) {
-        console.error('Failed to parse saved position');
+        setPosition(JSON.parse(saved));
+      } catch {
+        // Ignore parse errors
       }
     }
   }, []);
 
-  const handleStart = (clientX: number, clientY: number) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
     setHasMoved(false);
-    setIsSnapping(false);
-    dragStart.current = { x: clientX, y: clientY };
+    dragStart.current = { x: e.clientX, y: e.clientY };
     buttonStart.current = { ...position };
   };
 
-  const handleMove = useCallback((clientX: number, clientY: number) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
 
-    const deltaX = clientX - dragStart.current.x;
-    const deltaY = clientY - dragStart.current.y;
+    const deltaX = e.clientX - dragStart.current.x;
+    const deltaY = e.clientY - dragStart.current.y;
 
     if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
       setHasMoved(true);
     }
 
-    let newX = buttonStart.current.x + deltaX;
-    let newY = buttonStart.current.y + deltaY;
+    const newX = buttonStart.current.x + deltaX;
+    const newY = buttonStart.current.y + deltaY;
 
     // Constrain within viewport
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    const maxX = window.innerWidth - 80;
+    const maxY = window.innerHeight - 80;
     
-    // Max left offset (button starts at right-6, so moving left is negative)
-    const maxLeftOffset = -(viewportWidth - BUTTON_SIZE - MARGIN);
-    // Max right offset (can't go past right edge)
-    const maxRightOffset = MARGIN;
-    // Max up offset (button starts at bottom-6)
-    const maxUpOffset = -(viewportHeight - BUTTON_SIZE - MARGIN);
-    // Max down offset
-    const maxDownOffset = MARGIN;
+    setPosition({
+      x: Math.max(-maxX, Math.min(24, newX)),
+      y: Math.max(-maxY, Math.min(24, newY))
+    });
+  };
 
-    newX = Math.max(maxLeftOffset, Math.min(maxRightOffset, newX));
-    newY = Math.max(maxUpOffset, Math.min(maxDownOffset, newY));
-
-    setPosition({ x: newX, y: newY });
-  }, [isDragging]);
-
-  const handleEnd = useCallback(() => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     if (!isDragging) return;
     
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
     setIsDragging(false);
-    setIsSnapping(true);
-    
+
     // Snap to nearest side
-    const snappedPosition = snapToSide(position.x, position.y);
-    setPosition(snappedPosition);
+    const viewportWidth = window.innerWidth;
+    const buttonCenterX = (buttonRef.current?.getBoundingClientRect().left || 0) + 28;
+    const snapToRight = buttonCenterX > viewportWidth / 2;
     
-    // Save position after snap
-    setTimeout(() => {
-      localStorage.setItem('whatsapp-btn-pos', JSON.stringify(snappedPosition));
-      setIsSnapping(false);
-    }, 300);
-  }, [isDragging, position, snapToSide]);
-
-  // Mouse events
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleStart(e.clientX, e.clientY);
+    const snappedX = snapToRight ? 0 : -(viewportWidth - 80);
+    const finalPosition = { x: snappedX, y: position.y };
+    
+    setPosition(finalPosition);
+    localStorage.setItem('whatsapp-btn-pos', JSON.stringify(finalPosition));
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
-    const handleMouseUp = () => handleEnd();
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, handleMove, handleEnd]);
-
-  // Touch events
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    handleStart(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    handleMove(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchEnd = () => handleEnd();
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasMoved) {
@@ -176,16 +89,15 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className={`fixed bottom-6 right-6 z-[100] w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 select-none ${
-        isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      className={`fixed bottom-6 right-6 z-[100] w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 select-none touch-none ${
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
       }`}
       style={{
-        transform: `translate(${position.x}px, ${position.y}px) scale(${isDragging ? 1.1 : 1})`,
-        transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        transition: isDragging ? 'none' : 'transform 0.2s ease-out',
       }}
       aria-label="Contact us on WhatsApp"
     >

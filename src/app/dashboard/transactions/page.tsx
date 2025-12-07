@@ -37,7 +37,6 @@ export default function TransactionsPage() {
     return date.toLocaleDateString("en-NG", {
       month: "short",
       day: "numeric",
-      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -80,62 +79,73 @@ export default function TransactionsPage() {
 
       <main className="container mx-auto px-4 lg:px-8 py-6 max-w-4xl">
         <Card className="border-border">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <CardTitle className="text-xl">Transaction History</CardTitle>
-                <CardDescription>
-                  View all your transactions and activities
-                </CardDescription>
-              </div>
-            </div>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Transaction History</CardTitle>
+            <CardDescription>
+              View all your transactions and activities
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1 relative">
-                <IonIcon
-                  name="search-outline"
-                  size="18px"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-background border-border"
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="h-9 px-3 py-1 rounded-md border border-border bg-card text-foreground text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-                >
-                  <option value="all" className="bg-card text-foreground">All Types</option>
-                  <option value="deposit" className="bg-card text-foreground">Fund Wallet</option>
-                  <option value="airtime" className="bg-card text-foreground">Airtime</option>
-                  <option value="data" className="bg-card text-foreground">Data</option>
-                  <option value="cable" className="bg-card text-foreground">Cable TV</option>
-                  <option value="electricity" className="bg-card text-foreground">Electricity</option>
-                </select>
+            {/* Search */}
+            <div className="relative mb-4">
+              <IonIcon
+                name="search-outline"
+                size="18px"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                placeholder="Search transactions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-background border-border"
+              />
+            </div>
 
-                {["all", "success", "failed"].map((status) => (
-                  <Button
-                    key={status}
-                    variant={filterStatus === status ? "default" : "outline"}
-                    onClick={() => setFilterStatus(status)}
-                    size="sm"
-                    className={
-                      filterStatus === status
-                        ? "bg-green-500 hover:bg-green-600"
-                        : ""
-                    }
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                ))}
-              </div>
+            {/* Type Filters */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[
+                { value: "all", label: "All" },
+                { value: "deposit", label: "Deposit" },
+                { value: "airtime", label: "Airtime" },
+                { value: "data", label: "Data" },
+                { value: "cable", label: "Cable" },
+                { value: "electricity", label: "Electric" },
+              ].map((type) => (
+                <Button
+                  key={type.value}
+                  variant={filterType === type.value ? "default" : "outline"}
+                  onClick={() => setFilterType(type.value)}
+                  size="sm"
+                  className={
+                    filterType === type.value
+                      ? "bg-green-500 hover:bg-green-600"
+                      : ""
+                  }
+                >
+                  {type.label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {[
+                { value: "all", label: "All Status" },
+                { value: "success", label: "Success" },
+                { value: "failed", label: "Failed" },
+              ].map((status) => (
+                <button
+                  key={status.value}
+                  onClick={() => setFilterStatus(status.value)}
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                    filterStatus === status.value
+                      ? "bg-muted text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {status.label}
+                </button>
+              ))}
             </div>
 
             {/* Transactions List */}
@@ -164,39 +174,49 @@ export default function TransactionsPage() {
                 {filteredTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-4 rounded-xl border border-border hover:bg-muted/50 transition-smooth"
+                    className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                          transaction.amount > 0
-                            ? "bg-green-500/10"
-                            : "bg-muted"
-                        }`}
-                      >
-                        <IonIcon
-                          name={getTypeIcon(transaction.type)}
-                          size="20px"
-                          color={transaction.amount > 0 ? "#22c55e" : undefined}
-                          className={
-                            transaction.amount <= 0
-                              ? "text-muted-foreground"
-                              : ""
-                          }
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground truncate">
-                          {transaction.description}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
+                    {/* Icon */}
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        transaction.amount > 0
+                          ? "bg-green-500/10"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <IonIcon
+                        name={getTypeIcon(transaction.type)}
+                        size="20px"
+                        color={transaction.amount > 0 ? "#22c55e" : undefined}
+                        className={
+                          transaction.amount <= 0
+                            ? "text-muted-foreground"
+                            : ""
+                        }
+                      />
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground text-sm truncate">
+                        {transaction.description}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-muted-foreground">
                           {formatDate(transaction.created_at)}
-                        </p>
+                        </span>
+                        {transaction.network && (
+                          <span className="text-xs text-muted-foreground">
+                            • {transaction.network}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right shrink-0 ml-4">
+
+                    {/* Amount & Status */}
+                    <div className="text-right flex-shrink-0">
                       <p
-                        className={`font-semibold ${
+                        className={`font-semibold text-sm ${
                           transaction.amount > 0
                             ? "text-green-500"
                             : "text-foreground"
@@ -205,22 +225,15 @@ export default function TransactionsPage() {
                         {transaction.amount > 0 ? "+" : ""}₦
                         {Math.abs(transaction.amount).toLocaleString()}
                       </p>
-                      <div className="flex items-center justify-end gap-2 mt-1">
-                        {transaction.network && (
-                          <span className="text-xs text-muted-foreground">
-                            {transaction.network}
-                          </span>
-                        )}
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded ${
-                            transaction.status === "success"
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-red-500/10 text-red-500"
-                          }`}
-                        >
-                          {transaction.status}
-                        </span>
-                      </div>
+                      <span
+                        className={`inline-block mt-1 px-1.5 py-0.5 text-xs font-medium rounded ${
+                          transaction.status === "success"
+                            ? "bg-green-500/10 text-green-500"
+                            : "bg-red-500/10 text-red-500"
+                        }`}
+                      >
+                        {transaction.status}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -229,7 +242,7 @@ export default function TransactionsPage() {
 
             {/* Summary */}
             {filteredTransactions.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-border">
+              <div className="mt-6 pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground text-center">
                   Showing {filteredTransactions.length} of {transactions.length}{" "}
                   transactions

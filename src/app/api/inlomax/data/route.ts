@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { purchaseData, getDataPlans, getNetworkServiceId } from '@/lib/api/inlomax';
+import { purchaseData, ServiceUnavailableError } from '@/lib/api/inlomax';
 
-// Create Supabase admin client
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -17,191 +16,193 @@ function getSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, network, phone, planId, type, amount, planName, userId } = body;
+    const { network, phone, planId, amount, planName, userId } = body;
 
-    const useSandbox = process.env.INLOMAX_SANDBOX !== 'false';
-
-    // Get data plans
-    if (action === 'get_plans') {
-      if (!network) {
-        return NextResponse.json(
-          { status: false, message: 'Network is required' },
-          { status: 400 }
-        );
-      }
-
-      if (useSandbox) {
-        // Return empty - frontend uses local plans in sandbox mode
-        return NextResponse.json({ status: true, data: [] });
-      }
-
-      const plans = await getDataPlans(network);
-      return NextResponse.json({ status: true, data: plans });
-    }
-
-    // Purchase data
-    if (!network || !phone || !planId || !type) {
+    // Validate required fields
+    if (!network || !phone || !planId) {
       return NextResponse.json(
-        { status: false, message: 'Missing required fields' },
+        { status: false, message: 'Missing required fields: network, phone, planId' },
         { status: 400 }
       );
     }
 
-    // Validate phone number format
-    if (!/^0\d{10}$/.test(phone)) {
+    // Validate phone number format (Nigerian format)
+    if (!/^0[789][01]\d{8}$/.test(phone)) {
       return NextResponse.json(
-        { status: false, message: 'Invalid phone number format. Use format: 08012345678' },
+        { status: false, message: 'Invalid phone number. Use format: 08012345678' },
         { status: 400 }
+      );
+    }
+
+    // User must be authenticated
+    if (!userId) {
+      return NextResponse.json(
+        { status: false, message: 'Authentication required' },
+        { status: 401 }
       );
     }
 
     const numAmount = Number(amount) || 0;
+    if (numAmount <= 0) {
+      return NextResponse.json(
+        { status: false, message: 'Invalid amount' },
+        { status: 400 }
+      );
+    }
+
     const supabase = getSupabaseAdmin();
 
-    // If userId provided, verify balance and create transaction
-    if (userId && numAmount > 0) {
-      // Get user's current balance
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', userId)
-        .single();
+    // Get user profile and balance
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('balance')
+      .eq('id', userId)
+      .single();
 
-      if (profileError || !profile) {
-        return NextResponse.json(
-          { status: false, message: 'User not found' },
-          { status: 404 }
-        );
-      }
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError);
+      return NextResponse.json(
+        { status: false, message: 'User not found' },
+        { status: 404 }
+      );
+    }
 
-      if ((profile.balance || 0) < numAmount) {
-        return NextResponse.json(
-          { status: false, message: 'Insufficient balance' },
-          { status: 400 }
-        );
-      }
 
-      // Create pending transaction
-      const { data: transaction, error: txnError } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: userId,
-          type: 'data',
-          amount: -numAmount,
-          status: 'pending',
-          description: `${network} ${planName || type} Data - ${phone}`,
-          metadata: { network, phone, planId, type, serviceId: getNetworkServiceId(network) }
-        })
-        .select()
-        .single();
+    // Check balance
+    const currentBalance = profile.balance || 0;
+    if (currentBalance < numAmount) {
+      return NextResponse.json(
+        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
+        { status: 400 }
+      );
+    }
 
-      if (txnError) {
-        console.error('Transaction creation error:', txnError);
-        return NextResponse.json(
-          { status: false, message: 'Failed to create transaction' },
-          { status: 500 }
-        );
-      }
+    // Generate unique reference
+    const reference = `DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      try {
-        let result;
+    // Create pending transaction FIRST
+    const { data: transaction, error: txnError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: userId,
+        type: 'data',
+        amount: -numAmount,
+        status: 'pending',
+        reference: reference,
+        phone_number: phone,
+        network: network.toUpperCase(),
+        description: `${network} ${planName || 'Data'} - ${phone}`,
+      })
+      .select()
+      .single();
+
+    if (txnError) {
+      console.error('Transaction creation error:', txnError);
+      return NextResponse.json(
+        { status: false, message: 'Failed to initiate transaction. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    try {
+      // Call Inlomax API - planId is the serviceID
+      console.log(`[DATA] Calling Inlomax API: ${network} ${planName} (ID: ${planId}) to ${phone}`);
+      const result = await purchaseData({ serviceID: planId, phone });
+      console.log(`[DATA] Inlomax response:`, result.status, result.message);
+
+      if (result.status === 'success') {
+        const newBalance = currentBalance - numAmount;
         
-        if (useSandbox) {
-          // Sandbox mode - simulate successful purchase
-          result = {
-            status: 'success' as const,
-            message: `Data purchase successful (sandbox) - ${planName || planId} to ${phone}`,
-            data: {
-              reference: 'SANDBOX_' + Date.now(),
-              network,
-              phone,
-              planId,
-              type,
-            },
-          };
-        } else {
-          // Production mode - call actual Inlomax API
-          result = await purchaseData({ network, phone, planId, type });
+        // Deduct from wallet
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ balance: newBalance })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Balance update error:', updateError);
         }
 
-        if (result.status === 'success') {
-          // Deduct from wallet and update transaction
-          await supabase
-            .from('profiles')
-            .update({ balance: profile.balance - numAmount })
-            .eq('id', userId);
-
-          const responseData = result.data as Record<string, unknown> | undefined;
-          await supabase
-            .from('transactions')
-            .update({ 
-              status: 'success',
-              reference: responseData?.reference as string || undefined,
-              metadata: { ...(transaction.metadata as object), apiResponse: responseData }
-            })
-            .eq('id', transaction.id);
-
-          return NextResponse.json({
-            status: true,
-            message: result.message,
-            data: {
-              ...(responseData || {}),
-              transactionId: transaction.id,
-              newBalance: profile.balance - numAmount,
-            },
-          });
-        } else {
-          // Mark transaction as failed
-          await supabase
-            .from('transactions')
-            .update({ status: 'failed', metadata: { ...(transaction.metadata as object), error: result.message } })
-            .eq('id', transaction.id);
-
-          return NextResponse.json({
-            status: false,
-            message: result.message || 'Purchase failed',
-          });
-        }
-      } catch (apiError) {
-        // Mark transaction as failed
+        // Update transaction as success
         await supabase
           .from('transactions')
-          .update({ 
-            status: 'failed', 
-            metadata: { ...(transaction.metadata as object), error: String(apiError) } 
+          .update({
+            status: 'success',
+            external_reference: result.data?.reference,
           })
           .eq('id', transaction.id);
 
-        throw apiError;
+        return NextResponse.json({
+          status: true,
+          message: `${planName || 'Data'} sent to ${phone} successfully!`,
+          data: {
+            reference: transaction.reference,
+            externalReference: result.data?.reference,
+            network,
+            phone,
+            dataPlan: planName,
+            amount: numAmount,
+            newBalance,
+          },
+        });
+      } else if (result.status === 'processing') {
+        // Transaction is processing
+        await supabase
+          .from('transactions')
+          .update({
+            status: 'pending',
+            external_reference: result.data?.reference,
+          })
+          .eq('id', transaction.id);
+
+        return NextResponse.json({
+          status: true,
+          message: 'Transaction is processing. You will be notified when complete.',
+          data: {
+            reference: transaction.reference,
+            status: 'processing',
+          },
+        });
+      } else {
+        // Transaction failed
+        await supabase
+          .from('transactions')
+          .update({ status: 'failed' })
+          .eq('id', transaction.id);
+
+        return NextResponse.json({
+          status: false,
+          message: result.message || 'Data purchase failed. Please try again.',
+        });
       }
-    }
+    } catch (apiError) {
+      console.error('[DATA] API Error:', apiError);
+      
+      // Mark transaction as failed
+      await supabase
+        .from('transactions')
+        .update({ status: 'failed' })
+        .eq('id', transaction.id);
 
-    // No userId - just process without wallet (for testing)
-    if (useSandbox) {
-      return NextResponse.json({
-        status: true,
-        message: 'Data purchase successful (sandbox)',
-        data: {
-          reference: 'SANDBOX_' + Date.now(),
-          network,
-          phone,
-          planId,
-          type,
-        },
-      });
-    }
+      // Handle insufficient admin balance gracefully
+      if (apiError instanceof ServiceUnavailableError) {
+        return NextResponse.json(
+          { status: false, message: 'Service is unavailable. Please try again later.' },
+          { status: 503 }
+        );
+      }
 
-    const result = await purchaseData({ network, phone, planId, type });
-    return NextResponse.json({
-      status: result.status === 'success',
-      message: result.message,
-      data: result.data,
-    });
+      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
+      return NextResponse.json(
+        { status: false, message: errorMessage },
+        { status: 500 }
+      );
+    }
 
   } catch (error) {
-    console.error('Data purchase error:', error);
+    console.error('[DATA] Unexpected error:', error);
     return NextResponse.json(
-      { status: false, message: error instanceof Error ? error.message : 'Purchase failed' },
+      { status: false, message: 'An unexpected error occurred. Please try again.' },
       { status: 500 }
     );
   }

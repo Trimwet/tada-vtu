@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '@/lib/supabase/client';
-import type { Transaction } from '@/types/database';
+import type { Transaction, Profile } from '@/types/database';
 import { useAuth } from './useAuth';
 
 export function useSupabaseUser() {
@@ -31,8 +31,8 @@ export function useSupabaseUser() {
       
       if (error) throw error;
       
-      setTransactions(data || []);
-      return data || [];
+      setTransactions((data || []) as Transaction[]);
+      return (data || []) as Transaction[];
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
@@ -60,7 +60,6 @@ export function useSupabaseUser() {
       
       if (error) throw error;
       
-      // Refresh profile and transactions
       await refreshProfile();
       await fetchTransactions();
       
@@ -92,12 +91,11 @@ export function useSupabaseUser() {
       
       if (error) {
         if (error.message?.includes('Insufficient balance')) {
-          return null; // Insufficient balance
+          return null;
         }
         throw error;
       }
       
-      // Create transaction record
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error: txnError } = await (supabase.from('transactions') as any)
         .insert({
@@ -115,7 +113,6 @@ export function useSupabaseUser() {
       
       if (txnError) throw txnError;
       
-      // Refresh profile and transactions
       await refreshProfile();
       await fetchTransactions();
       
@@ -126,17 +123,31 @@ export function useSupabaseUser() {
     }
   }, [user, supabase, refreshProfile, fetchTransactions]);
 
-  // Fetch transactions on mount
   useEffect(() => {
     if (user) {
       fetchTransactions();
     }
   }, [user, fetchTransactions]);
 
+  // Create fallback profile from auth user if profile not loaded yet
+  const fallbackProfile: Profile | null = user ? {
+    id: user.id,
+    email: user.email || null,
+    full_name: user.user_metadata?.full_name || null,
+    phone_number: null,
+    balance: 0,
+    referral_code: null,
+    referred_by: null,
+    pin: null,
+    kyc_level: 0,
+    is_active: true,
+    created_at: user.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } : null;
+
   return {
-    user: profile,
-    // Only show loading on initial auth load, not on subsequent navigations
-    loading: authLoading && !profile,
+    user: profile || fallbackProfile,
+    loading: authLoading,
     transactionsLoading: loading,
     transactions,
     creditWallet,

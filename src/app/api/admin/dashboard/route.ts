@@ -85,14 +85,75 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
 
-    // Total revenue (sum of deposits)
-    const { data: revenueData } = await supabase
+    // Total deposits (wallet funding from customers)
+    const { data: depositData } = await supabase
       .from('transactions')
       .select('amount')
       .eq('type', 'deposit')
       .eq('status', 'success');
 
-    const totalRevenue = revenueData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const totalDeposits = depositData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+
+    // Calculate service fees earned (1% or min ₦20 per deposit)
+    // Each deposit has a service fee attached
+    const serviceFees = depositData?.reduce((sum, t) => {
+      const amount = Math.abs(t.amount);
+      const fee = Math.max(20, Math.ceil(amount * 0.01));
+      return sum + fee;
+    }, 0) || 0;
+
+    // Total airtime/data purchases (what customers spent)
+    const { data: purchaseData } = await supabase
+      .from('transactions')
+      .select('amount, type')
+      .in('type', ['airtime', 'data', 'cable', 'electricity'])
+      .eq('status', 'success');
+
+    const totalPurchases = purchaseData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    
+    // Estimate margins (roughly 2.5% on airtime, 5% on data)
+    const airtimePurchases = purchaseData?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const dataPurchases = purchaseData?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const otherPurchases = purchaseData?.filter(t => !['airtime', 'data'].includes(t.type)).reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    
+    const airtimeMargin = Math.round(airtimePurchases * 0.025); // ~2.5% margin
+    const dataMargin = Math.round(dataPurchases * 0.05); // ~5% margin
+    const otherMargin = Math.round(otherPurchases * 0.005); // ~0.5% margin
+    
+    const totalMargins = airtimeMargin + dataMargin + otherMargin;
+    const totalEarnings = serviceFees + totalMargins;
+
+    // Today's earnings
+    const { data: todayDeposits } = await supabase
+      .from('transactions')
+      .select('amount')
+      .eq('type', 'deposit')
+      .eq('status', 'success')
+      .gte('created_at', today.toISOString());
+
+    const todayServiceFees = todayDeposits?.reduce((sum, t) => {
+      const amount = Math.abs(t.amount);
+      return sum + Math.max(20, Math.ceil(amount * 0.01));
+    }, 0) || 0;
+
+    const { data: todayPurchases } = await supabase
+      .from('transactions')
+      .select('amount, type')
+      .in('type', ['airtime', 'data', 'cable', 'electricity'])
+      .eq('status', 'success')
+      .gte('created_at', today.toISOString());
+
+    const todayAirtime = todayPurchases?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const todayData = todayPurchases?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const todayMargins = Math.round(todayAirtime * 0.025) + Math.round(todayData * 0.05);
+    const todayEarnings = todayServiceFees + todayMargins;
+
+    // Total user balances (your liability)
+    const { data: balanceData } = await supabase
+      .from('profiles')
+      .select('balance');
+    
+    const totalUserBalances = balanceData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
     // Fetch users (last 100)
     const { data: users } = await supabase
@@ -115,7 +176,17 @@ export async function GET(request: NextRequest) {
         totalTransactions: totalTransactions || 0,
         todayTransactions: todayTransactions || 0,
         pendingTransactions: pendingTransactions || 0,
-        totalRevenue,
+        totalDeposits,
+        totalPurchases,
+        totalUserBalances,
+        // Earnings breakdown
+        serviceFees,
+        airtimeMargin,
+        dataMargin,
+        otherMargin,
+        totalMargins,
+        totalEarnings,
+        todayEarnings,
       },
       users: users || [],
       transactions: transactions || [],

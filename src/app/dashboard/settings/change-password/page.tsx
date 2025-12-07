@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ChangePasswordPage() {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -81,24 +84,52 @@ export default function ChangePasswordPage() {
       return;
     }
 
+    if (!user?.email) {
+      toast.error("User not found. Please login again.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock: Check if current password is correct
-      if (formData.currentPassword !== 'password123') {
-        toast.error("Current password is incorrect");
-        setIsSubmitting(false);
+    try {
+      const supabase = createClient();
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        toast.error("Session expired. Please login again.");
         return;
+      }
+
+      // Call API route to change password
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newPassword: formData.newPassword,
+          accessToken: session.access_token,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to change password');
       }
 
       toast.success("Password changed successfully!", {
         description: "You can now use your new password to login"
       });
-      setIsSubmitting(false);
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setPasswordStrength(0);
-    }, 2000);
+    } catch (error) {
+      console.error('Password change error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

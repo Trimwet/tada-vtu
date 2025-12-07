@@ -11,10 +11,19 @@ import { toast } from 'sonner';
 interface Stats {
   totalUsers: number;
   totalTransactions: number;
-  totalRevenue: number;
   todayTransactions: number;
   activeUsers: number;
   pendingTransactions: number;
+  totalDeposits: number;
+  totalPurchases: number;
+  totalUserBalances: number;
+  serviceFees: number;
+  airtimeMargin: number;
+  dataMargin: number;
+  otherMargin: number;
+  totalMargins: number;
+  totalEarnings: number;
+  todayEarnings: number;
 }
 
 interface User {
@@ -149,10 +158,19 @@ export default function AdminDashboard() {
       setStats(data.stats || {
         totalUsers: 0,
         totalTransactions: 0,
-        totalRevenue: 0,
         todayTransactions: 0,
         activeUsers: 0,
         pendingTransactions: 0,
+        totalDeposits: 0,
+        totalPurchases: 0,
+        totalUserBalances: 0,
+        serviceFees: 0,
+        airtimeMargin: 0,
+        dataMargin: 0,
+        otherMargin: 0,
+        totalMargins: 0,
+        totalEarnings: 0,
+        todayEarnings: 0,
       });
       setUsers(data.users || []);
       setTransactions(data.transactions || []);
@@ -163,10 +181,19 @@ export default function AdminDashboard() {
       setStats({
         totalUsers: 0,
         totalTransactions: 0,
-        totalRevenue: 0,
         todayTransactions: 0,
         activeUsers: 0,
         pendingTransactions: 0,
+        totalDeposits: 0,
+        totalPurchases: 0,
+        totalUserBalances: 0,
+        serviceFees: 0,
+        airtimeMargin: 0,
+        dataMargin: 0,
+        otherMargin: 0,
+        totalMargins: 0,
+        totalEarnings: 0,
+        todayEarnings: 0,
       });
     } finally {
       setLoading(false);
@@ -239,6 +266,43 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         {activeTab === 'overview' && stats && (
           <div className="space-y-6">
+            {/* Earnings Card - Most Important */}
+            <Card className="bg-gradient-to-br from-green-600 to-emerald-700 border-0">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white text-lg">💰 Your Earnings</CardTitle>
+                <CardDescription className="text-green-100">Money you've made from the platform</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <p className="text-green-100 text-sm">Total Earnings</p>
+                    <p className="text-3xl font-bold text-white">₦{stats.totalEarnings.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <p className="text-green-100 text-sm">Today's Earnings</p>
+                    <p className="text-3xl font-bold text-white">₦{stats.todayEarnings.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <p className="text-green-100 text-sm">Service Fees</p>
+                    <p className="text-2xl font-bold text-white">₦{stats.serviceFees.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <p className="text-green-100 text-sm">VTU Margins</p>
+                    <p className="text-2xl font-bold text-white">₦{stats.totalMargins.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <p className="text-green-100 text-sm mb-2">Margin Breakdown:</p>
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <span className="text-white">Airtime: ₦{stats.airtimeMargin.toLocaleString()}</span>
+                    <span className="text-white">Data: ₦{stats.dataMargin.toLocaleString()}</span>
+                    <span className="text-white">Bills: ₦{stats.otherMargin.toLocaleString()}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Platform Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-4">
@@ -254,26 +318,26 @@ export default function AdminDashboard() {
               </Card>
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-4">
-                  <p className="text-gray-400 text-sm">Total Transactions</p>
-                  <p className="text-2xl font-bold text-white">{stats.totalTransactions}</p>
+                  <p className="text-gray-400 text-sm">Total Deposits</p>
+                  <p className="text-2xl font-bold text-blue-500">₦{stats.totalDeposits.toLocaleString()}</p>
                 </CardContent>
               </Card>
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-4">
-                  <p className="text-gray-400 text-sm">Today's Txns</p>
-                  <p className="text-2xl font-bold text-blue-500">{stats.todayTransactions}</p>
+                  <p className="text-gray-400 text-sm">Total Purchases</p>
+                  <p className="text-2xl font-bold text-white">₦{stats.totalPurchases.toLocaleString()}</p>
                 </CardContent>
               </Card>
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-4">
-                  <p className="text-gray-400 text-sm">Total Revenue</p>
-                  <p className="text-2xl font-bold text-green-500">₦{stats.totalRevenue.toLocaleString()}</p>
+                  <p className="text-gray-400 text-sm">User Balances</p>
+                  <p className="text-2xl font-bold text-yellow-500">₦{stats.totalUserBalances.toLocaleString()}</p>
                 </CardContent>
               </Card>
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-4">
-                  <p className="text-gray-400 text-sm">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-500">{stats.pendingTransactions}</p>
+                  <p className="text-gray-400 text-sm">Pending Txns</p>
+                  <p className="text-2xl font-bold text-orange-500">{stats.pendingTransactions}</p>
                 </CardContent>
               </Card>
             </div>

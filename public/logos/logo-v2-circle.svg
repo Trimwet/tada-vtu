@@ -1,9 +1,0 @@
-<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Version 2: Circular with Lightning Bolt -->
-  <g id="icon">
-    <circle cx="24" cy="30" r="22" fill="#22c55e"/>
-    <path d="M28 16L18 32H24L20 44L32 26H26L28 16Z" fill="white"/>
-  </g>
-  <text x="54" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#22c55e">TADA</text>
-  <text x="132" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="400" fill="#666666">VTU</text>
-</svg>

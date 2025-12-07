@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction, verifyTransactionByRef } from '@/lib/api/flutterwave';
+import { createClient } from '@supabase/supabase-js';
+
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
+  return createClient(url, serviceKey);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,11 +30,137 @@ export async function GET(request: NextRequest) {
     }
 
     if (result?.data?.status === 'successful') {
+      const supabase = getSupabaseAdmin();
+      const txRef = result.data.tx_ref;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const meta = (result.data as any).meta || {};
+      const userId = meta.user_id;
+      
+      // Use the original amount (wallet_credit) from meta, not the total charged amount
+      // This ensures we only credit what the user intended to fund, not including service charge
+      const walletCredit = meta.wallet_credit || meta.original_amount || result.data.amount;
+      const serviceCharge = meta.service_charge || 0;
+
+      console.log('Payment verification:', { 
+        txRef, 
+        totalPaid: result.data.amount, 
+        walletCredit, 
+        serviceCharge,
+        userId 
+      });
+
+      // Check if transaction already processed
+      const { data: existingTxn } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('reference', txRef)
+        .single();
+
+      if (!existingTxn && userId) {
+        // Transaction not yet processed - credit the wallet with original amount only
+        console.log('Crediting wallet via verify endpoint:', { userId, walletCredit, txRef });
+
+        // Get user's current balance and referral info
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('balance, referred_by')
+          .eq('id', userId)
+          .single();
+
+        if (!profileError && profile) {
+          // Credit wallet with original amount (excluding service charge)
+          const newBalance = (profile.balance || 0) + walletCredit;
+          await supabase
+            .from('profiles')
+            .update({ balance: newBalance })
+            .eq('id', userId);
+
+          // Create transaction record
+          await supabase.from('transactions').insert({
+            user_id: userId,
+            type: 'deposit',
+            amount: walletCredit,
+            status: 'success',
+            description: `Wallet funding via Flutterwave (₦${serviceCharge} service fee paid)`,
+            reference: txRef,
+            external_reference: result.data.flw_ref,
+          });
+
+          console.log('Wallet credited successfully:', { userId, walletCredit, newBalance, serviceCharge });
+
+          // Check if this is user's first deposit and they have a referrer
+          if (profile.referred_by) {
+            // Check if referral bonus already paid
+            const { data: existingBonus } = await supabase
+              .from('transactions')
+              .select('id')
+              .eq('user_id', profile.referred_by)
+              .eq('type', 'deposit')
+              .ilike('description', `%Referral bonus%${userId}%`)
+              .single();
+
+            if (!existingBonus) {
+              // Check if this is the referee's first deposit
+              const { count: depositCount } = await supabase
+                .from('transactions')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('type', 'deposit')
+                .eq('status', 'success');
+
+              // Only pay bonus on first deposit
+              if (depositCount === 1) {
+                const REFERRAL_BONUS = 100; // ₦100 referral bonus
+
+                // Get referrer's current balance
+                const { data: referrer } = await supabase
+                  .from('profiles')
+                  .select('balance, full_name')
+                  .eq('id', profile.referred_by)
+                  .single();
+
+                if (referrer) {
+                  // Credit referrer
+                  const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS;
+                  await supabase
+                    .from('profiles')
+                    .update({ balance: referrerNewBalance })
+                    .eq('id', profile.referred_by);
+
+                  // Create referral bonus transaction
+                  await supabase.from('transactions').insert({
+                    user_id: profile.referred_by,
+                    type: 'deposit',
+                    amount: REFERRAL_BONUS,
+                    status: 'success',
+                    description: `Referral bonus - ${userId.slice(0, 8)}`,
+                    reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
+                  });
+
+                  // Create notification for referrer
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  await (supabase as any).from('notifications').insert({
+                    user_id: profile.referred_by,
+                    type: 'success',
+                    title: 'Referral Bonus! 🎉',
+                    message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
+                  });
+
+                  console.log('Referral bonus paid:', { referrerId: profile.referred_by, bonus: REFERRAL_BONUS });
+                }
+              }
+            }
+          }
+        }
+      }
+
       return NextResponse.json({
         status: 'success',
-        message: 'Transaction verified',
+        message: 'Transaction verified and wallet credited',
         data: {
-          amount: result.data.amount,
+          amount: walletCredit, // Return the amount credited to wallet
+          total_paid: result.data.amount,
+          service_charge: serviceCharge,
           currency: result.data.currency,
           tx_ref: result.data.tx_ref,
           flw_ref: result.data.flw_ref,

@@ -19,9 +19,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       {/* lg:pl-64 offsets content for the 64 (16rem) sidebar width */}
-      {/* pb-24 ensures content isn't hidden behind mobile bottom nav */}
-      <main className="lg:pl-64 min-h-screen pb-24 lg:pb-8 transition-all duration-200">
-        <div className="container mx-auto p-4 lg:p-8 max-w-7xl">{children}</div>
+      {/* pb-20 ensures content isn't hidden behind mobile bottom nav */}
+      <main className="lg:pl-64 min-h-screen pb-20 lg:pb-8 transition-all duration-200">
+        {children}
       </main>
 
       {/* Mobile Bottom Navigation - Hidden on desktop via CSS in component */}

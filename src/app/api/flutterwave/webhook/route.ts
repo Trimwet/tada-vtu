@@ -27,10 +27,23 @@ export async function POST(request: NextRequest) {
     if (event === 'charge.completed' && data.status === 'successful') {
       const supabase = getSupabaseAdmin();
       const userId = data.meta?.user_id;
-      const amount = data.amount;
       const txRef = data.tx_ref;
+      
+      // Use wallet_credit from meta (original amount without service charge)
+      // Fall back to original_amount, then to total amount if meta not available
+      const walletCredit = data.meta?.wallet_credit || data.meta?.original_amount || data.amount;
+      const serviceCharge = data.meta?.service_charge || 0;
+      const totalPaid = data.amount;
 
-      if (!userId || !amount) {
+      console.log('Webhook payment data:', { 
+        userId, 
+        txRef, 
+        totalPaid, 
+        walletCredit, 
+        serviceCharge 
+      });
+
+      if (!userId || !walletCredit) {
         console.error('Missing user_id or amount in webhook data');
         return NextResponse.json({ status: 'error', message: 'Missing data' }, { status: 400 });
       }
@@ -47,10 +60,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: 'success', message: 'Already processed' });
       }
 
-      // Get user's current balance
+      // Get user's current balance and referral info
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('balance')
+        .select('balance, referred_by')
         .eq('id', userId)
         .single();
 
@@ -59,8 +72,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: 'error', message: 'User not found' }, { status: 404 });
       }
 
-      // Credit wallet
-      const newBalance = (profile.balance || 0) + amount;
+      // Credit wallet with original amount only (excluding service charge)
+      const newBalance = (profile.balance || 0) + walletCredit;
       await supabase
         .from('profiles')
         .update({ balance: newBalance })
@@ -70,18 +83,84 @@ export async function POST(request: NextRequest) {
       await supabase.from('transactions').insert({
         user_id: userId,
         type: 'deposit',
-        amount: amount,
+        amount: walletCredit,
         status: 'success',
-        description: 'Wallet funding via Flutterwave',
+        description: `Wallet funding via Flutterwave (₦${serviceCharge} service fee paid)`,
         reference: txRef,
         metadata: {
           flw_ref: data.flw_ref,
           payment_type: data.payment_type,
           customer_email: data.customer?.email,
+          total_paid: totalPaid,
+          service_charge: serviceCharge,
         }
       });
 
-      console.log('Wallet credited:', { userId, amount, newBalance, txRef });
+      console.log('Wallet credited:', { userId, walletCredit, newBalance, txRef, serviceCharge });
+
+      // Check if this is user's first deposit and they have a referrer
+      if (profile.referred_by) {
+        // Check if referral bonus already paid
+        const { data: existingBonus } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('user_id', profile.referred_by)
+          .eq('type', 'deposit')
+          .ilike('description', `%Referral bonus%${userId}%`)
+          .single();
+
+        if (!existingBonus) {
+          // Check if this is the referee's first deposit
+          const { count: depositCount } = await supabase
+            .from('transactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('type', 'deposit')
+            .eq('status', 'success');
+
+          // Only pay bonus on first deposit
+          if (depositCount === 1) {
+            const REFERRAL_BONUS = 100; // ₦100 referral bonus
+
+            // Get referrer's current balance
+            const { data: referrer } = await supabase
+              .from('profiles')
+              .select('balance, full_name')
+              .eq('id', profile.referred_by)
+              .single();
+
+            if (referrer) {
+              // Credit referrer
+              const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS;
+              await supabase
+                .from('profiles')
+                .update({ balance: referrerNewBalance })
+                .eq('id', profile.referred_by);
+
+              // Create referral bonus transaction
+              await supabase.from('transactions').insert({
+                user_id: profile.referred_by,
+                type: 'deposit',
+                amount: REFERRAL_BONUS,
+                status: 'success',
+                description: `Referral bonus - ${userId.slice(0, 8)}`,
+                reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
+              });
+
+              // Create notification for referrer
+              await supabase.from('notifications').insert({
+                user_id: profile.referred_by,
+                type: 'success',
+                title: 'Referral Bonus! 🎉',
+                message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
+              });
+
+              console.log('Referral bonus paid via webhook:', { referrerId: profile.referred_by, bonus: REFERRAL_BONUS });
+            }
+          }
+        }
+      }
+
       return NextResponse.json({ status: 'success', message: 'Wallet credited' });
     }
 

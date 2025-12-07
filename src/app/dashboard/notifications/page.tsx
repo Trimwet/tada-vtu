@@ -1,79 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useSupabaseUser } from '@/hooks/useSupabaseUser';
+import { getSupabase } from '@/lib/supabase/client';
 
 interface Notification {
   id: string;
-  type: 'success' | 'info' | 'warning' | 'promo';
+  type: 'success' | 'info' | 'warning' | 'promo' | 'error';
   title: string;
   message: string;
-  time: string;
-  read: boolean;
+  created_at: string;
+  is_read: boolean;
 }
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'success',
-    title: 'Data Purchase Successful',
-    message: '2GB MTN data has been sent to 08012345678',
-    time: '2 minutes ago',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'success',
-    title: 'Wallet Funded',
-    message: 'Your wallet has been credited with ₦5,000',
-    time: '1 hour ago',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'promo',
-    title: '🎉 Special Offer!',
-    message: 'Get 10% bonus on all data purchases this weekend. Use code: WEEKEND10',
-    time: '3 hours ago',
-    read: false,
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'New Feature Available',
-    message: 'You can now pay electricity bills directly from your wallet',
-    time: 'Yesterday',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'warning',
-    title: 'Low Wallet Balance',
-    message: 'Your wallet balance is below ₦500. Fund now to continue enjoying our services.',
-    time: 'Yesterday',
-    read: true,
-  },
-  {
-    id: '6',
-    type: 'success',
-    title: 'Airtime Purchase Successful',
-    message: '₦500 airtime sent to 08098765432',
-    time: '2 days ago',
-    read: true,
-  },
-  {
-    id: '7',
-    type: 'info',
-    title: 'Referral Bonus',
-    message: 'You earned ₦100 from your referral. Keep sharing!',
-    time: '3 days ago',
-    read: true,
-  },
-];
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -88,32 +31,109 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
+const formatTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+};
+
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const { user } = useSupabaseUser();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Fetch notifications from database
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchNotifications = async () => {
+      setLoading(true);
+      const supabase = getSupabase();
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+      } else {
+        setNotifications((data as Notification[]) || []);
+      }
+      setLoading(false);
+    };
+
+    fetchNotifications();
+  }, [user?.id]);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
   const filteredNotifications = filter === 'unread' 
-    ? notifications.filter(n => !n.read) 
+    ? notifications.filter(n => !n.is_read) 
     : notifications;
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    const supabase = getSupabase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id);
+    
     setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
+      prev.map(n => n.id === id ? { ...n, is_read: true } : n)
     );
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    if (!user?.id) return;
+    
+    const supabase = getSupabase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', user.id);
+    
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     toast.success("All notifications marked as read");
   };
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    const supabase = getSupabase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('notifications')
+      .delete()
+      .eq('id', id);
+    
     setNotifications(prev => prev.filter(n => n.id !== id));
     toast.success("Notification deleted");
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
+    if (!user?.id) return;
+    
+    const supabase = getSupabase();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id);
+    
     setNotifications([]);
     toast.success("All notifications cleared");
   };
@@ -136,17 +156,15 @@ export default function NotificationsPage() {
               )}
             </div>
             {notifications.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={markAllAsRead}
-                  className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                >
-                  <IonIcon name="checkmark-done-outline" size="18px" className="mr-1" />
-                  Mark all read
-                </Button>
-              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={markAllAsRead}
+                className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
+              >
+                <IonIcon name="checkmark-done-outline" size="18px" className="mr-1" />
+                Mark all read
+              </Button>
             )}
           </div>
         </div>
@@ -177,9 +195,15 @@ export default function NotificationsPage() {
           </button>
         </div>
 
-
-        {/* Notifications List */}
-        {filteredNotifications.length === 0 ? (
+        {/* Loading State */}
+        {loading ? (
+          <Card className="border-border">
+            <CardContent className="py-16 text-center">
+              <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading notifications...</p>
+            </CardContent>
+          </Card>
+        ) : filteredNotifications.length === 0 ? (
           <Card className="border-border">
             <CardContent className="py-16 text-center">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -200,7 +224,7 @@ export default function NotificationsPage() {
                 <Card 
                   key={notification.id} 
                   className={`border-border transition-smooth hover:border-green-500/30 ${
-                    !notification.read ? 'bg-green-500/5 border-green-500/20' : ''
+                    !notification.is_read ? 'bg-green-500/5 border-green-500/20' : ''
                   }`}
                 >
                   <CardContent className="p-4">
@@ -216,7 +240,7 @@ export default function NotificationsPage() {
                               <h3 className="font-semibold text-foreground text-sm truncate">
                                 {notification.title}
                               </h3>
-                              {!notification.read && (
+                              {!notification.is_read && (
                                 <span className="w-2 h-2 bg-green-500 rounded-full shrink-0"></span>
                               )}
                             </div>
@@ -224,12 +248,12 @@ export default function NotificationsPage() {
                               {notification.message}
                             </p>
                             <p className="text-xs text-muted-foreground mt-2">
-                              {notification.time}
+                              {formatTime(notification.created_at)}
                             </p>
                           </div>
                           
                           <div className="flex items-center gap-1 shrink-0">
-                            {!notification.read && (
+                            {!notification.is_read && (
                               <Button
                                 variant="ghost"
                                 size="icon"

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initiatePayment } from '@/lib/api/flutterwave';
+import { initiatePayment, calculateServiceCharge } from '@/lib/api/flutterwave';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,11 +20,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Calculate service charge (min ₦20 or 1%)
+    const serviceCharge = calculateServiceCharge(amount);
+    const totalAmount = amount + serviceCharge;
+
     const tx_ref = 'TADA_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+
+    console.log('Initiating payment:', { 
+      originalAmount: amount, 
+      serviceCharge, 
+      totalAmount, 
+      tx_ref 
+    });
 
     const result = await initiatePayment({
       tx_ref,
-      amount,
+      amount: totalAmount, // Customer pays total (amount + service charge)
       redirect_url: redirect_url || `${process.env.NEXTAUTH_URL}/dashboard/fund-wallet?status=success`,
       customer: {
         email,
@@ -33,12 +44,15 @@ export async function POST(request: NextRequest) {
       },
       customizations: {
         title: 'TADA VTU',
-        description: 'Fund your wallet',
+        description: `Fund wallet ₦${amount.toLocaleString()} + ₦${serviceCharge} service fee`,
         logo: 'https://tadavtu.com/logo.png',
       },
       meta: {
         ...meta,
         tx_ref,
+        original_amount: amount,
+        service_charge: serviceCharge,
+        wallet_credit: amount, // Amount to credit to wallet
       },
     });
 
@@ -48,6 +62,9 @@ export async function POST(request: NextRequest) {
       data: {
         link: result.data?.link,
         tx_ref,
+        original_amount: amount,
+        service_charge: serviceCharge,
+        total_amount: totalAmount,
       },
     });
   } catch (error) {

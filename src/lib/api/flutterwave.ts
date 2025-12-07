@@ -12,7 +12,7 @@ interface FlutterwaveResponse<T = unknown> {
 async function flutterwaveRequest<T>(
   endpoint: string,
   method: 'GET' | 'POST' = 'POST',
-  data?: Record<string, unknown>
+  data?: object
 ): Promise<FlutterwaveResponse<T>> {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
 
@@ -56,16 +56,29 @@ export interface PaymentPayload {
     logo?: string;
   };
   meta?: Record<string, unknown>;
+  subaccounts?: Array<{
+    id: string;
+    transaction_charge_type?: string;
+    transaction_charge?: number;
+  }>;
 }
 
 export interface PaymentResponse {
   link: string;
 }
 
+// Calculate service charge: minimum ₦20 or 1% of amount
+export function calculateServiceCharge(amount: number): number {
+  const percentageCharge = Math.ceil(amount * 0.01); // 1%
+  return Math.max(20, percentageCharge); // Minimum ₦20
+}
+
 export async function initiatePayment(payload: PaymentPayload) {
   return flutterwaveRequest<PaymentResponse>('/payments', 'POST', {
     ...payload,
     currency: payload.currency || 'NGN',
+    // pass_charge makes customer pay Flutterwave fees
+    payment_options: 'card,banktransfer,ussd',
   });
 }
 

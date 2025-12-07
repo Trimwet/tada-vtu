@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@tadavtu.com"
+                  placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"

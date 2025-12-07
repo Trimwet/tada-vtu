@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
+import { LogoutDialog } from "@/components/logout-dialog";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -19,12 +20,12 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-border bg-card/50 backdrop-blur-xl z-40">
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-border bg-card/50 backdrop-blur-xl z-40 overflow-hidden">
       <div className="p-6 border-b border-border">
         <LogoInline size="sm" />
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 sidebar-scroll">
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -107,6 +108,16 @@ export function DashboardSidebar() {
             />
             <span>Settings</span>
           </Link>
+          
+          {/* Logout Button */}
+          <LogoutDialog
+            trigger={
+              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-red-500 hover:bg-red-500/10">
+                <IonIcon name="log-out-outline" size="20px" />
+                <span>Logout</span>
+              </button>
+            }
+          />
         </div>
       </nav>
 
@@ -130,19 +141,17 @@ export function DashboardSidebar() {
 export function DashboardBottomNav() {
   const pathname = usePathname();
 
-  // Mobile nav usually has fewer items to fit screen
   const mobileNavItems = [
     { name: "Home", href: "/dashboard", icon: "home", exact: true },
-    // Assuming airtime is a key service to jump to
     { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
-    { name: "Rewards", href: "/dashboard/rewards", icon: "gift" },
+    { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
     { name: "History", href: "/dashboard/transactions", icon: "time" },
     { name: "Profile", href: "/dashboard/profile", icon: "person" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border lg:hidden z-50 pb-1">
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border lg:hidden z-50 safe-bottom">
+      <div className="flex items-center justify-around h-16">
         {mobileNavItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -153,15 +162,15 @@ export function DashboardBottomNav() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[4rem]",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-all no-select touch-target",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground",
+                  : "text-muted-foreground active:text-foreground",
               )}
             >
               <IonIcon
                 name={isActive ? item.icon : `${item.icon}-outline`}
-                size="22px"
+                size="24px"
               />
               <span className="text-[10px] font-medium">{item.name}</span>
             </Link>

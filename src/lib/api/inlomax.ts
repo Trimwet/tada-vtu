@@ -1,25 +1,52 @@
 // Inlomax API Service
 // Documentation: https://inlomax.com/api-documentation
+// Base URL: https://inlomax.com/api
 
 const INLOMAX_API_URL = 'https://inlomax.com/api';
 
-// Network to Service ID mapping (case-insensitive)
-const NETWORK_SERVICE_IDS: Record<string, string> = {
-  mtn: '100',
-  airtel: '200',
-  glo: '300',
-  '9mobile': '400',
-  etisalat: '400', // alias for 9mobile
+// Airtime Service IDs from Inlomax
+export const AIRTIME_SERVICE_IDS: Record<string, string> = {
+  MTN: '1',
+  AIRTEL: '2',
+  GLO: '3',
+  '9MOBILE': '4',
 };
 
-export function getNetworkServiceId(network: string): string {
-  return NETWORK_SERVICE_IDS[network.toLowerCase()] || '100';
+export function getAirtimeServiceId(network: string): string {
+  return AIRTIME_SERVICE_IDS[network.toUpperCase()] || '1';
 }
 
 interface InlomaxResponse<T = unknown> {
   status: 'success' | 'processing' | 'failed';
   message: string;
   data?: T;
+}
+
+// Patterns that indicate insufficient admin balance on Inlomax
+const INSUFFICIENT_BALANCE_PATTERNS = [
+  'insufficient balance',
+  'insufficient funds',
+  'low balance',
+  'not enough balance',
+  'balance too low',
+  'inadequate balance',
+  'wallet balance is low',
+  'top up your wallet',
+  'fund your wallet',
+];
+
+// Check if error message indicates insufficient admin balance
+function isInsufficientBalanceError(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  return INSUFFICIENT_BALANCE_PATTERNS.some(pattern => lowerMessage.includes(pattern));
+}
+
+// Custom error class for service unavailability
+export class ServiceUnavailableError extends Error {
+  constructor() {
+    super('Service is unavailable. Please try again later.');
+    this.name = 'ServiceUnavailableError';
+  }
 }
 
 // Server-side API call (use in API routes only)
@@ -41,23 +68,44 @@ export async function inlomaxRequest<T>(
         'Content-Type': 'application/json',
         Authorization: `Token ${apiKey}`,
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: method === 'POST' && data ? JSON.stringify(data) : undefined,
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.message || `API Error: ${response.statusText}`);
+      const errorMessage = result.message || `API Error: ${response.statusText}`;
+      
+      // Check if this is an insufficient balance error (admin's Inlomax account)
+      if (isInsufficientBalanceError(errorMessage)) {
+        console.error('[INLOMAX] Admin insufficient balance detected:', errorMessage);
+        throw new ServiceUnavailableError();
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    // Also check successful responses that might indicate balance issues
+    if (result.status === 'failed' && isInsufficientBalanceError(result.message || '')) {
+      console.error('[INLOMAX] Admin insufficient balance detected:', result.message);
+      throw new ServiceUnavailableError();
     }
 
     return result;
   } catch (error) {
+    // Re-throw ServiceUnavailableError as-is
+    if (error instanceof ServiceUnavailableError) {
+      throw error;
+    }
+    
     console.error('Inlomax API Error:', error);
     throw error;
   }
 }
 
+
 // ============ BALANCE ============
+// GET /balance
 
 export interface BalanceData {
   funds: number;
@@ -67,7 +115,53 @@ export async function getWalletBalance() {
   return inlomaxRequest<BalanceData>('/balance', 'GET');
 }
 
+// ============ SERVICES ============
+// GET /services - Get all available services and pricing
+
+export interface ServiceAirtime {
+  network: string;
+  serviceID: string;
+  discount: string;
+}
+
+export interface ServiceDataPlan {
+  serviceID: string;
+  network: string;
+  dataPlan: string;
+  amount: string;
+  dataType: string;
+  validity: string;
+}
+
+export interface ServiceCablePlan {
+  serviceID: string;
+  cablePlan: string;
+  cable: string;
+  amount: string;
+  discount: string;
+}
+
+export interface ServiceElectricity {
+  disco: string;
+  serviceID: string;
+  discount: string;
+}
+
+export interface ServicesData {
+  airtime: ServiceAirtime[];
+  dataPlans: ServiceDataPlan[];
+  cablePlans: ServiceCablePlan[];
+  electricity: ServiceElectricity[];
+  education: Array<{ serviceID: string; type: string; amount: string }>;
+  status: string;
+}
+
+export async function getServices() {
+  return inlomaxRequest<ServicesData>('/services', 'GET');
+}
+
 // ============ AIRTIME SERVICES ============
+// POST /airtime
 
 export interface AirtimeData {
   type: string;
@@ -84,7 +178,7 @@ export async function purchaseAirtime(data: {
   phone: string;
   amount: number;
 }) {
-  const serviceID = getNetworkServiceId(data.network);
+  const serviceID = getAirtimeServiceId(data.network);
 
   return inlomaxRequest<AirtimeData>('/airtime', 'POST', {
     serviceID,
@@ -93,128 +187,128 @@ export async function purchaseAirtime(data: {
   });
 }
 
+
 // ============ DATA SERVICES ============
+// POST /data
 
-export interface DataPlan {
-  id: string;
-  network: string;
-  name: string;
-  size: string;
-  price: number;
-  validity: string;
+export interface DataPurchaseData {
   type: string;
-}
-
-export async function getDataPlans(network: string): Promise<DataPlan[]> {
-  const serviceID = NETWORK_SERVICE_IDS[network.toUpperCase()] || '100';
-  const response = await inlomaxRequest<DataPlan[]>('/data/plans', 'POST', {
-    serviceID,
-  });
-  return response.data || [];
+  reference: string;
+  amount: number;
+  dataPlan: string;
+  dataType: string;
+  network: string;
+  status: string;
 }
 
 export async function purchaseData(data: {
-  network: string;
+  serviceID: string; // The serviceID from /services endpoint
   phone: string;
-  planId: string;
-  type: string;
 }) {
-  const serviceID = NETWORK_SERVICE_IDS[data.network.toUpperCase()] || '100';
-
-  return inlomaxRequest('/data', 'POST', {
-    serviceID,
+  return inlomaxRequest<DataPurchaseData>('/data', 'POST', {
+    serviceID: data.serviceID,
     mobileNumber: data.phone,
-    planID: data.planId,
-    dataType: data.type,
   });
 }
 
 // ============ CABLE TV SERVICES ============
+// POST /validatecable - Validate IUC number
+// POST /subcable - Purchase cable subscription
 
-export interface CablePlan {
-  id: string;
-  name: string;
-  price: number;
-  provider: string;
+export interface CableValidationData {
+  customerName: string;
+  currentBouquet: string;
 }
 
-export async function getCablePlans(provider: string): Promise<CablePlan[]> {
-  const response = await inlomaxRequest<CablePlan[]>('/cable/plans', 'POST', {
-    provider,
-  });
-  return response.data || [];
+export interface CablePurchaseData {
+  type: string;
+  amount: number;
+  reference: string;
+  iucNum: string;
+  cable: string;
+  status: string;
 }
 
-export async function verifyCableCard(data: {
-  provider: string;
-  smartCardNumber: string;
+export async function validateCable(data: {
+  serviceID: string;
+  iucNum: string;
 }) {
-  return inlomaxRequest('/cable/verify', 'POST', {
-    provider: data.provider,
-    smartCardNumber: data.smartCardNumber,
+  return inlomaxRequest<CableValidationData>('/validatecable', 'POST', {
+    serviceID: data.serviceID,
+    iucNum: data.iucNum,
   });
 }
 
 export async function purchaseCable(data: {
-  provider: string;
-  smartCardNumber: string;
-  planId: string;
+  serviceID: string;
+  iucNum: string;
 }) {
-  return inlomaxRequest('/cable', 'POST', {
-    provider: data.provider,
-    smartCardNumber: data.smartCardNumber,
-    planID: data.planId,
+  return inlomaxRequest<CablePurchaseData>('/subcable', 'POST', {
+    serviceID: data.serviceID,
+    iucNum: data.iucNum,
   });
 }
+
 
 // ============ ELECTRICITY SERVICES ============
+// POST /validatemeter - Validate meter number
+// POST /payelectric - Pay electricity bill
 
-export interface ElectricityDisco {
-  id: string;
-  name: string;
-  code: string;
+export interface MeterValidationData {
+  customerName: string;
 }
 
-export async function getElectricityDiscos(): Promise<ElectricityDisco[]> {
-  const response = await inlomaxRequest<ElectricityDisco[]>(
-    '/electricity/discos',
-    'GET'
-  );
-  return response.data || [];
-}
-
-export async function verifyMeter(data: {
-  disco: string;
-  meterNumber: string;
-  meterType: 'prepaid' | 'postpaid';
-}) {
-  return inlomaxRequest('/electricity/verify', 'POST', {
-    disco: data.disco,
-    meterNumber: data.meterNumber,
-    meterType: data.meterType,
-  });
-}
-
-export async function purchaseElectricity(data: {
-  disco: string;
-  meterNumber: string;
+export interface ElectricityPurchaseData {
+  type: string;
+  token: string;
+  customerName: string;
   amount: number;
-  meterType: 'prepaid' | 'postpaid';
+  amountCharged: number;
+  reference: string;
+  meterNum: string;
+  disco: string;
+  status: string;
+}
+
+export async function validateMeter(data: {
+  serviceID: string;
+  meterNum: string;
+  meterType: 1 | 2; // 1=prepaid, 2=postpaid
 }) {
-  return inlomaxRequest('/electricity', 'POST', {
-    disco: data.disco,
-    meterNumber: data.meterNumber,
-    amount: data.amount,
+  return inlomaxRequest<MeterValidationData>('/validatemeter', 'POST', {
+    serviceID: data.serviceID,
+    meterNum: data.meterNum,
     meterType: data.meterType,
   });
 }
 
-// ============ TRANSACTIONS ============
-
-export async function getTransactionHistory(limit = 20) {
-  return inlomaxRequest('/transactions', 'GET');
+export async function payElectricity(data: {
+  serviceID: string;
+  meterNum: string;
+  meterType: 1 | 2; // 1=prepaid, 2=postpaid
+  amount: number;
+}) {
+  return inlomaxRequest<ElectricityPurchaseData>('/payelectric', 'POST', {
+    serviceID: data.serviceID,
+    meterNum: data.meterNum,
+    meterType: data.meterType,
+    amount: data.amount,
+  });
 }
 
-export async function verifyTransaction(reference: string) {
-  return inlomaxRequest(`/transaction/${reference}`, 'GET');
+// ============ TRANSACTION VERIFICATION ============
+// POST /transaction
+
+export interface TransactionData {
+  type: string;
+  reference: string;
+  amount: number;
+  date: string;
+  status: string;
+}
+
+export async function getTransaction(reference: string) {
+  return inlomaxRequest<TransactionData>('/transaction', 'POST', {
+    reference,
+  });
 }

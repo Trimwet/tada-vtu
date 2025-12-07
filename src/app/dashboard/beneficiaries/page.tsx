@@ -81,7 +81,7 @@ export default function BeneficiariesPage() {
         phone_number: formData.phoneNumber.trim(),
         network: formData.network,
         service_type: formData.serviceType,
-      })
+      } as never)
       .select()
       .single();
 

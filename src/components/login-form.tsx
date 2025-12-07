@@ -25,7 +25,7 @@ import { Logo } from "@/components/logo";
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<typeof Card>) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -120,9 +120,9 @@ export function LoginForm({
                 }}
                 required
                 disabled={isLoading}
-                className={
+                className={`bg-background ${
                   errors.email ? "border-red-500 focus:ring-red-500" : ""
-                }
+                }`}
               />
               {errors.email && (
                 <FieldDescription className="text-red-500 text-sm mt-1">
@@ -153,7 +153,7 @@ export function LoginForm({
                   }}
                   required
                   disabled={isLoading}
-                  className={`pr-10 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
+                  className={`bg-background pr-10 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
                 />
                 <button
                   type="button"

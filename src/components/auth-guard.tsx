@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { LoadingScreen } from '@/components/loading-screen';
+import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { LoadingScreen } from "@/components/loading-screen";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -11,37 +11,44 @@ interface AuthGuardProps {
   redirectTo?: string;
 }
 
-export function AuthGuard({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = '/login' 
+export function AuthGuard({
+  children,
+  requireAuth = true,
+  redirectTo = "/login",
 }: AuthGuardProps) {
-  const { isAuthenticated, loading, profile } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
-      if (requireAuth && !isAuthenticated) {
-        router.push(redirectTo);
-      } else if (!requireAuth && isAuthenticated) {
-        router.push('/dashboard');
-      }
+    // Skip if still loading
+    if (loading) return;
+
+    // Check auth requirements
+    if (requireAuth && !isAuthenticated) {
+      console.log("Not authenticated, redirecting to:", redirectTo);
+      router.replace(redirectTo);
+    } else if (!requireAuth && isAuthenticated) {
+      console.log("Already authenticated, redirecting to dashboard");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, loading, requireAuth, redirectTo, router]);
 
-  // Only show loading on initial load, not on navigation
-  // If we already have a profile, we're authenticated - no need to show loading
-  if (loading && !profile) {
-    return <LoadingScreen message="Checking authentication..." />;
+  // Show loading only during initial auth check
+  if (loading) {
+    return <LoadingScreen message="Loading..." />;
   }
 
+  // If we need auth but don't have it, show loading while redirecting
   if (requireAuth && !isAuthenticated) {
-    return null; // Will redirect
+    return <LoadingScreen message="Redirecting to login..." />;
   }
 
+  // If we don't need auth but have it, show loading while redirecting
   if (!requireAuth && isAuthenticated) {
-    return null; // Will redirect
+    return <LoadingScreen message="Redirecting to dashboard..." />;
   }
 
+  // Auth requirements met, render children
   return <>{children}</>;
 }

@@ -23,6 +23,12 @@ import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
+// Calculate service charge: minimum ₦20 or 1% of amount
+function calculateServiceCharge(amount: number): number {
+  const percentageCharge = Math.ceil(amount * 0.01); // 1%
+  return Math.max(20, percentageCharge); // Minimum ₦20
+}
+
 export default function FundWalletPage() {
   const searchParams = useSearchParams();
   const { user } = useSupabaseUser();
@@ -44,27 +50,27 @@ export default function FundWalletPage() {
 
     const handlePaymentCallback = async () => {
       if (status === "successful" && tx_ref) {
-        // Verify payment with backend
+        // Verify payment with backend - this will also credit the wallet
         try {
           const response = await fetch(`/api/flutterwave/verify?tx_ref=${tx_ref}`);
           const result = await response.json();
           
           if (result.status === "success") {
-            // Payment verified - webhook should have credited wallet
-            // Just refresh user data and show success
-            toast.success(`Payment successful! Your wallet has been credited.`);
-            // Refresh to get updated balance
-            window.location.href = "/dashboard/fund-wallet";
+            toast.success(`Payment successful! ₦${result.data?.amount?.toLocaleString() || ''} has been added to your wallet.`);
+            // Small delay then refresh to get updated balance
+            setTimeout(() => {
+              window.location.href = "/dashboard/fund-wallet";
+            }, 1500);
           } else {
             toast.error("Payment verification failed. Please contact support if amount was deducted.");
+            window.history.replaceState({}, "", "/dashboard/fund-wallet");
           }
         } catch {
-          // If verification fails, the webhook should still handle it
           toast.info("Payment is being processed. Your wallet will be credited shortly.");
+          window.history.replaceState({}, "", "/dashboard/fund-wallet");
         }
         
         localStorage.removeItem("pending_payment");
-        window.history.replaceState({}, "", "/dashboard/fund-wallet");
       } else if (status === "cancelled") {
         toast.error("Payment was cancelled");
         localStorage.removeItem("pending_payment");
@@ -146,19 +152,17 @@ export default function FundWalletPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link
-              href="/dashboard"
-              className="p-2 -ml-2 hover:bg-muted rounded-lg transition-smooth lg:hidden"
-            >
-              <IonIcon name="arrow-back-outline" size="20px" />
-            </Link>
-            <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
-              Fund Wallet
-            </h1>
-          </div>
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+        <div className="flex items-center h-14 px-4">
+          <Link
+            href="/dashboard"
+            className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target"
+          >
+            <IonIcon name="arrow-back-outline" size="20px" />
+          </Link>
+          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
+            Fund Wallet
+          </h1>
         </div>
       </header>
 
@@ -234,30 +238,40 @@ export default function FundWalletPage() {
               </div>
             </div>
 
-            {amount && parseInt(amount) >= 100 && (
-              <div className="bg-muted/50 rounded-lg p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Amount</span>
-                  <span className="font-bold text-foreground">
-                    ₦{parseInt(amount).toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm mt-2">
-                  <span className="text-muted-foreground">Fee</span>
-                  <span className="font-medium text-green-500">Free</span>
-                </div>
-                <div className="border-t border-border mt-3 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">
-                      You'll receive
-                    </span>
-                    <span className="font-bold text-green-500 text-lg">
-                      ₦{parseInt(amount).toLocaleString()}
+            {amount && parseInt(amount) >= 100 && (() => {
+              const fundAmount = parseInt(amount);
+              const serviceCharge = calculateServiceCharge(fundAmount);
+              const totalToPay = fundAmount + serviceCharge;
+              return (
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Wallet Credit</span>
+                    <span className="font-bold text-foreground">
+                      ₦{fundAmount.toLocaleString()}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-muted-foreground">Service Fee</span>
+                    <span className="font-medium text-orange-500">
+                      ₦{serviceCharge.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="border-t border-border mt-3 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        Total to Pay
+                      </span>
+                      <span className="font-bold text-green-500 text-lg">
+                        ₦{totalToPay.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ₦{fundAmount.toLocaleString()} will be credited to your wallet
+                  </p>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             <Button
               onClick={handleFundWallet}
@@ -277,7 +291,7 @@ export default function FundWalletPage() {
               ) : (
                 <div className="flex items-center gap-2">
                   <IonIcon name="card-outline" size="20px" />
-                  Pay ₦{amount ? parseInt(amount).toLocaleString() : "0"}
+                  Pay ₦{amount ? (parseInt(amount) + calculateServiceCharge(parseInt(amount))).toLocaleString() : "0"}
                 </div>
               )}
             </Button>

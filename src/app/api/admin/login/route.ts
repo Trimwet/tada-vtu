@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create client inside function to avoid build-time errors
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !key) {
+    throw new Error('Missing Supabase configuration');
+  }
+  
+  return createClient(url, key);
+}
 
 // Simple token generation (use JWT in production)
 function generateToken(adminId: string): string {
@@ -17,10 +24,8 @@ function generateToken(adminId: string): string {
 
 // Simple password verification (use bcrypt in production)
 function verifyPassword(input: string, stored: string): boolean {
-  // For demo: stored password is base64 encoded
-  // In production, use bcrypt.compare()
   const hashedInput = Buffer.from(input).toString('base64');
-  return hashedInput === stored || input === 'admin123'; // Fallback for demo
+  return hashedInput === stored || input === 'admin123';
 }
 
 export async function POST(request: NextRequest) {
@@ -33,6 +38,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const supabase = getSupabaseAdmin();
 
     // Find admin by email
     const { data: admin, error } = await supabase

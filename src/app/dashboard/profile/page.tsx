@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
+import { LogoutDialog } from "@/components/logout-dialog";
 import Link from "next/link";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,7 @@ export default function ProfilePage() {
     fullName: "",
     phoneNumber: "",
   });
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Initialize form data when user loads
   useEffect(() => {
@@ -83,7 +85,7 @@ export default function ProfilePage() {
           full_name: formData.fullName.trim(),
           phone_number: formData.phoneNumber.trim() || null,
           updated_at: new Date().toISOString(),
-        })
+        } as never)
         .eq("id", user.id);
 
       if (error) {
@@ -150,9 +152,11 @@ export default function ProfilePage() {
               </Link>
               <h1 className="text-lg font-semibold text-foreground">Profile</h1>
             </div>
-            <Button variant="ghost" size="icon">
-              <IonIcon name="settings-outline" size="20px" />
-            </Button>
+            <Link href="/dashboard/settings">
+              <Button variant="ghost" size="icon">
+                <IonIcon name="settings-outline" size="20px" />
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -164,7 +168,7 @@ export default function ProfilePage() {
             <span className="text-green-600 font-bold text-3xl">
               {(user.full_name || "U")
                 .split(" ")
-                .map((n) => n[0])
+                .map((n: string) => n[0])
                 .join("")
                 .slice(0, 2)}
             </span>
@@ -357,7 +361,7 @@ export default function ProfilePage() {
         <Button
           variant="outline"
           className="w-full border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-500"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutDialog(true)}
         >
           <IonIcon name="log-out-outline" size="18px" className="mr-2" />
           Log Out
@@ -367,6 +371,12 @@ export default function ProfilePage() {
           TADA VTU v1.0.0
         </p>
       </main>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+      />
     </div>
   );
 }

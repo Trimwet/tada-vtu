@@ -19,7 +19,7 @@ export async function signUp(email: string, password: string, fullName: string, 
   if (data.user) {
     await supabase
       .from('profiles')
-      .update({ phone_number: phoneNumber, full_name: fullName })
+      .update({ phone_number: phoneNumber, full_name: fullName } as never)
       .eq('id', data.user.id);
   }
 
