@@ -30,18 +30,11 @@ export async function POST(request: NextRequest) {
       const txRef = data.tx_ref;
       
       // Use wallet_credit from meta (original amount without service charge)
-      // Fall back to original_amount, then to total amount if meta not available
       const walletCredit = data.meta?.wallet_credit || data.meta?.original_amount || data.amount;
       const serviceCharge = data.meta?.service_charge || 0;
       const totalPaid = data.amount;
 
-      console.log('Webhook payment data:', { 
-        userId, 
-        txRef, 
-        totalPaid, 
-        walletCredit, 
-        serviceCharge 
-      });
+      console.log('Webhook payment data:', { userId, txRef, totalPaid, walletCredit, serviceCharge });
 
       if (!userId || !walletCredit) {
         console.error('Missing user_id or amount in webhook data');
@@ -120,12 +113,12 @@ export async function POST(request: NextRequest) {
 
           // Only pay bonus on first deposit
           if (depositCount === 1) {
-            const REFERRAL_BONUS = 100; // ₦100 referral bonus
+            const REFERRAL_BONUS = 100;
 
             // Get referrer's current balance
             const { data: referrer } = await supabase
               .from('profiles')
-              .select('balance, full_name')
+              .select('balance')
               .eq('id', profile.referred_by)
               .single();
 
@@ -155,7 +148,7 @@ export async function POST(request: NextRequest) {
                 message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
               });
 
-              console.log('Referral bonus paid via webhook:', { referrerId: profile.referred_by, bonus: REFERRAL_BONUS });
+              console.log('Referral bonus paid:', { referrerId: profile.referred_by, bonus: REFERRAL_BONUS });
             }
           }
         }
@@ -164,7 +157,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'success', message: 'Wallet credited' });
     }
 
-    // Handle other events
     console.log('Unhandled webhook event:', event);
     return NextResponse.json({ status: 'success' });
 

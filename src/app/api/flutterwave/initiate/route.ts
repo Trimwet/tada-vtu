@@ -20,22 +20,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate service charge (min ₦20 or 1%)
-    const serviceCharge = calculateServiceCharge(amount);
-    const totalAmount = amount + serviceCharge;
+    // Simple fee structure - just our service fee
+    const walletCredit = amount;
+    const serviceFee = calculateServiceCharge(amount);
+    const totalToPay = walletCredit + serviceFee;
 
     const tx_ref = 'TADA_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
 
     console.log('Initiating payment:', { 
-      originalAmount: amount, 
-      serviceCharge, 
-      totalAmount, 
+      walletCredit,
+      serviceFee,
+      totalToPay,
       tx_ref 
     });
 
     const result = await initiatePayment({
       tx_ref,
-      amount: totalAmount, // Customer pays total (amount + service charge)
+      amount: totalToPay,
       redirect_url: redirect_url || `${process.env.NEXTAUTH_URL}/dashboard/fund-wallet?status=success`,
       customer: {
         email,
@@ -44,15 +45,15 @@ export async function POST(request: NextRequest) {
       },
       customizations: {
         title: 'TADA VTU',
-        description: `Fund wallet ₦${amount.toLocaleString()} + ₦${serviceCharge} service fee`,
+        description: `Fund wallet ₦${walletCredit.toLocaleString()}`,
         logo: 'https://tadavtu.com/logo.png',
       },
       meta: {
         ...meta,
         tx_ref,
-        original_amount: amount,
-        service_charge: serviceCharge,
-        wallet_credit: amount, // Amount to credit to wallet
+        original_amount: walletCredit,
+        service_charge: serviceFee,
+        wallet_credit: walletCredit,
       },
     });
 
@@ -62,9 +63,9 @@ export async function POST(request: NextRequest) {
       data: {
         link: result.data?.link,
         tx_ref,
-        original_amount: amount,
-        service_charge: serviceCharge,
-        total_amount: totalAmount,
+        wallet_credit: walletCredit,
+        service_fee: serviceFee,
+        total_amount: totalToPay,
       },
     });
   } catch (error) {

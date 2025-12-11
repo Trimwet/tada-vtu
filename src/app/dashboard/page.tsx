@@ -22,20 +22,25 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
 
+// Greeting messages - clean and professional
 const GREETING_MESSAGES = [
   "What would you like to do today?",
   "Ready to top up your airtime?",
   "Need some data? We've got you covered!",
-  "Fast, reliable VTU services at your fingertips.",
+  "Fast, reliable VTU services at your fingertips",
   "Save more with our amazing discounts!",
-  "Your one-stop shop for all recharges.",
+  "Your one-stop shop for all recharges",
   "Instant delivery, zero stress!",
-  "Top up anytime, anywhere.",
+  "Top up anytime, anywhere",
   "Enjoy seamless transactions today!",
   "The best rates in town, guaranteed!",
-  "Stay connected with TADA VTU.",
-  "Quick, easy, and affordable.",
+  "Stay connected with TADA VTU",
+  "Quick, easy, and affordable",
+  "Refer friends and earn ₦100 each!",
+  "Your wallet is waiting for action",
 ];
+
+
 
 export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
@@ -168,7 +173,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-hidden w-full max-w-full">
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border lg:hidden safe-top">
         <div className="flex items-center justify-between h-14 px-4">
@@ -199,7 +204,7 @@ export default function DashboardPage() {
 
       <main className="px-4 lg:px-8 py-4 lg:py-6 space-y-5 lg:space-y-6 lg:max-w-7xl lg:mx-auto">
         {/* Greeting */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
             {timeGreeting}
           </h1>
@@ -281,12 +286,6 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-foreground">
               Quick Services
             </h2>
-            <Link
-              href="/dashboard/services"
-              className="text-sm text-green-500 hover:text-green-400 flex items-center gap-1 font-medium transition-smooth"
-            >
-              View all <IonIcon name="chevron-forward" size="16px" />
-            </Link>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
@@ -326,10 +325,10 @@ export default function DashboardPage() {
         </section>
 
         {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-5 gap-6">
+        <div className="grid lg:grid-cols-5 gap-4 lg:gap-6">
           {/* Transactions - Takes 3 columns */}
           <Card
-            className="lg:col-span-3 border-border animate-slide-up"
+            className="lg:col-span-3 border-border animate-slide-up overflow-hidden"
             style={{ animationDelay: "0.2s" }}
           >
             <CardHeader className="pb-3">
@@ -385,15 +384,15 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={transaction.id}
-                        className={`flex items-center justify-between py-3 px-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth ${
+                        className={`flex items-center justify-between py-3 px-2 rounded-xl hover:bg-muted/50 transition-smooth overflow-hidden ${
                           index !== recentTransactions.length - 1
                             ? "border-b border-border/50"
                             : ""
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
                               transaction.amount > 0
                                 ? "bg-green-500/10"
                                 : "bg-muted"
@@ -402,19 +401,19 @@ export default function DashboardPage() {
                             {transaction.amount > 0 ? (
                               <IonIcon
                                 name="arrow-down"
-                                size="20px"
+                                size="18px"
                                 color="#22c55e"
                               />
                             ) : (
                               <IonIcon
                                 name="arrow-up"
-                                size="20px"
+                                size="18px"
                                 className="text-muted-foreground"
                               />
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm text-foreground truncate">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
                               {transaction.description}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -422,7 +421,7 @@ export default function DashboardPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right shrink-0 ml-4">
+                        <div className="text-right shrink-0 ml-2">
                           <p
                             className={`font-semibold text-sm ${
                               transaction.amount > 0
@@ -481,14 +480,19 @@ export default function DashboardPage() {
                     <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
                       <IonIcon name="wifi" size="20px" color="#22c55e" />
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      Data Purchased
-                    </span>
+                    <div>
+                      <span className="text-sm text-muted-foreground block">
+                        Data Purchased
+                      </span>
+                      {monthlyStats.dataGB > 0 && (
+                        <span className="text-xs text-green-500">
+                          {monthlyStats.dataGB}GB total
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className="font-semibold text-foreground">
-                    {monthlyStats.dataGB > 0
-                      ? `${monthlyStats.dataGB}GB`
-                      : "0GB"}
+                    ₦{monthlyStats.dataSpent.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">

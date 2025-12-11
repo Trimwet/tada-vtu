@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface IonIconProps {
   name: string;
   size?: string;
@@ -13,6 +15,12 @@ export function IonIcon({
   color,
   className = "",
 }: IonIconProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <span
       className={className}
@@ -26,9 +34,12 @@ export function IonIcon({
         width: size,
         height: size,
       }}
+      suppressHydrationWarning
     >
-      {/* @ts-ignore: Custom element */}
-      <ion-icon name={name} style={{ fontSize: "inherit", color: "inherit" }} />
+      {mounted && (
+        // @ts-ignore: Custom element
+        <ion-icon name={name} style={{ fontSize: "inherit", color: "inherit" }} />
+      )}
     </span>
   );
 }

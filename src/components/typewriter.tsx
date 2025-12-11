@@ -8,6 +8,7 @@ interface TypewriterProps {
   deletingSpeed?: number;
   pauseDuration?: number;
   className?: string;
+  onIndexChange?: (index: number) => void;
 }
 
 export function Typewriter({
@@ -16,6 +17,7 @@ export function Typewriter({
   deletingSpeed = 30,
   pauseDuration = 2000,
   className = '',
+  onIndexChange,
 }: TypewriterProps) {
   const [displayText, setDisplayText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
@@ -23,6 +25,11 @@ export function Typewriter({
   const [isPaused, setIsPaused] = useState(false);
 
   const currentText = texts[textIndex];
+
+  // Notify parent when index changes
+  useEffect(() => {
+    onIndexChange?.(textIndex);
+  }, [textIndex, onIndexChange]);
 
   const tick = useCallback(() => {
     if (isPaused) return;

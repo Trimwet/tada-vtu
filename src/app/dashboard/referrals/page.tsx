@@ -27,6 +27,7 @@ interface Referral {
   full_name: string | null;
   created_at: string;
   balance: number;
+  hasDeposited?: boolean;
 }
 
 export default function ReferralsPage() {
@@ -35,7 +36,7 @@ export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch referrals from database
+  // Fetch referrals from database with deposit status
   useEffect(() => {
     if (!user?.id) return;
 
@@ -50,7 +51,21 @@ export default function ReferralsPage() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        setReferrals(data);
+        // Check each referral for deposit status
+        const referralData = data as Array<{ id: string; full_name: string | null; created_at: string; balance: number }>;
+        const referralsWithStatus = await Promise.all(
+          referralData.map(async (referral) => {
+            const { count } = await supabase
+              .from('transactions')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', referral.id)
+              .eq('type', 'deposit')
+              .eq('status', 'success');
+            
+            return { ...referral, hasDeposited: (count || 0) > 0 };
+          })
+        );
+        setReferrals(referralsWithStatus);
       }
       setLoading(false);
     };
@@ -61,13 +76,17 @@ export default function ReferralsPage() {
   const referralCode = user?.referral_code || 'LOADING...';
   const referralLink = `https://tadavtu.com/register?ref=${referralCode}`;
   
-  // Calculate stats
+  // Calculate stats - only count those who made deposits
   const totalReferrals = referrals.length;
-  // Active = has made a deposit (balance > 0 or has transactions)
-  const activeReferrals = referrals.filter(r => r.balance > 0).length;
+  const activeReferrals = referrals.filter(r => r.hasDeposited).length;
   const pendingReferrals = totalReferrals - activeReferrals;
   const totalEarnings = activeReferrals * 100; // ₦100 per active referral
   const pendingEarnings = pendingReferrals * 100;
+
+  const handleWhatsAppShare = () => {
+    const message = `🎉 Join TADA VTU and get instant airtime & data at the best prices!\n\nUse my referral code: ${referralCode}\n\nSign up here: ${referralLink}\n\nWe both get ₦100 bonus when you make your first deposit! 💰`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -203,6 +222,16 @@ export default function ReferralsPage() {
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
+
+              <Button
+                onClick={handleWhatsAppShare}
+                className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Share on WhatsApp
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -274,7 +303,7 @@ export default function ReferralsPage() {
                 </div>
               ) : (
                 referrals.map((referral) => {
-                  const isActive = referral.balance > 0;
+                  const hasDeposited = referral.hasDeposited === true;
                   const displayName = referral.full_name || 'Anonymous User';
                   const joinDate = new Date(referral.created_at).toLocaleDateString('en-NG', {
                     year: 'numeric',
@@ -288,8 +317,8 @@ export default function ReferralsPage() {
                       className="flex items-center justify-between p-4 bg-card rounded-lg border border-border"
                     >
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-semibold">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${hasDeposited ? 'bg-green-100 dark:bg-green-900' : 'bg-yellow-100 dark:bg-yellow-900'}`}>
+                          <span className={`font-semibold ${hasDeposited ? 'text-green-600' : 'text-yellow-600'}`}>
                             {displayName.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -305,21 +334,21 @@ export default function ReferralsPage() {
                       <div className="text-right">
                         <p
                           className={`font-bold ${
-                            isActive
+                            hasDeposited
                               ? "text-green-600"
-                              : "text-muted-foreground"
+                              : "text-yellow-600"
                           }`}
                         >
-                          {isActive ? "+₦100" : "Pending"}
+                          {hasDeposited ? "+₦100 ✓" : "Awaiting deposit"}
                         </p>
                         <span
                           className={`inline-block mt-1 px-2 py-1 text-xs rounded-full ${
-                            isActive
+                            hasDeposited
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                           }`}
                         >
-                          {isActive ? "Active" : "Pending"}
+                          {hasDeposited ? "Earned" : "Pending"}
                         </span>
                       </div>
                     </div>

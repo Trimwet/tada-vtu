@@ -291,36 +291,70 @@ export default function ProfilePage() {
             <CardTitle className="text-base">Account Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                Referral Code
-              </span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Referral Code</span>
+                <span className="text-green-500 text-sm">Earn ₦100 per referral!</span>
+              </div>
               <div className="flex items-center gap-2">
-                <span className="text-foreground font-mono font-medium">
-                  {user.referral_code || "-"}
-                </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <IonIcon name="copy-outline" size="16px" />
+                <div className="flex-1 bg-muted/50 rounded-lg px-4 py-3 text-center">
+                  <span className="text-foreground font-mono font-bold text-lg tracking-wider">
+                    {user.referral_code || "-"}
+                  </span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-12 w-12 border-border"
+                  onClick={() => {
+                    if (user.referral_code) {
+                      navigator.clipboard.writeText(user.referral_code);
+                      toast.success("Referral code copied!");
+                    }
+                  }}
+                >
+                  <IonIcon name="copy-outline" size="20px" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  className="h-12 w-12 bg-green-500 hover:bg-green-600"
+                  onClick={() => {
+                    const referralLink = `${window.location.origin}/register?ref=${user.referral_code}`;
+                    const message = `🎉 Join TADA VTU and get instant airtime & data!\n\nUse my code: ${user.referral_code}\n\nSign up: ${referralLink}\n\nWe both get ₦100 bonus! 💰`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+                  }}
+                >
+                  <IonIcon name="logo-whatsapp" size="20px" />
                 </Button>
               </div>
+              <Button 
+                variant="outline" 
+                className="w-full border-green-500/30 text-green-500 hover:bg-green-500/10"
+                onClick={() => {
+                  const referralLink = `${window.location.origin}/register?ref=${user.referral_code}`;
+                  navigator.clipboard.writeText(referralLink);
+                  toast.success("Referral link copied!");
+                }}
+              >
+                <IonIcon name="link-outline" size="18px" className="mr-2" />
+                Copy Referral Link
+              </Button>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                Member Since
-              </span>
-              <span className="text-foreground font-medium">
-                {new Date(user.created_at).toLocaleDateString("en-NG", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                Account Status
-              </span>
-              <span className="text-green-600 font-medium">Active</span>
+            <div className="pt-2 border-t border-border space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Member Since</span>
+                <span className="text-foreground font-medium">
+                  {new Date(user.created_at).toLocaleDateString("en-NG", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">Account Status</span>
+                <span className="text-green-600 font-medium">Active</span>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -62,6 +62,12 @@ export async function inlomaxRequest<T>(
   }
 
   try {
+    console.log(`[INLOMAX] Request: ${method} ${endpoint}`, data ? JSON.stringify(data) : '');
+    
+    // Create AbortController for timeout (60 seconds for data purchases)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    
     const response = await fetch(`${INLOMAX_API_URL}${endpoint}`, {
       method,
       headers: {
@@ -69,9 +75,29 @@ export async function inlomaxRequest<T>(
         Authorization: `Token ${apiKey}`,
       },
       body: method === 'POST' && data ? JSON.stringify(data) : undefined,
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
-    const result = await response.json();
+    // Get raw response text first
+    const responseText = await response.text();
+    console.log(`[INLOMAX] Response status: ${response.status}, body: ${responseText.substring(0, 500)}`);
+
+    // Check for empty response
+    if (!responseText || responseText.trim() === '') {
+      console.error('[INLOMAX] Empty response from server');
+      throw new Error('Service provider is not responding. Please try again in a few minutes.');
+    }
+
+    // Try to parse JSON
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[INLOMAX] Failed to parse response:', responseText);
+      throw new Error('Invalid response from server. Please try again.');
+    }
 
     if (!response.ok) {
       const errorMessage = result.message || `API Error: ${response.statusText}`;
@@ -98,7 +124,13 @@ export async function inlomaxRequest<T>(
       throw error;
     }
     
-    console.error('Inlomax API Error:', error);
+    // Handle timeout/abort errors
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[INLOMAX] Request timed out');
+      throw new Error('Request timed out. Please try again.');
+    }
+    
+    console.error('[INLOMAX] API Error:', error);
     throw error;
   }
 }

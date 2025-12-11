@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
@@ -143,9 +143,7 @@ export default function BuyDataPage() {
 
       if (result.status) {
         await refreshUser();
-        toast.success("Data purchase successful!", {
-          description: `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`,
-        });
+        toast.payment("Data purchase successful!", `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`);
         setPhoneNumber("");
         setSelectedPlan("");
         setSelectedNetwork("");
@@ -153,7 +151,7 @@ export default function BuyDataPage() {
         toast.error(result.message || "Purchase failed");
       }
     } catch (error) {
-      toast.error("Network error. Please try again.");
+      toast.error("Network error", "Please try again");
       console.error("Purchase error:", error);
     } finally {
       setIsProcessing(false);
@@ -164,14 +162,12 @@ export default function BuyDataPage() {
     e.preventDefault();
 
     if (!selectedNetwork || !phoneNumber || !selectedPlan || !selectedPlanDetails) {
-      toast.error("Please fill all fields");
+      toast.warning("Please fill all fields");
       return;
     }
 
     if (!user || (user.balance || 0) < selectedPlanDetails.price) {
-      toast.error("Insufficient balance", {
-        description: `You need ₦${selectedPlanDetails.price.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`,
-      });
+      toast.error("Insufficient balance", `You need ₦${selectedPlanDetails.price.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`);
       return;
     }
 
@@ -358,7 +354,7 @@ export default function BuyDataPage() {
                   {loadingPlans ? (
                     <div className="text-center py-8">
                       <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-muted-foreground">Loading plans from Inlomax...</p>
+                      <p className="text-muted-foreground">Loading plans...</p>
                     </div>
                   ) : availablePlans.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">

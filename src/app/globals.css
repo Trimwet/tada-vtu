@@ -321,6 +321,22 @@
     .stagger-5 {
         animation-delay: 0.5s;
     }
+
+    /* Shake animation for errors */
+    @keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+        10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-5px);
+        }
+        20%, 40%, 60%, 80% {
+            transform: translateX(5px);
+        }
+    }
+    .animate-shake {
+        animation: shake 0.5s ease-in-out;
+    }
 }
 
 /* Mobile-first improvements */
@@ -402,4 +418,87 @@
 
 [data-sonner-toast][data-type="info"] {
     border-color: rgba(59, 130, 246, 0.3) !important;
+}
+/
+* Toast Animations */
+@keyframes toast-slide-in {
+  from {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes toast-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes toast-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.2); }
+}
+
+/* Sonner toast overrides */
+[data-sonner-toaster] {
+  --normal-bg: #1f2937;
+  --normal-border: #374151;
+  --normal-text: #ffffff;
+}
+
+[data-sonner-toast] {
+  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+  border-radius: 12px !important;
+  backdrop-filter: blur(8px);
+}
+
+[data-sonner-toast][data-removed="true"] {
+  animation: toast-slide-out 0.3s ease-in forwards;
+}
+
+[data-sonner-toast][data-type="success"] {
+  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards,
+             toast-pulse-glow 2s ease-in-out infinite;
+}
+
+[data-sonner-toast][data-type="error"] {
+  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards,
+             toast-shake 0.5s ease-in-out;
+}
+
+[data-sonner-toast] [data-icon] {
+  animation: toast-bounce 0.5s ease-in-out;
+}
+
+/* Toast close button */
+[data-sonner-toast] [data-close-button] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.1);
 }

@@ -14,6 +14,38 @@ function verifyToken(token: string): { valid: boolean; adminId?: string } {
   }
 }
 
+// Get Flutterwave balance
+async function getFlutterwaveBalance(): Promise<number> {
+  try {
+    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+    if (!secretKey) return 0;
+    
+    const response = await fetch('https://api.flutterwave.com/v3/balances/NGN', {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    const result = await response.json();
+    return result.data?.[0]?.available_balance || 0;
+  } catch {
+    return 0;
+  }
+}
+
+// Get Inlomax balance
+async function getInlomaxBalance(): Promise<number> {
+  try {
+    const apiKey = process.env.INLOMAX_API_KEY;
+    if (!apiKey) return 0;
+    
+    const response = await fetch('https://inlomax.com.ng/api/balance', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const result = await response.json();
+    return parseFloat(result.balance) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Check env vars
@@ -155,6 +187,32 @@ export async function GET(request: NextRequest) {
     
     const totalUserBalances = balanceData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
+    // Get API balances
+    const [flutterwaveBalance, inlomaxBalance] = await Promise.all([
+      getFlutterwaveBalance(),
+      getInlomaxBalance(),
+    ]);
+
+    // Calculate Flutterwave fees paid (estimate ~1.4% of deposits for card, less for bank transfer)
+    // Average ~1% considering mix of payment methods
+    const flutterwaveFeesPaid = Math.round(totalDeposits * 0.01);
+
+    // Calculate actual costs
+    // Inlomax costs: airtime ~97.5% of face value, data ~95% of face value
+    const airtimeCost = Math.round(airtimePurchases * 0.975);
+    const dataCost = Math.round(dataPurchases * 0.95);
+    const otherCost = Math.round(otherPurchases * 0.995);
+    const totalVTUCosts = airtimeCost + dataCost + otherCost;
+
+    // Actual profit calculation
+    const grossRevenue = totalDeposits + serviceFees; // What customers paid
+    const totalCosts = totalVTUCosts + flutterwaveFeesPaid; // What you spent
+    const netProfit = serviceFees + totalMargins - flutterwaveFeesPaid;
+
+    // Today's costs
+    const todayFlutterwaveFees = Math.round((todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0) * 0.01);
+    const todayNetProfit = todayEarnings - todayFlutterwaveFees;
+
     // Fetch users (last 100)
     const { data: users } = await supabase
       .from('profiles')
@@ -187,6 +245,16 @@ export async function GET(request: NextRequest) {
         totalMargins,
         totalEarnings,
         todayEarnings,
+        // NEW: Costs & Net Profit
+        flutterwaveFeesPaid,
+        totalVTUCosts,
+        grossRevenue,
+        totalCosts,
+        netProfit,
+        todayNetProfit,
+        // API Balances
+        flutterwaveBalance,
+        inlomaxBalance,
       },
       users: users || [],
       transactions: transactions || [],

@@ -30,6 +30,8 @@ export default function ChangePinPage() {
   const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasExistingPin, setHasExistingPin] = useState(true);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [shake, setShake] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -73,11 +75,22 @@ export default function ChangePinPage() {
     }
   };
 
+  const triggerError = (message: string) => {
+    setPinError(message);
+    setShake(true);
+    toast.error(message);
+    setTimeout(() => {
+      setShake(false);
+      setPinError(null);
+    }, 2000);
+  };
+
   const handleNext = async () => {
     const { pin } = getCurrentPinArray();
+    setPinError(null);
 
     if (pin.some((d) => !d)) {
-      toast.error("Please enter all 4 digits");
+      triggerError("Please enter all 4 digits");
       return;
     }
 
@@ -85,9 +98,9 @@ export default function ChangePinPage() {
       // Verify current PIN against database
       const enteredHash = hashPin(pin.join(""));
       if (enteredHash !== user?.pin) {
-        toast.error("Incorrect PIN");
+        triggerError("Incorrect PIN. Please try again.");
         setCurrentPin(["", "", "", ""]);
-        inputRefs.current[0]?.focus();
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
         return;
       }
       setStep("new");
@@ -111,16 +124,16 @@ export default function ChangePinPage() {
           "4321",
         ].includes(pinStr)
       ) {
-        toast.error("Please choose a stronger PIN");
+        triggerError("Please choose a stronger PIN");
         return;
       }
       setStep("confirm");
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } else if (step === "confirm") {
       if (newPin.join("") !== confirmPin.join("")) {
-        toast.error("PINs do not match");
+        triggerError("PINs do not match");
         setConfirmPin(["", "", "", ""]);
-        inputRefs.current[0]?.focus();
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
         return;
       }
 
@@ -276,7 +289,7 @@ export default function ChangePinPage() {
 
           <CardContent className="pt-6">
             {/* PIN Input */}
-            <div className="flex justify-center gap-3 mb-8">
+            <div className={`flex justify-center gap-3 mb-4 ${shake ? 'animate-shake' : ''}`}>
               {[0, 1, 2, 3].map((index) => (
                 <input
                   key={`${step}-${index}`}
@@ -291,11 +304,25 @@ export default function ChangePinPage() {
                     handlePinInput(index, e.target.value, pin, setPin)
                   }
                   onKeyDown={(e) => handleKeyDown(index, e, pin, setPin)}
-                  className="w-14 h-14 text-center text-2xl font-bold bg-background border-2 border-border rounded-xl focus:border-green-500 focus:outline-none transition-smooth"
+                  className={`w-14 h-14 text-center text-2xl font-bold bg-background border-2 rounded-xl focus:outline-none transition-smooth ${
+                    pinError 
+                      ? 'border-red-500 focus:border-red-500' 
+                      : 'border-border focus:border-green-500'
+                  }`}
                   autoFocus={index === 0}
                 />
               ))}
             </div>
+            
+            {/* Error Message */}
+            {pinError && (
+              <div className="flex items-center justify-center gap-2 mb-4 text-red-500 text-sm">
+                <IonIcon name="alert-circle" size="16px" />
+                <span>{pinError}</span>
+              </div>
+            )}
+            
+            <div className="mb-4"></div>
 
             {/* Action Button */}
             <Button

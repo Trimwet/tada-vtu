@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
@@ -64,9 +64,7 @@ export default function BuyAirtimePage() {
       if (result.status) {
         // Refresh user data to get updated balance
         await refreshUser();
-        toast.success("Airtime purchase successful!", {
-          description: `₦${numAmount} ${selectedNetwork} airtime sent to ${phoneNumber}`,
-        });
+        toast.payment("Airtime purchase successful!", `₦${numAmount} ${selectedNetwork} airtime sent to ${phoneNumber}`);
         setPhoneNumber("");
         setAmount("");
         setSelectedNetwork("");
@@ -74,7 +72,7 @@ export default function BuyAirtimePage() {
         toast.error(result.message || "Purchase failed");
       }
     } catch (error) {
-      toast.error("Network error. Please try again.");
+      toast.error("Network error", "Please try again");
       console.error("Purchase error:", error);
     } finally {
       setIsProcessing(false);
@@ -85,26 +83,24 @@ export default function BuyAirtimePage() {
     e.preventDefault();
 
     if (!selectedNetwork || !phoneNumber || !amount) {
-      toast.error("Please fill all fields");
+      toast.warning("Please fill all fields");
       return;
     }
 
     const numAmount = parseInt(amount);
     if (numAmount < 50) {
-      toast.error("Minimum amount is ₦50");
+      toast.warning("Minimum amount is ₦50");
       return;
     }
 
     if (numAmount > 50000) {
-      toast.error("Maximum amount is ₦50,000");
+      toast.warning("Maximum amount is ₦50,000");
       return;
     }
 
     // Check wallet balance
     if (!user || (user.balance || 0) < numAmount) {
-      toast.error("Insufficient balance", {
-        description: `You need ₦${numAmount.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`,
-      });
+      toast.error("Insufficient balance", `You need ₦${numAmount.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`);
       return;
     }
 

@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { AuthGuard } from "@/components/auth-guard";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useAuth } from "@/hooks/useAuth";
+import { CreatePinModal } from "@/components/create-pin-modal";
 import {
   DashboardSidebar,
   DashboardBottomNav,
@@ -11,6 +14,26 @@ import {
 function DashboardContent({ children }: { children: React.ReactNode }) {
   // Enable real-time notifications for logged-in users
   useRealtimeNotifications();
+  
+  const { profile, refreshProfile } = useAuth();
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [checkedPin, setCheckedPin] = useState(false);
+
+  // Check if user needs to create PIN on first load
+  useEffect(() => {
+    if (profile && !checkedPin) {
+      setCheckedPin(true);
+      if (!profile.pin) {
+        // Small delay to let the page render first
+        setTimeout(() => setShowPinSetup(true), 500);
+      }
+    }
+  }, [profile, checkedPin]);
+
+  const handlePinCreated = () => {
+    setShowPinSetup(false);
+    refreshProfile();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,6 +52,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
       {/* Floating WhatsApp Button */}
       <WhatsAppButton />
+
+      {/* PIN Setup Modal for new users */}
+      <CreatePinModal
+        userId={profile?.id || ""}
+        isOpen={showPinSetup}
+        onClose={() => setShowPinSetup(false)}
+        onSuccess={handlePinCreated}
+        canSkip={false}
+      />
     </div>
   );
 }

@@ -13,7 +13,7 @@ interface CreatePinModalProps {
   userId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (hashedPin?: string) => void;
   canSkip?: boolean;
 }
 
@@ -55,7 +55,7 @@ export function CreatePinModal({ userId, isOpen, onClose, onSuccess, canSkip = t
       if (error) throw error;
 
       toast.success('Transaction PIN created successfully!');
-      onSuccess();
+      onSuccess(hashedPin);
       onClose();
     } catch (error) {
       console.error('Error creating PIN:', error);

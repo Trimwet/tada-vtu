@@ -1,64 +1,69 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export function useTransactionPin() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [showCreatePin, setShowCreatePin] = useState(false);
   const [showVerifyPin, setShowVerifyPin] = useState(false);
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [localPin, setLocalPin] = useState<string | null>(null);
+  const pendingActionRef = useRef<(() => void) | null>(null);
 
-  const hasPin = !!profile?.pin;
-
-  // Check if user needs to create PIN (first time after registration)
-  const checkPinSetup = useCallback(() => {
-    if (!hasPin) {
-      const skipped = localStorage.getItem('pinSkipped');
-      if (!skipped) {
-        setShowCreatePin(true);
-        return true;
-      }
-    }
-    return false;
-  }, [hasPin]);
+  // Use local pin state if available (just created), otherwise use profile
+  const userPin = localPin || profile?.pin || null;
+  const hasPin = !!userPin;
 
   // Require PIN verification before an action
   const requirePin = useCallback((action: () => void) => {
     if (!hasPin) {
-      // User needs to create PIN first
+      // User needs to create PIN first - store action for after creation
+      pendingActionRef.current = action;
       setShowCreatePin(true);
       return;
     }
     
     // Show PIN verification modal
-    setPendingAction(() => action);
+    pendingActionRef.current = action;
     setShowVerifyPin(true);
   }, [hasPin]);
 
   // Called when PIN is verified successfully
   const onPinVerified = useCallback(() => {
-    if (pendingAction) {
-      pendingAction();
-      setPendingAction(null);
-    }
     setShowVerifyPin(false);
-  }, [pendingAction]);
+    if (pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      action();
+    }
+  }, []);
 
   // Called when PIN is created successfully
-  const onPinCreated = useCallback(() => {
+  const onPinCreated = useCallback(async (newPin?: string) => {
+    // Store the new PIN locally so we don't need to wait for profile refresh
+    if (newPin) {
+      setLocalPin(newPin);
+    }
     setShowCreatePin(false);
-    localStorage.removeItem('pinSkipped');
-  }, []);
+    
+    // Refresh profile in background
+    refreshProfile();
+    
+    // If there was a pending action, now show verify modal
+    if (pendingActionRef.current) {
+      setTimeout(() => {
+        setShowVerifyPin(true);
+      }, 300);
+    }
+  }, [refreshProfile]);
 
   return {
     hasPin,
-    userPin: profile?.pin || null,
+    userPin,
     showCreatePin,
     showVerifyPin,
     setShowCreatePin,
     setShowVerifyPin,
-    checkPinSetup,
     requirePin,
     onPinVerified,
     onPinCreated,

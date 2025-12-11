@@ -67,18 +67,48 @@ export interface PaymentResponse {
   link: string;
 }
 
-// Calculate service charge: minimum ₦20 or 1% of amount
+// Calculate service charge: minimum ₦50 or 1% of amount (your platform fee)
 export function calculateServiceCharge(amount: number): number {
   const percentageCharge = Math.ceil(amount * 0.01); // 1%
-  return Math.max(20, percentageCharge); // Minimum ₦20
+  return Math.max(50, percentageCharge); // Minimum ₦50
+}
+
+// Calculate Flutterwave processing fee (approximately 1.4% for cards, capped at ₦2000)
+// This ensures customers see the EXACT amount they'll pay - no surprises
+export function calculateFlutterwaveFee(amount: number): number {
+  const fee = Math.ceil(amount * 0.014); // 1.4%
+  return Math.min(fee, 2000); // Flutterwave caps at ₦2000
+}
+
+// Calculate total amount customer will pay (wallet amount + service fee + payment processing)
+export function calculateTotalPayment(walletAmount: number): {
+  walletCredit: number;
+  serviceFee: number;
+  processingFee: number;
+  totalToPay: number;
+} {
+  const serviceFee = calculateServiceCharge(walletAmount);
+  const subtotal = walletAmount + serviceFee;
+  const processingFee = calculateFlutterwaveFee(subtotal);
+  const totalToPay = subtotal + processingFee;
+  
+  return {
+    walletCredit: walletAmount,
+    serviceFee,
+    processingFee,
+    totalToPay,
+  };
 }
 
 export async function initiatePayment(payload: PaymentPayload) {
   return flutterwaveRequest<PaymentResponse>('/payments', 'POST', {
     ...payload,
     currency: payload.currency || 'NGN',
-    // pass_charge makes customer pay Flutterwave fees
-    payment_options: 'card,banktransfer,ussd',
+    // Bank transfer first (lower fees), then card, then USSD
+    payment_options: 'banktransfer,card,ussd',
+    // pass_charge: false = merchant pays Flutterwave fee (deducted from settlement)
+    // Customer pays exactly what we show them - no surprises!
+    pass_charge: false,
   });
 }
 
