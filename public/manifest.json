@@ -1,0 +1,46 @@
+{
+  "name": "TADA VTU - Airtime & Data Services",
+  "short_name": "TADA VTU",
+  "description": "Nigeria's most reliable VTU platform. Buy airtime, data bundles, pay bills instantly.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "en-NG",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Buy Airtime",
+      "short_name": "Airtime",
+      "description": "Purchase airtime instantly",
+      "url": "/dashboard/buy-airtime",
+      "icons": [{ "src": "/logo-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Buy Data",
+      "short_name": "Data",
+      "description": "Purchase data bundles",
+      "url": "/dashboard/buy-data",
+      "icons": [{ "src": "/logo-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Fund Wallet",
+      "short_name": "Fund",
+      "description": "Add money to your wallet",
+      "url": "/dashboard/fund-wallet",
+      "icons": [{ "src": "/logo-icon.svg", "sizes": "96x96" }]
+    }
+  ]
+}

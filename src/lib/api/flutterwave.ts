@@ -32,7 +32,19 @@ async function flutterwaveRequest<T>(
   const result = await response.json();
 
   if (!response.ok) {
+    // Log full error for debugging
+    console.error('Flutterwave API Error:', {
+      endpoint,
+      status: response.status,
+      result,
+    });
     throw new Error(result.message || `API Error: ${response.statusText}`);
+  }
+
+  // Also check for error status in response body (Flutterwave sometimes returns 200 with error)
+  if (result.status === 'error') {
+    console.error('Flutterwave Error Response:', result);
+    throw new Error(result.message || 'Flutterwave request failed');
   }
 
   return result;
@@ -203,4 +215,80 @@ export async function validateBillService(
     `/bill-items/${item_code}/validate?code=${code}&customer=${customer}`,
     'GET'
   );
+}
+
+// ============ TRANSFERS (Withdrawals) ============
+
+export interface BankData {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export async function getBanks(country: string = 'NG') {
+  return flutterwaveRequest<BankData[]>(`/banks/${country}`, 'GET');
+}
+
+export interface AccountVerificationData {
+  account_number: string;
+  account_name: string;
+}
+
+export async function verifyBankAccount(accountNumber: string, bankCode: string) {
+  return flutterwaveRequest<AccountVerificationData>('/accounts/resolve', 'POST', {
+    account_number: accountNumber,
+    account_bank: bankCode,
+  });
+}
+
+export interface TransferPayload {
+  account_bank: string;
+  account_number: string;
+  amount: number;
+  narration: string;
+  currency?: string;
+  reference: string;
+  callback_url?: string;
+  debit_currency?: string;
+  beneficiary_name?: string;
+}
+
+export interface TransferData {
+  id: number;
+  account_number: string;
+  bank_code: string;
+  full_name: string;
+  created_at: string;
+  currency: string;
+  debit_currency: string;
+  amount: number;
+  fee: number;
+  status: string;
+  reference: string;
+  meta: unknown;
+  narration: string;
+  complete_message: string;
+  requires_approval: number;
+  is_approved: number;
+  bank_name: string;
+}
+
+export async function initiateTransfer(payload: TransferPayload) {
+  return flutterwaveRequest<TransferData>('/transfers', 'POST', {
+    ...payload,
+    currency: payload.currency || 'NGN',
+    debit_currency: payload.debit_currency || 'NGN',
+  });
+}
+
+export async function getTransferStatus(transferId: number) {
+  return flutterwaveRequest<TransferData>(`/transfers/${transferId}`, 'GET');
+}
+
+// Calculate withdrawal fee (Flutterwave charges ₦10.75 for NGN transfers under ₦5000, ₦26.88 for ₦5000+)
+// We add a small platform fee on top
+export function calculateWithdrawalFee(amount: number): number {
+  const flwFee = amount < 5000 ? 10.75 : 26.88;
+  const platformFee = 25; // ₦25 platform fee
+  return Math.ceil(flwFee + platformFee);
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseData, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,39 +17,32 @@ function getSupabaseAdmin() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { network, phone, planId, amount, planName, userId } = body;
-
-    // Validate required fields
-    if (!network || !phone || !planId) {
+    
+    // Input validation with Zod
+    const { dataRequestSchema, validateFormData } = await import('@/lib/validation');
+    const validation = validateFormData(dataRequestSchema, body);
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { status: false, message: 'Missing required fields: network, phone, planId' },
+        { status: false, message: validation.errors?.[0] || 'Invalid input data' },
         { status: 400 }
       );
     }
+    
+    const { network, phone, planId, amount, planName, userId } = validation.data!;
 
-    // Validate phone number format (Nigerian format)
-    if (!/^0[789][01]\d{8}$/.test(phone)) {
+    // Rate limiting
+    const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimit = checkRateLimit(`data:${identifier}`, RATE_LIMITS.transaction);
+    
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { status: false, message: 'Invalid phone number. Use format: 08012345678' },
-        { status: 400 }
+        { status: false, message: `Too many requests. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.` },
+        { status: 429 }
       );
     }
 
-    // User must be authenticated
-    if (!userId) {
-      return NextResponse.json(
-        { status: false, message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const numAmount = Number(amount) || 0;
-    if (numAmount <= 0) {
-      return NextResponse.json(
-        { status: false, message: 'Invalid amount' },
-        { status: 400 }
-      );
-    }
+    const numAmount = amount;
 
     const supabase = getSupabaseAdmin();
 

@@ -157,6 +157,102 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'success', message: 'Wallet credited' });
     }
 
+    // Handle transfer events (withdrawals)
+    if (event === 'transfer.completed') {
+      const supabase = getSupabaseAdmin();
+      const reference = data.reference;
+      const status = data.status; // SUCCESSFUL, FAILED, PENDING
+
+      console.log('Transfer webhook:', { reference, status });
+
+      if (!reference) {
+        return NextResponse.json({ status: 'error', message: 'Missing reference' }, { status: 400 });
+      }
+
+      // Find the withdrawal record
+      const { data: withdrawal, error: withdrawalError } = await supabase
+        .from('withdrawals')
+        .select('*')
+        .eq('reference', reference)
+        .single();
+
+      if (withdrawalError || !withdrawal) {
+        console.error('Withdrawal not found:', reference);
+        return NextResponse.json({ status: 'error', message: 'Withdrawal not found' }, { status: 404 });
+      }
+
+      // Already processed
+      if (withdrawal.status === 'success' || withdrawal.status === 'failed') {
+        console.log('Withdrawal already finalized:', reference);
+        return NextResponse.json({ status: 'success', message: 'Already processed' });
+      }
+
+      if (status === 'SUCCESSFUL') {
+        // Update withdrawal status
+        await supabase
+          .from('withdrawals')
+          .update({ 
+            status: 'success',
+            completed_at: new Date().toISOString()
+          })
+          .eq('reference', reference);
+
+        // Update transaction status
+        await supabase
+          .from('transactions')
+          .update({ status: 'success' })
+          .eq('reference', reference);
+
+        // Create notification
+        await supabase.from('notifications').insert({
+          user_id: withdrawal.user_id,
+          type: 'success',
+          title: 'Withdrawal Successful',
+          message: `Your withdrawal of ₦${withdrawal.amount.toLocaleString()} to ${withdrawal.account_name} has been completed.`,
+        });
+
+        console.log('Withdrawal completed:', reference);
+      } else if (status === 'FAILED') {
+        // Refund the user
+        const totalDebit = withdrawal.amount + withdrawal.fee;
+
+        await supabase.rpc('update_user_balance', {
+          p_user_id: withdrawal.user_id,
+          p_amount: totalDebit,
+          p_type: 'credit',
+          p_description: `Withdrawal refund - ${reference}`,
+          p_reference: `${reference}-REFUND`,
+        });
+
+        // Update withdrawal status
+        await supabase
+          .from('withdrawals')
+          .update({ 
+            status: 'failed',
+            failure_reason: data.complete_message || 'Transfer failed'
+          })
+          .eq('reference', reference);
+
+        // Update transaction status
+        await supabase
+          .from('transactions')
+          .update({ status: 'failed' })
+          .eq('reference', reference);
+
+        // Create notification
+        await supabase.from('notifications').insert({
+          user_id: withdrawal.user_id,
+          type: 'error',
+          title: 'Withdrawal Failed',
+          message: `Your withdrawal of ₦${withdrawal.amount.toLocaleString()} failed. The amount has been refunded to your wallet.`,
+        });
+
+        console.log('Withdrawal failed and refunded:', reference);
+      }
+
+      return NextResponse.json({ status: 'success' });
+    }
+
     console.log('Unhandled webhook event:', event);
     return NextResponse.json({ status: 'success' });
 

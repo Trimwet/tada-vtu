@@ -21,6 +21,10 @@ import { Typewriter } from "@/components/typewriter";
 import { LoadingScreen } from "@/components/loading-screen";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
+import { useLoyalty } from "@/hooks/useLoyalty";
+import { LoyaltyCard } from "@/components/loyalty-dashboard";
+import { SpinWheel } from "@/components/spin-wheel";
+import { WithdrawalModal } from "@/components/withdrawal-modal";
 
 // Greeting messages - clean and professional
 const GREETING_MESSAGES = [
@@ -36,7 +40,6 @@ const GREETING_MESSAGES = [
   "The best rates in town, guaranteed!",
   "Stay connected with TADA VTU",
   "Quick, easy, and affordable",
-  "Refer friends and earn ₦100 each!",
   "Your wallet is waiting for action",
 ];
 
@@ -46,13 +49,15 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
+  const loyalty = useLoyalty();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("hideBalance") === "true";
     }
     return false;
   });
-  const [referralCount, setReferralCount] = useState(0);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [allTransactions, setAllTransactions] = useState<
     typeof recentTransactions
   >([]);
@@ -83,14 +88,6 @@ export default function DashboardPage() {
       if (monthTxns) {
         setAllTransactions(monthTxns);
       }
-
-      // Fetch referral count
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("referred_by", user.id);
-
-      setReferralCount(count || 0);
     };
 
     fetchData();
@@ -126,9 +123,6 @@ export default function DashboardPage() {
     return stats;
   }, [allTransactions]);
 
-  // Calculate referral earnings (₦100 per referral)
-  const referralEarnings = referralCount * 100;
-
   const toggleHideBalance = () => {
     const newValue = !hideBalance;
     setHideBalance(newValue);
@@ -136,17 +130,8 @@ export default function DashboardPage() {
   };
 
   const timeGreeting = user
-    ? getTimeBasedGreeting((user.full_name || "User").split(" ")[0])
+    ? getTimeBasedGreeting((user.full_name || "User").split(" ")[0]).greeting
     : "Welcome";
-
-  const copyReferralCode = () => {
-    if (user?.referral_code) {
-      navigator.clipboard.writeText(user.referral_code);
-      toast.success("Referral code copied!", {
-        description: "Share it with friends to earn rewards",
-      });
-    }
-  };
 
   // Show loading while user data is being fetched
   // AuthGuard handles the redirect if user is not authenticated
@@ -270,7 +255,7 @@ export default function DashboardPage() {
                   size="sm"
                   variant="outline"
                   className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
-                  onClick={() => toast.info("Withdraw feature coming soon!")}
+                  onClick={() => setShowWithdrawal(true)}
                 >
                   <IonIcon name="arrow-up-circle-outline" size="16px" />
                   Withdraw
@@ -323,6 +308,18 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        {/* Loyalty Card */}
+        {loyalty.data && (
+          <LoyaltyCard
+            points={loyalty.data.loyalty_points}
+            tier={loyalty.data.loyalty_tier}
+            streak={loyalty.data.login_streak}
+            spinAvailable={loyalty.data.spin_available}
+            onOpenSpin={() => setShowSpinWheel(true)}
+            onViewAll={() => {}}
+          />
+        )}
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-5 gap-4 lg:gap-6">
@@ -511,64 +508,73 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Referral Card */}
+            {/* Referral Card - Coming Soon */}
             <Card
               className="border-border animate-slide-up"
               style={{ animationDelay: "0.4s" }}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                    <IonIcon name="gift" size="16px" color="white" />
+                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
+                    <IonIcon name="gift-outline" size="16px" className="text-muted-foreground" />
                   </div>
                   Refer & Earn
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Invite friends, earn ₦100 per referral
+                  Referral program
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Your Referrals
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {referralCount} {referralCount === 1 ? "friend" : "friends"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Total Earnings
-                  </span>
-                  <span className="font-semibold text-green-500">
-                    ₦{referralEarnings.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold transition-smooth"
-                    size="sm"
-                    onClick={copyReferralCode}
-                  >
-                    <IonIcon name="copy-outline" size="16px" className="mr-2" />
-                    Copy Code
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-green-500/30 text-green-500 hover:bg-green-500/10 transition-smooth"
-                    asChild
-                  >
-                    <Link href="/dashboard/referrals">
-                      <IonIcon name="share-social-outline" size="16px" />
-                    </Link>
-                  </Button>
+              <CardContent className="pt-0">
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <IonIcon name="time-outline" size="24px" className="text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-foreground">Coming Soon</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Exciting rewards await!
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </main>
+
+      {/* Spin Wheel Modal */}
+      {showSpinWheel && loyalty.data && (
+        <SpinWheel
+          isAvailable={loyalty.data.spin_available}
+          onSpin={async (prize) => {
+            try {
+              await loyalty.spinWheel();
+              if (prize.type === "points") {
+                toast.success(`You won ${prize.value} points!`);
+              } else if (prize.type === "discount") {
+                toast.success(`You won a ${prize.value}% discount!`);
+              } else if (prize.type === "cashback") {
+                toast.success(`You won ₦${prize.value} cashback!`);
+              } else {
+                toast.info("Better luck next time!");
+              }
+            } catch (error) {
+              toast.error("Failed to spin. Try again later.");
+            }
+          }}
+          onClose={() => setShowSpinWheel(false)}
+        />
+      )}
+
+      {/* Withdrawal Modal */}
+      <WithdrawalModal
+        isOpen={showWithdrawal}
+        onClose={() => setShowWithdrawal(false)}
+        userId={user.id}
+        balance={user.balance || 0}
+        onSuccess={() => {
+          // Refresh user data
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

@@ -19,6 +19,8 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
+import { EchoTipModal, useEchoTip } from "@/components/echo-tip-modal";
+
 interface DataPlan {
   id: string;
   name: string;
@@ -49,6 +51,9 @@ export default function BuyDataPage() {
     onPinCreated,
     onPinVerified,
   } = useTransactionPin();
+
+  // Echo Tip hook for smart tips after purchase
+  const { tip, isModalOpen, fetchTip, closeModal } = useEchoTip();
 
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [selectedType, setSelectedType] = useState("");
@@ -144,6 +149,16 @@ export default function BuyDataPage() {
       if (result.status) {
         await refreshUser();
         toast.payment("Data purchase successful!", `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`);
+        
+        // Fetch smart tip for the user
+        fetchTip({
+          userId: user?.id,
+          network: selectedNetwork,
+          amount: selectedPlanDetails.price,
+          type: "data",
+          planName: selectedPlanDetails.size,
+        });
+        
         setPhoneNumber("");
         setSelectedPlan("");
         setSelectedNetwork("");
@@ -518,6 +533,20 @@ export default function BuyDataPage() {
         title="Authorize Purchase"
         description={`Enter PIN to buy ${selectedPlanDetails?.size || ""} ${selectedNetwork} data`}
       />
+
+      {/* Echo Tip Modal - Shows smart tip after successful purchase */}
+      {tip && (
+        <EchoTipModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          tip={tip.tip}
+          savingsEstimate={tip.savingsEstimate}
+          actionType={tip.actionType}
+          transactionType="data"
+          network={selectedNetwork || ""}
+          amount={selectedPlanDetails?.price || 0}
+        />
+      )}
     </div>
   );
 }

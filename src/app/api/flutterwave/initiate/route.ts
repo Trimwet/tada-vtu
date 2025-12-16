@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initiatePayment, calculateServiceCharge } from '@/lib/api/flutterwave';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { amount, email, name, phone, redirect_url, meta } = body;
+
+    // Rate limiting by email or IP
+    const identifier = email || request.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimit = checkRateLimit(`payment:${identifier}`, RATE_LIMITS.transaction);
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { status: 'error', message: `Too many payment attempts. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.` },
+        { status: 429 }
+      );
+    }
 
     if (!amount || !email) {
       return NextResponse.json(

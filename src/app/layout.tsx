@@ -16,13 +16,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TADA VTU - Airtime & Data Services",
-  description: "Reliable VTU services for airtime, data, and bill payments in Nigeria. Buy airtime, data bundles, pay electricity bills, and more.",
-  keywords: "VTU, airtime, data, bill payment, recharge, Nigeria, MTN, Airtel, Glo, 9mobile",
+  metadataBase: new URL('https://tadavtu.com'),
+  title: {
+    default: "TADA VTU - Airtime & Data Services",
+    template: "%s | TADA VTU"
+  },
+  description: "Nigeria's most reliable VTU platform. Buy airtime, data bundles, pay electricity bills, cable TV subscriptions, and more. Instant delivery, secure payments.",
+  keywords: "VTU, airtime, data, bill payment, recharge, Nigeria, MTN, Airtel, Glo, 9mobile, electricity, DSTV, GOTV, Startimes",
   authors: [{ name: "TADA VTU" }],
   creator: "TADA VTU",
   publisher: "TADA VTU",
   robots: "index, follow",
+  manifest: "/manifest.json",
   icons: {
     icon: "/logo-icon.svg",
     shortcut: "/logo-icon.svg",
@@ -34,13 +39,26 @@ export const metadata: Metadata = {
     url: "https://tadavtu.com",
     siteName: "TADA VTU",
     title: "TADA VTU - Airtime & Data Services",
-    description: "Reliable VTU services for airtime, data, and bill payments in Nigeria.",
+    description: "Nigeria's most reliable VTU platform. Instant airtime, data, and bill payments.",
+    images: [
+      {
+        url: "/logo.svg",
+        width: 1200,
+        height: 630,
+        alt: "TADA VTU - Airtime & Data Services",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "TADA VTU - Airtime & Data Services",
-    description: "Reliable VTU services for airtime, data, and bill payments in Nigeria.",
+    description: "Nigeria's most reliable VTU platform. Instant airtime, data, and bill payments.",
+    images: ["/logo.svg"],
   },
+  verification: {
+    google: "your-google-verification-code",
+  },
+  category: "Finance",
 };
 
 export const viewport = {

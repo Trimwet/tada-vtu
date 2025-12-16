@@ -19,6 +19,9 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
+import { EchoTipModal, useEchoTip } from "@/components/echo-tip-modal";
+import { BeneficiariesCard } from "@/components/beneficiaries-card";
+
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
@@ -33,6 +36,9 @@ export default function BuyAirtimePage() {
     onPinVerified,
     onPinCreated,
   } = useTransactionPin();
+
+  // Echo Tip hook for smart tips after purchase
+  const { tip, isModalOpen, fetchTip, closeModal } = useEchoTip();
 
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -65,6 +71,15 @@ export default function BuyAirtimePage() {
         // Refresh user data to get updated balance
         await refreshUser();
         toast.payment("Airtime purchase successful!", `₦${numAmount} ${selectedNetwork} airtime sent to ${phoneNumber}`);
+        
+        // Fetch smart tip for the user
+        fetchTip({
+          userId: user?.id,
+          network: selectedNetwork,
+          amount: numAmount,
+          type: "airtime",
+        });
+        
         setPhoneNumber("");
         setAmount("");
         setSelectedNetwork("");
@@ -351,51 +366,14 @@ export default function BuyAirtimePage() {
         </Card>
 
         {/* Recent Beneficiaries */}
-        <Card className="border-border mt-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <IonIcon name="people-outline" size="18px" color="#22c55e" />
-              Recent Beneficiaries
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[
-                { name: "My MTN", number: "08012345678", network: "MTN" },
-                { name: "Mom", number: "08098765432", network: "Airtel" },
-                { name: "Office Line", number: "08055544433", network: "Glo" },
-              ].map((beneficiary, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => {
-                    setPhoneNumber(beneficiary.number);
-                    setSelectedNetwork(beneficiary.network.toUpperCase());
-                    toast.info(`Selected ${beneficiary.name}`);
-                  }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-border hover:border-green-500/50 hover:bg-muted/50 transition-smooth text-left"
-                >
-                  <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
-                    <span className="text-green-500 font-semibold text-sm">
-                      {beneficiary.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">
-                      {beneficiary.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {beneficiary.number}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                    {beneficiary.network}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <BeneficiariesCard 
+          serviceType="airtime"
+          onSelect={(phone, network) => {
+            setPhoneNumber(phone);
+            setSelectedNetwork(network);
+            toast.info("Beneficiary selected");
+          }}
+        />
       </main>
 
       {/* PIN Modals */}
@@ -415,6 +393,20 @@ export default function BuyAirtimePage() {
         title="Authorize Purchase"
         description={`Enter PIN to buy ₦${amount} ${selectedNetwork} airtime`}
       />
+
+      {/* Echo Tip Modal - Shows smart tip after successful purchase */}
+      {tip && (
+        <EchoTipModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          tip={tip.tip}
+          savingsEstimate={tip.savingsEstimate}
+          actionType={tip.actionType}
+          transactionType="airtime"
+          network={selectedNetwork || ""}
+          amount={parseInt(amount) || 0}
+        />
+      )}
     </div>
   );
 }

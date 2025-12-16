@@ -1,6 +1,7 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogoInline } from "@/components/logo";
+import { LiveTransactionTicker } from "@/components/stats-counter";
 
 export default function Home() {
   return (
@@ -29,15 +30,17 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 via-transparent to-transparent" />
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[128px]" />
-        <div className="absolute top-40 right-1/4 w-64 h-64 bg-green-400/10 rounded-full blur-[100px]" />
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[128px] animate-float" />
+        <div className="absolute top-40 right-1/4 w-64 h-64 bg-green-400/10 rounded-full blur-[100px] animate-float-delayed" />
+        <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow" />
         
         <div className="container mx-auto relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-300">Trusted by 10,000+ Nigerians</span>
+              <span className="text-sm text-gray-300">Trusted by 8,500+ Nigerians</span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-[1.1] tracking-tight">
@@ -66,20 +69,27 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-lg mx-auto">
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold text-white">10K+</p>
-                <p className="text-sm text-gray-500">Active Users</p>
+            {/* Stats - More realistic figures */}
+            <div className="flex items-center justify-center gap-6 md:gap-12 mb-12">
+              <div className="text-center px-4">
+                <p className="text-2xl md:text-3xl font-bold text-white">8.5K+</p>
+                <p className="text-xs md:text-sm text-gray-500">Active Users</p>
               </div>
-              <div className="text-center border-x border-white/10">
-                <p className="text-3xl md:text-4xl font-bold text-green-500">99.9%</p>
-                <p className="text-sm text-gray-500">Uptime</p>
+              <div className="w-px h-10 bg-white/10" />
+              <div className="text-center px-4">
+                <p className="text-2xl md:text-3xl font-bold text-green-500">99.8%</p>
+                <p className="text-xs md:text-sm text-gray-500">Uptime</p>
               </div>
-              <div className="text-center">
-                <p className="text-3xl md:text-4xl font-bold text-white">₦50M+</p>
-                <p className="text-sm text-gray-500">Transactions</p>
+              <div className="w-px h-10 bg-white/10" />
+              <div className="text-center px-4">
+                <p className="text-2xl md:text-3xl font-bold text-white">₦125M+</p>
+                <p className="text-xs md:text-sm text-gray-500">Transactions</p>
               </div>
+            </div>
+            
+            {/* Live Transaction Ticker */}
+            <div className="flex justify-center">
+              <LiveTransactionTicker />
             </div>
           </div>
         </div>
@@ -97,7 +107,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
 
       {/* Services Section */}
       <section id="services" className="py-24 px-6">
@@ -167,7 +176,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
 
       {/* Features Section */}
       <section id="features" className="py-24 px-6 bg-gradient-to-b from-transparent via-green-500/5 to-transparent">
@@ -270,7 +278,6 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* Testimonials */}
       <section className="py-24 px-6 bg-white/[0.02]">
         <div className="container mx-auto">
@@ -337,7 +344,6 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* CTA Section */}
       <section className="py-24 px-6">
         <div className="container mx-auto">
@@ -391,8 +397,8 @@ export default function Home() {
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><span className="text-gray-400">Terms of Service</span></li>
-                <li><span className="text-gray-400">Privacy Policy</span></li>
+                <li><Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

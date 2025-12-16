@@ -139,6 +139,16 @@ export function useSupabaseUser() {
         is_active: true,
         created_at: user.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // Loyalty fields
+        loyalty_points: 0,
+        loyalty_tier: "bronze",
+        total_points_earned: 0,
+        login_streak: 0,
+        longest_streak: 0,
+        last_login_date: null,
+        spin_available: true,
+        last_spin_date: null,
+        birthday: null,
       }
     : null;
 

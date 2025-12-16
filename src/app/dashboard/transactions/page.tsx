@@ -13,12 +13,14 @@ import { Input } from "@/components/ui/input";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { useSupabaseTransactions } from "@/hooks/useSupabaseUser";
+import { TransactionReceipt } from "@/components/transaction-receipt";
 
 export default function TransactionsPage() {
   const { transactions, loading } = useSupabaseTransactions();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<typeof transactions[0] | null>(null);
 
   const filteredTransactions = transactions.filter((txn) => {
     const matchesSearch =
@@ -174,7 +176,8 @@ export default function TransactionsPage() {
                 {filteredTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelectedTransaction(transaction)}
+                    className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors cursor-pointer"
                   >
                     {/* Icon */}
                     <div
@@ -252,6 +255,25 @@ export default function TransactionsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Transaction Receipt Modal */}
+      {selectedTransaction && (
+        <TransactionReceipt
+          isOpen={!!selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+          transaction={{
+            id: selectedTransaction.id,
+            type: selectedTransaction.type,
+            amount: selectedTransaction.amount,
+            network: selectedTransaction.network || undefined,
+            phone: selectedTransaction.phone_number || undefined,
+            description: selectedTransaction.description || "",
+            status: selectedTransaction.status,
+            date: selectedTransaction.created_at,
+            reference: selectedTransaction.reference || undefined,
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseAirtime, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,6 +18,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { network, phone, amount, userId } = body;
+
+    // Rate limiting - use userId or IP
+    const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
+    const rateLimit = checkRateLimit(`airtime:${identifier}`, RATE_LIMITS.transaction);
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { status: false, message: `Too many requests. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.` },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rateLimit.resetIn / 1000)) } }
+      );
+    }
 
     // Validate required fields
     if (!network || !phone || !amount) {
