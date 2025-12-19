@@ -159,6 +159,8 @@ import {
   ChatCircleDots,
   FileDoc,
   IdentificationCard,
+  ShoppingCart,
+  ShoppingCartSimple,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -652,6 +654,12 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
   "checkmark-done-outline": Check,
   sad: Smiley,
   "sad-outline": Smiley,
+
+  // Cart/Shopping
+  cart: ShoppingCart,
+  "cart-outline": ShoppingCartSimple,
+  bag: ShoppingCart,
+  "bag-outline": ShoppingCartSimple,
 
   // Numbers
   "0": NumberCircleZero,
