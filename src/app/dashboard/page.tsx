@@ -129,6 +129,16 @@ export default function DashboardPage() {
     localStorage.setItem("hideBalance", String(newValue));
   };
 
+  // Services list - defined before any conditional returns
+  const services = useMemo(() => [
+    { name: "Airtime", icon: "call-outline", href: "/dashboard/buy-airtime" },
+    { name: "Data", icon: "wifi-outline", href: "/dashboard/buy-data" },
+    { name: "Cable TV", icon: "tv-outline", href: "/dashboard/cable-tv" },
+    { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
+    { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
+    { name: "Send Gift", icon: "gift-outline", href: "/dashboard/send-gift", badge: "NEW" },
+  ], []);
+
   const timeGreeting = user
     ? getTimeBasedGreeting((user.full_name || "User").split(" ")[0]).greeting
     : "Welcome";
@@ -138,15 +148,6 @@ export default function DashboardPage() {
   if (userLoading || !user) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
-
-  const services = useMemo(() => [
-    { name: "Airtime", icon: "call-outline", href: "/dashboard/buy-airtime" },
-    { name: "Data", icon: "wifi-outline", href: "/dashboard/buy-data" },
-    { name: "Cable TV", icon: "tv-outline", href: "/dashboard/cable-tv" },
-    { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
-    { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
-    { name: "Send Gift", icon: "gift-outline", href: "/dashboard/send-gift", badge: "NEW" },
-  ], []);
 
   return (
     <div className="overflow-x-hidden w-full max-w-full">
