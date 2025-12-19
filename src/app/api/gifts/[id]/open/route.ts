@@ -25,7 +25,7 @@ export async function POST(
   try {
     const { id: giftId } = await params;
     const body = await request.json();
-    const { recipientPhone, idempotencyKey: clientKey } = body;
+    const { recipientPhone, recipientEmail, userId, idempotencyKey: clientKey } = body;
 
     if (!giftId) {
       return NextResponse.json({ status: false, message: 'Gift ID required' }, { status: 400 });
@@ -44,24 +44,73 @@ export async function POST(
       return NextResponse.json({ status: false, message: 'Gift not found' }, { status: 404 });
     }
 
-    // IDEMPOTENCY: If already credited, return success with existing data
+    // ============================================
+    // RECIPIENT VERIFICATION - Only the right person can open
+    // ============================================
+    
+    // Check if gift was already opened/credited (one-time only)
     if (gift.status === 'credited') {
-      const theme = getThemeById(gift.theme_id);
       return NextResponse.json({
-        status: true,
-        message: 'Gift already claimed!',
-        data: {
-          amount: gift.amount,
-          serviceType: gift.service_type,
-          senderName: gift.sender_name,
-          personalMessage: gift.personal_message,
-          occasion: gift.occasion,
-          theme: theme || { animation: 'confetti', primaryColor: '#22C55E' },
-          reference: gift.inlomax_reference,
-          alreadyClaimed: true,
-        },
-      });
+        status: false,
+        message: 'This gift has already been claimed',
+        data: { alreadyClaimed: true },
+      }, { status: 400 });
     }
+
+    // Verify recipient by email OR phone OR user ID
+    let isAuthorizedRecipient = false;
+    
+    // Method 1: Verify by user ID (if recipient is a TADA user)
+    if (userId && gift.recipient_user_id) {
+      isAuthorizedRecipient = userId === gift.recipient_user_id;
+    }
+    
+    // Method 2: Verify by email
+    if (!isAuthorizedRecipient && recipientEmail) {
+      isAuthorizedRecipient = recipientEmail.toLowerCase() === gift.recipient_email.toLowerCase();
+    }
+    
+    // Method 3: Verify by phone number
+    if (!isAuthorizedRecipient && recipientPhone) {
+      // Normalize phone numbers for comparison
+      const normalizedInput = recipientPhone.replace(/\D/g, '').slice(-10);
+      const normalizedGift = gift.recipient_phone.replace(/\D/g, '').slice(-10);
+      isAuthorizedRecipient = normalizedInput === normalizedGift;
+    }
+
+    // If no verification provided, check if user's email matches
+    if (!isAuthorizedRecipient && userId) {
+      const { data: user } = await supabase
+        .from('profiles')
+        .select('email, phone_number')
+        .eq('id', userId)
+        .single();
+      
+      if (user) {
+        if (user.email && user.email.toLowerCase() === gift.recipient_email.toLowerCase()) {
+          isAuthorizedRecipient = true;
+        }
+        if (user.phone_number) {
+          const normalizedUserPhone = user.phone_number.replace(/\D/g, '').slice(-10);
+          const normalizedGiftPhone = gift.recipient_phone.replace(/\D/g, '').slice(-10);
+          if (normalizedUserPhone === normalizedGiftPhone) {
+            isAuthorizedRecipient = true;
+          }
+        }
+      }
+    }
+
+    if (!isAuthorizedRecipient) {
+      return NextResponse.json({
+        status: false,
+        message: 'This gift was sent to someone else. Please verify your email or phone number.',
+        data: { unauthorized: true },
+      }, { status: 403 });
+    }
+
+    // ============================================
+    // STATUS CHECKS
+    // ============================================
 
     // If currently crediting, return processing status
     if (gift.status === 'crediting') {
@@ -87,14 +136,14 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Verify recipient phone matches (if provided)
-    const targetPhone = recipientPhone || gift.recipient_phone;
+    // Use the gift's recipient phone for delivery
+    const targetPhone = gift.recipient_phone;
     
     // Validate phone format
     if (!/^0[789][01]\d{8}$/.test(targetPhone)) {
       return NextResponse.json({
         status: false,
-        message: 'Invalid phone number format',
+        message: 'Invalid recipient phone number',
       }, { status: 400 });
     }
 

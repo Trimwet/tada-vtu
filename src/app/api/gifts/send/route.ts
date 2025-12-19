@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
 import { validateGiftCard, type GiftCardInput } from '@/lib/gift-cards';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { sendGiftNotificationEmail } from '@/lib/email';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -161,6 +162,25 @@ export async function POST(request: NextRequest) {
         message: `${senderName || 'Someone special'} sent you a gift! Open it now.`,
         type: 'success',
       });
+    }
+
+    // Send email notification to recipient (if not scheduled)
+    if (!isScheduled) {
+      try {
+        await sendGiftNotificationEmail({
+          recipientEmail: giftInput.recipient_email,
+          senderName: senderName || sender.full_name || 'Someone special',
+          amount: giftInput.amount,
+          occasion: giftInput.occasion,
+          personalMessage: giftInput.personal_message,
+          giftId: gift.id,
+          accessToken,
+          expiresAt: expiresAt.toISOString(),
+        });
+      } catch (emailErr) {
+        console.error('Failed to send gift email:', emailErr);
+        // Don't fail the gift creation if email fails
+      }
     }
 
     // Notify sender

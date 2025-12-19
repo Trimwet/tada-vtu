@@ -30,6 +30,8 @@ export default function SendGiftPage() {
   const [personalMessage, setPersonalMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   const occasions = Object.entries(OCCASION_CONFIG) as [GiftOccasion, { label: string; icon: string; color: string }][];
 
   useEffect(() => {
@@ -171,6 +173,52 @@ export default function SendGiftPage() {
       month: "short",
       year: "numeric",
     });
+  };
+
+  const handleCancelGift = async (giftId: string) => {
+    if (!confirm("Are you sure you want to cancel this gift? The amount will be refunded to your wallet.")) return;
+    
+    setActionLoading(giftId);
+    try {
+      const response = await fetch(`/api/gifts/${giftId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id }),
+      });
+      const result = await response.json();
+      if (result.status) {
+        toast.success("Gift cancelled", `₦${result.data.refundAmount.toLocaleString()} refunded`);
+        await refreshProfile();
+        await fetchGifts();
+      } else {
+        toast.error(result.message || "Failed to cancel gift");
+      }
+    } catch {
+      toast.error("Failed to cancel gift");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleResendEmail = async (giftId: string) => {
+    setActionLoading(giftId);
+    try {
+      const response = await fetch(`/api/gifts/${giftId}/resend-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id }),
+      });
+      const result = await response.json();
+      if (result.status) {
+        toast.success("Email sent!", "Notification resent to recipient");
+      } else {
+        toast.error(result.message || "Failed to resend email");
+      }
+    } catch {
+      toast.error("Failed to resend email");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -582,6 +630,9 @@ export default function SendGiftPage() {
                   sentGifts.map((gift) => {
                     const status = getGiftStatusDisplay(gift.status);
                     const occasionConfig = OCCASION_CONFIG[gift.occasion];
+                    const canCancel = gift.status === 'scheduled' || gift.status === 'delivered';
+                    const canResend = gift.status === 'delivered';
+                    const isLoading = actionLoading === gift.id;
                     return (
                       <div
                         key={gift.id}
@@ -626,6 +677,39 @@ export default function SendGiftPage() {
                               <p className="text-xs text-muted-foreground mt-2 italic line-clamp-2 bg-muted/30 p-2 rounded-lg">
                                 &ldquo;{gift.personal_message}&rdquo;
                               </p>
+                            )}
+                            {/* Action buttons */}
+                            {(canCancel || canResend) && (
+                              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                                {canResend && (
+                                  <button
+                                    onClick={() => handleResendEmail(gift.id)}
+                                    disabled={isLoading}
+                                    className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 disabled:opacity-50"
+                                  >
+                                    {isLoading ? (
+                                      <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <IonIcon name="mail" size="14px" />
+                                    )}
+                                    Resend Email
+                                  </button>
+                                )}
+                                {canCancel && (
+                                  <button
+                                    onClick={() => handleCancelGift(gift.id)}
+                                    disabled={isLoading}
+                                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 disabled:opacity-50 ml-auto"
+                                  >
+                                    {isLoading ? (
+                                      <div className="w-3 h-3 border border-red-500 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <IonIcon name="close-circle" size="14px" />
+                                    )}
+                                    Cancel & Refund
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>

@@ -15,7 +15,7 @@ interface PageProps {
 
 export default function GiftOpenPage({ params }: PageProps) {
   const { id } = use(params);
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [gift, setGift] = useState<GiftCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -71,7 +71,11 @@ export default function GiftOpenPage({ params }: PageProps) {
       const response = await fetch(`/api/gifts/${id}/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ 
+          userId: user.id,
+          recipientEmail: user.email,
+          recipientPhone: profile?.phone_number,
+        }),
       });
 
       const result = await response.json();
@@ -196,7 +200,35 @@ export default function GiftOpenPage({ params }: PageProps) {
   // Check if user is the recipient (case-insensitive email comparison)
   const userEmail = user.email?.toLowerCase().trim() || "";
   const giftEmail = gift.recipient_email?.toLowerCase().trim() || "";
-  const isRecipient = userEmail === giftEmail || gift.recipient_user_id === user.id;
+  const userPhone = profile?.phone_number?.replace(/\D/g, '').slice(-10) || "";
+  const giftPhone = gift.recipient_phone?.replace(/\D/g, '').slice(-10) || "";
+  const isRecipient = userEmail === giftEmail || gift.recipient_user_id === user.id || userPhone === giftPhone;
+
+  // Not the intended recipient
+  if (!isRecipient) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="border-border max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-amber-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <IonIcon name="lock-closed" size="32px" color="#f59e0b" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">Not Your Gift</h2>
+            <p className="text-muted-foreground mb-4">
+              This gift was sent to someone else. Only the intended recipient can open it.
+            </p>
+            <div className="bg-muted/50 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm text-muted-foreground mb-1">Sent to:</p>
+              <p className="font-medium text-foreground">{gift.recipient_email}</p>
+            </div>
+            <Button asChild className="w-full bg-green-500 hover:bg-green-600">
+              <Link href="/dashboard">Go to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Gift is already fully claimed (airtime sent)
   if (gift.status === "credited") {

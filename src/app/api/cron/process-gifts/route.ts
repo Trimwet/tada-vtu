@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendGiftNotificationEmail } from '@/lib/email';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,6 +45,22 @@ export async function GET(request: NextRequest) {
               delivered_at: now,
             })
             .eq('id', gift.id);
+
+          // Send email notification to recipient
+          try {
+            await sendGiftNotificationEmail({
+              recipientEmail: gift.recipient_email,
+              senderName: gift.sender_name,
+              amount: gift.amount,
+              occasion: gift.occasion,
+              personalMessage: gift.personal_message,
+              giftId: gift.id,
+              accessToken: gift.access_token,
+              expiresAt: gift.expires_at,
+            });
+          } catch (emailErr) {
+            console.error(`Failed to send email for gift ${gift.id}:`, emailErr);
+          }
 
           // Notify recipient if they're a TADA user
           if (gift.recipient_user_id) {
