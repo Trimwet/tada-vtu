@@ -32,6 +32,14 @@ export default function SendGiftPage() {
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Recipient lookup state
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [recipientLookup, setRecipientLookup] = useState<{
+    found: boolean;
+    name?: string;
+    checked: boolean;
+  } | null>(null);
+
   const occasions = Object.entries(OCCASION_CONFIG) as [GiftOccasion, { label: string; icon: string; color: string }][];
 
   useEffect(() => {
@@ -80,6 +88,56 @@ export default function SendGiftPage() {
     setSentGifts((sent as GiftCard[]) || []);
     setReceivedGifts((received as GiftCard[]) || []);
     setLoading(false);
+  };
+
+  // Lookup recipient by email
+  const lookupRecipient = async (email: string) => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setRecipientLookup(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const response = await fetch("/api/users/lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json();
+      
+      if (result.status) {
+        setRecipientLookup({
+          found: result.found,
+          name: result.user?.name,
+          checked: true,
+        });
+      } else {
+        setRecipientLookup({ found: false, checked: true });
+      }
+    } catch {
+      setRecipientLookup({ found: false, checked: true });
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  // Debounced email lookup
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (recipientEmail && step === 3) {
+        lookupRecipient(recipientEmail);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [recipientEmail, step]);
+
+  // Reset lookup when email changes
+  const handleEmailChange = (email: string) => {
+    setRecipientEmail(email);
+    if (recipientLookup?.checked) {
+      setRecipientLookup(null);
+    }
   };
 
   const handleOccasionSelect = (occ: GiftOccasion) => {
@@ -478,15 +536,71 @@ export default function SendGiftPage() {
                             type="email"
                             placeholder="friend@example.com"
                             value={recipientEmail}
-                            onChange={(e) => setRecipientEmail(e.target.value)}
-                            className="pl-10 h-12 bg-background border-2 border-border focus:border-pink-500 text-foreground"
+                            onChange={(e) => handleEmailChange(e.target.value)}
+                            className={`pl-10 pr-10 h-12 bg-background border-2 text-foreground transition-colors ${
+                              recipientLookup?.checked
+                                ? recipientLookup.found
+                                  ? "border-green-500 focus:border-green-500"
+                                  : "border-yellow-500 focus:border-yellow-500"
+                                : "border-border focus:border-pink-500"
+                            }`}
                             required
                           />
+                          {/* Lookup status indicator */}
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {lookupLoading ? (
+                              <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                            ) : recipientLookup?.checked ? (
+                              recipientLookup.found ? (
+                                <IonIcon name="checkmark-circle" size="20px" className="text-green-500" />
+                              ) : (
+                                <IonIcon name="alert-circle" size="20px" className="text-yellow-500" />
+                              )
+                            ) : null}
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <IonIcon name="information-circle" size="12px" />
-                          They&apos;ll receive a notification to claim the gift
-                        </p>
+                        
+                        {/* Recipient verification result */}
+                        {recipientLookup?.checked && (
+                          <div className={`flex items-center gap-2 p-2.5 rounded-lg text-sm ${
+                            recipientLookup.found
+                              ? "bg-green-500/10 border border-green-500/30"
+                              : "bg-yellow-500/10 border border-yellow-500/30"
+                          }`}>
+                            {recipientLookup.found ? (
+                              <>
+                                <IonIcon name="person-circle" size="20px" className="text-green-500" />
+                                <div>
+                                  <p className="font-semibold text-green-600 dark:text-green-400">
+                                    {recipientLookup.name}
+                                  </p>
+                                  <p className="text-xs text-green-600/80 dark:text-green-400/80">
+                                    TADA VTU User ✓
+                                  </p>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <IonIcon name="person-add" size="20px" className="text-yellow-500" />
+                                <div>
+                                  <p className="font-medium text-yellow-600 dark:text-yellow-400">
+                                    Not a TADA user yet
+                                  </p>
+                                  <p className="text-xs text-yellow-600/80 dark:text-yellow-400/80">
+                                    They&apos;ll receive an invite to claim the gift
+                                  </p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        
+                        {!recipientLookup?.checked && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <IonIcon name="information-circle" size="12px" />
+                            They&apos;ll receive a notification to claim the gift
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
@@ -559,9 +673,18 @@ export default function SendGiftPage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">To</span>
-                          <span className="font-semibold text-foreground truncate max-w-[180px]">
-                            {recipientEmail || "—"}
-                          </span>
+                          <div className="text-right">
+                            {recipientLookup?.found && recipientLookup.name && (
+                              <span className="font-bold text-green-500 block text-sm">
+                                {recipientLookup.name}
+                              </span>
+                            )}
+                            <span className={`font-semibold truncate max-w-[180px] block ${
+                              recipientLookup?.found ? "text-xs text-muted-foreground" : "text-foreground"
+                            }`}>
+                              {recipientEmail || "—"}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Phone</span>
