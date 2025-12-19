@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,11 +19,16 @@ import {
 } from "@/hooks/useSupabaseUser";
 import { Typewriter } from "@/components/typewriter";
 import { LoadingScreen } from "@/components/loading-screen";
-import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
-import { WithdrawalModal } from "@/components/withdrawal-modal";
 import { TierBadge } from "@/components/tier-badge";
 import { getUserTier } from "@/lib/pricing-tiers";
+import dynamic from "next/dynamic";
+
+// Lazy load heavy components
+const WithdrawalModal = dynamic(
+  () => import("@/components/withdrawal-modal").then(mod => ({ default: mod.WithdrawalModal })),
+  { ssr: false }
+);
 
 // Greeting messages - clean and professional
 const GREETING_MESSAGES = [
@@ -60,36 +65,30 @@ export default function DashboardPage() {
     typeof recentTransactions
   >([]);
 
-  // Fetch all transactions for this month and referral count
-  useEffect(() => {
+  // Fetch all transactions for this month - optimized with useCallback
+  const fetchMonthlyData = useCallback(async () => {
     if (!user?.id) return;
 
-    const fetchData = async () => {
-      const supabase = getSupabase();
+    const supabase = getSupabase();
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      // Get start of current month
-      const now = new Date();
-      const startOfMonth = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        1,
-      ).toISOString();
+    const { data: monthTxns } = await supabase
+      .from("transactions")
+      .select("id, amount, type, status, description, created_at")
+      .eq("user_id", user.id)
+      .gte("created_at", startOfMonth)
+      .order("created_at", { ascending: false })
+      .limit(100);
 
-      // Fetch this month's transactions
-      const { data: monthTxns } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("created_at", startOfMonth)
-        .order("created_at", { ascending: false });
-
-      if (monthTxns) {
-        setAllTransactions(monthTxns);
-      }
-    };
-
-    fetchData();
+    if (monthTxns) {
+      setAllTransactions(monthTxns);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    fetchMonthlyData();
+  }, [fetchMonthlyData]);
 
   // Calculate monthly stats from transactions - only count successful ones
   const monthlyStats = useMemo(() => {
@@ -140,23 +139,14 @@ export default function DashboardPage() {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
 
-  const services = [
+  const services = useMemo(() => [
     { name: "Airtime", icon: "call-outline", href: "/dashboard/buy-airtime" },
     { name: "Data", icon: "wifi-outline", href: "/dashboard/buy-data" },
     { name: "Cable TV", icon: "tv-outline", href: "/dashboard/cable-tv" },
-    {
-      name: "Electricity",
-      icon: "flash-outline",
-      href: "/dashboard/electricity",
-    },
+    { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
     { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
-    {
-      name: "Send Gift",
-      icon: "gift-outline",
-      href: "/dashboard/send-gift",
-      badge: "NEW",
-    },
-  ];
+    { name: "Send Gift", icon: "gift-outline", href: "/dashboard/send-gift", badge: "NEW" },
+  ], []);
 
   return (
     <div className="overflow-x-hidden w-full max-w-full">

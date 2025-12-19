@@ -5,7 +5,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   
-
+  // Enable React Compiler for automatic optimizations
+  experimental: {
+    reactCompiler: true,
+    optimizePackageImports: [
+      '@phosphor-icons/react',
+      'sonner',
+      'recharts',
+      '@supabase/supabase-js',
+    ],
+  },
   
   // Image optimization
   images: {

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NetworkStatusBar } from "@/components/network-status-bar";
@@ -13,6 +12,7 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
   weight: ["400", "500", "600", "700"],
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -100,16 +100,6 @@ export default function RootLayout({
           expand={false}
           richColors
           closeButton
-        />
-        <Script
-          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
-          type="module"
-          strategy="lazyOnload"
-        />
-        <Script
-          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
-          noModule
-          strategy="lazyOnload"
         />
         <Analytics />
       </body>
