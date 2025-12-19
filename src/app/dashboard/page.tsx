@@ -22,6 +22,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { getSupabase } from "@/lib/supabase/client";
 import { TierBadge } from "@/components/tier-badge";
 import { getUserTier } from "@/lib/pricing-tiers";
+import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
 import dynamic from "next/dynamic";
 
 // Lazy load heavy components
@@ -53,6 +54,7 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
+  const { hasUnread } = useNotifications(user?.id);
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("hideBalance") === "true";
@@ -64,6 +66,13 @@ export default function DashboardPage() {
   const [allTransactions, setAllTransactions] = useState<
     typeof recentTransactions
   >([]);
+
+  // Check if user needs to add phone number (for Google signups)
+  useEffect(() => {
+    if (user?.id && !user.phone_number) {
+      checkAndNotifyMissingPhone(user.id, user.phone_number);
+    }
+  }, [user?.id, user?.phone_number]);
 
   // Fetch all transactions for this month - optimized with useCallback
   const fetchMonthlyData = useCallback(async () => {
@@ -163,7 +172,9 @@ export default function DashboardPage() {
                 className="relative hover:bg-muted transition-smooth h-10 w-10"
               >
                 <IonIcon name="notifications-outline" size="22px" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full pulse-green"></span>
+                {hasUnread && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full pulse-green"></span>
+                )}
               </Button>
             </Link>
             <Link href="/dashboard/settings">
