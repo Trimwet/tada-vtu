@@ -149,6 +149,7 @@ export function useSupabaseUser() {
         spin_available: true,
         last_spin_date: null,
         birthday: null,
+        total_spent: 0,
       }
     : null;
 

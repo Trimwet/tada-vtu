@@ -1,6 +1,6 @@
 "use client"
 
-import { Zap, Lock } from "lucide-react"
+import { Lightning, Lock } from "@phosphor-icons/react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="h-8 w-8 text-yellow-500" />
+              <Lock size={32} className="text-yellow-500" />
             </div>
             <h2 className="text-xl font-semibold">Invalid or Expired Link</h2>
             <p className="text-muted-foreground">
@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-green-600 text-white flex size-6 items-center justify-center rounded-md">
-              <Zap className="size-4" />
+              <Lightning size={16} />
             </div>
             TADA VTU
           </Link>
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
             <Card className="border-0 shadow-none">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                  <Lock className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <Lock size={24} className="text-green-600 dark:text-green-400" />
                 </div>
                 <CardTitle className="text-2xl">Set New Password</CardTitle>
                 <CardDescription>
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center p-8">
             <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Zap className="h-10 w-10 text-white" />
+              <Lightning size={40} className="text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Almost There!

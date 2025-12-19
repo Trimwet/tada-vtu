@@ -6,23 +6,31 @@ import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
 import { LogoutDialog } from "@/components/logout-dialog";
 import { cn } from "@/lib/utils";
+import { TierBadge } from "@/components/tier-badge";
+import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { getUserTier } from "@/lib/pricing-tiers";
 
 const navItems = [
   { name: "Home", href: "/dashboard", icon: "home", exact: true },
   { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
   { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
+  { name: "Send Gift", href: "/dashboard/send-gift", icon: "gift" },
   { name: "Transactions", href: "/dashboard/transactions", icon: "time" },
-  { name: "Rewards", href: "/dashboard/rewards", icon: "gift" },
+  { name: "Rewards", href: "/dashboard/rewards", icon: "trophy" },
   { name: "Profile", href: "/dashboard/profile", icon: "person" },
 ];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { user } = useSupabaseUser();
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-border bg-card/50 backdrop-blur-xl z-40 overflow-hidden">
       <div className="p-6 border-b border-border">
-        <LogoInline size="sm" />
+        <div className="flex items-center justify-between">
+          <LogoInline size="sm" />
+          {user && <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" showLabel={false} />}
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 sidebar-scroll">
@@ -36,22 +44,33 @@ export function DashboardSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                 isActive
-                  ? "bg-primary/10 text-primary font-medium"
+                  ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <IonIcon
-                name={isActive ? item.icon : `${item.icon}-outline`}
-                className={cn(
-                  "transition-colors",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground",
-                )}
-                size="20px"
-              />
+              {/* Active indicator bar */}
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
+              )}
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                isActive
+                  ? "bg-primary/20"
+                  : "group-hover:bg-muted"
+              )}>
+                <IonIcon
+                  name={isActive ? item.icon : `${item.icon}-outline`}
+                  className={cn(
+                    "transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                  size="20px"
+                />
+              </div>
               <span>{item.name}</span>
             </Link>
           );
@@ -61,51 +80,71 @@ export function DashboardSidebar() {
           <Link
             href="/dashboard/referrals"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+              "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
               pathname.startsWith("/dashboard/referrals")
-                ? "bg-primary/10 text-primary font-medium"
+                ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <IonIcon
-              name={
-                pathname.startsWith("/dashboard/referrals")
-                  ? "people"
-                  : "people-outline"
-              }
-              className={cn(
-                "transition-colors",
-                pathname.startsWith("/dashboard/referrals")
-                  ? "text-primary"
-                  : "text-muted-foreground group-hover:text-foreground",
-              )}
-              size="20px"
-            />
+            {pathname.startsWith("/dashboard/referrals") && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
+            )}
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+              pathname.startsWith("/dashboard/referrals")
+                ? "bg-primary/20"
+                : "group-hover:bg-muted"
+            )}>
+              <IonIcon
+                name={
+                  pathname.startsWith("/dashboard/referrals")
+                    ? "people"
+                    : "people-outline"
+                }
+                className={cn(
+                  "transition-colors",
+                  pathname.startsWith("/dashboard/referrals")
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground",
+                )}
+                size="20px"
+              />
+            </div>
             <span>Referrals</span>
           </Link>
           <Link
             href="/dashboard/settings"
             className={cn(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+              "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
               pathname.startsWith("/dashboard/settings")
-                ? "bg-primary/10 text-primary font-medium"
+                ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <IonIcon
-              name={
-                pathname.startsWith("/dashboard/settings")
-                  ? "settings"
-                  : "settings-outline"
-              }
-              className={cn(
-                "transition-colors",
-                pathname.startsWith("/dashboard/settings")
-                  ? "text-primary"
-                  : "text-muted-foreground group-hover:text-foreground",
-              )}
-              size="20px"
-            />
+            {pathname.startsWith("/dashboard/settings") && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
+            )}
+            <div className={cn(
+              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+              pathname.startsWith("/dashboard/settings")
+                ? "bg-primary/20"
+                : "group-hover:bg-muted"
+            )}>
+              <IonIcon
+                name={
+                  pathname.startsWith("/dashboard/settings")
+                    ? "settings"
+                    : "settings-outline"
+                }
+                className={cn(
+                  "transition-colors",
+                  pathname.startsWith("/dashboard/settings")
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-foreground",
+                )}
+                size="20px"
+              />
+            </div>
             <span>Settings</span>
           </Link>
           
@@ -162,17 +201,29 @@ export function DashboardBottomNav() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-all no-select touch-target",
+                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-all no-select touch-target",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground active:text-foreground",
               )}
             >
-              <IonIcon
-                name={isActive ? item.icon : `${item.icon}-outline`}
-                size="24px"
-              />
-              <span className="text-[10px] font-medium">{item.name}</span>
+              {/* Active indicator dot */}
+              {isActive && (
+                <span className="absolute top-1 w-1 h-1 bg-primary rounded-full" />
+              )}
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                isActive && "bg-primary/15"
+              )}>
+                <IonIcon
+                  name={isActive ? item.icon : `${item.icon}-outline`}
+                  size="22px"
+                />
+              </div>
+              <span className={cn(
+                "text-[10px]",
+                isActive ? "font-bold" : "font-medium"
+              )}>{item.name}</span>
             </Link>
           );
         })}

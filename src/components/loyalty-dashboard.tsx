@@ -301,13 +301,15 @@ export function LoyaltyCard({
             </p>
             <p className="text-xs text-muted-foreground">Points</p>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1.5 justify-end opacity-50">
-              <IonIcon name="flame" size="18px" color="#9ca3af" />
-              <span className="text-xl font-bold text-muted-foreground">--</span>
+          {streak > 0 && (
+            <div className="text-right">
+              <div className="flex items-center gap-1.5 justify-end">
+                <IonIcon name="flame" size="18px" color="#f97316" />
+                <span className="text-xl font-bold text-foreground">{streak}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Day Streak</p>
             </div>
-            <p className="text-xs text-muted-foreground">Coming Soon</p>
-          </div>
+          )}
         </div>
 
         {spinAvailable && (

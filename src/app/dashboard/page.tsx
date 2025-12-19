@@ -21,10 +21,9 @@ import { Typewriter } from "@/components/typewriter";
 import { LoadingScreen } from "@/components/loading-screen";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
-import { useLoyalty } from "@/hooks/useLoyalty";
-import { LoyaltyCard } from "@/components/loyalty-dashboard";
-import { SpinWheel } from "@/components/spin-wheel";
 import { WithdrawalModal } from "@/components/withdrawal-modal";
+import { TierBadge } from "@/components/tier-badge";
+import { getUserTier } from "@/lib/pricing-tiers";
 
 // Greeting messages - clean and professional
 const GREETING_MESSAGES = [
@@ -49,14 +48,13 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
-  const loyalty = useLoyalty();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("hideBalance") === "true";
     }
     return false;
   });
-  const [showSpinWheel, setShowSpinWheel] = useState(false);
+
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [allTransactions, setAllTransactions] = useState<
     typeof recentTransactions
@@ -93,7 +91,7 @@ export default function DashboardPage() {
     fetchData();
   }, [user?.id]);
 
-  // Calculate monthly stats from transactions
+  // Calculate monthly stats from transactions - only count successful ones
   const monthlyStats = useMemo(() => {
     const stats = {
       totalSpent: 0,
@@ -103,6 +101,9 @@ export default function DashboardPage() {
     };
 
     allTransactions.forEach((txn) => {
+      // Only count successful transactions
+      if (txn.status !== "success") return;
+      
       if (txn.amount < 0) {
         const amount = Math.abs(txn.amount);
         stats.totalSpent += amount;
@@ -150,9 +151,9 @@ export default function DashboardPage() {
     },
     { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
     {
-      name: "Rewards",
+      name: "Send Gift",
       icon: "gift-outline",
-      href: "/dashboard/rewards",
+      href: "/dashboard/send-gift",
       badge: "NEW",
     },
   ];
@@ -190,9 +191,12 @@ export default function DashboardPage() {
       <main className="px-4 lg:px-8 py-4 lg:py-6 space-y-5 lg:space-y-6 lg:max-w-7xl lg:mx-auto">
         {/* Greeting */}
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
-            {timeGreeting}
-          </h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
+              {timeGreeting}
+            </h1>
+            <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
+          </div>
           <p className="text-muted-foreground h-6">
             <Typewriter
               texts={GREETING_MESSAGES}
@@ -309,17 +313,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Loyalty Card */}
-        {loyalty.data && (
-          <LoyaltyCard
-            points={loyalty.data.loyalty_points}
-            tier={loyalty.data.loyalty_tier}
-            streak={loyalty.data.login_streak}
-            spinAvailable={loyalty.data.spin_available}
-            onOpenSpin={() => setShowSpinWheel(true)}
-            onViewAll={() => {}}
-          />
-        )}
+
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-5 gap-4 lg:gap-6">
@@ -421,19 +415,29 @@ export default function DashboardPage() {
                         <div className="text-right shrink-0 ml-2">
                           <p
                             className={`font-semibold text-sm ${
-                              transaction.amount > 0
-                                ? "text-green-500"
-                                : "text-foreground"
+                              transaction.status === "failed"
+                                ? "text-foreground"
+                                : transaction.amount > 0
+                                  ? "text-green-500"
+                                  : "text-foreground"
                             }`}
                           >
                             {transaction.amount > 0 ? "+" : ""}₦
                             {Math.abs(transaction.amount).toLocaleString()}
                           </p>
-                          {transaction.network && (
+                          {transaction.status === "failed" ? (
+                            <p className="text-xs text-red-500 font-medium">
+                              failed
+                            </p>
+                          ) : transaction.status === "pending" ? (
+                            <p className="text-xs text-amber-500 font-medium">
+                              pending
+                            </p>
+                          ) : transaction.network ? (
                             <p className="text-xs text-muted-foreground">
                               {transaction.network}
                             </p>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     );
@@ -539,30 +543,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-
-      {/* Spin Wheel Modal */}
-      {showSpinWheel && loyalty.data && (
-        <SpinWheel
-          isAvailable={loyalty.data.spin_available}
-          onSpin={async (prize) => {
-            try {
-              await loyalty.spinWheel();
-              if (prize.type === "points") {
-                toast.success(`You won ${prize.value} points!`);
-              } else if (prize.type === "discount") {
-                toast.success(`You won a ${prize.value}% discount!`);
-              } else if (prize.type === "cashback") {
-                toast.success(`You won ₦${prize.value} cashback!`);
-              } else {
-                toast.info("Better luck next time!");
-              }
-            } catch (error) {
-              toast.error("Failed to spin. Try again later.");
-            }
-          }}
-          onClose={() => setShowSpinWheel(false)}
-        />
-      )}
 
       {/* Withdrawal Modal */}
       <WithdrawalModal

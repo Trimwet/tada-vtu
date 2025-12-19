@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -6,18 +8,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { 
   Phone, 
-  Mail, 
+  Envelope, 
   MapPin, 
   Clock, 
-  MessageCircle, 
-  Send, 
+  ChatCircle, 
+  PaperPlaneTilt, 
   Shield, 
   Users, 
-  Award,
+  Trophy,
   CheckCircle,
-  Zap,
+  Lightning,
   Star
-} from "lucide-react"
+} from "@phosphor-icons/react"
 import Link from "next/link"
 
 export default function ContactPage() {
@@ -29,7 +31,7 @@ export default function ContactPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
+                <Lightning size={20} className="text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">TADA VTU</span>
             </div>
@@ -50,7 +52,7 @@ export default function ContactPage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-4 py-2 rounded-full mb-6">
-              <MessageCircle className="h-4 w-4" />
+              <ChatCircle size={16} />
               <span className="text-sm font-medium">We're Here to Help</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
@@ -62,15 +64,15 @@ export default function ContactPage() {
             </p>
             <div className="flex items-center justify-center space-x-8 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>24/7 Support</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>Response in Minutes</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>100% Satisfaction</span>
               </div>
             </div>
@@ -85,7 +87,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Phone className="h-8 w-8 text-green-600" />
+                  <Phone size={32} className="text-green-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Phone Support</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Speak with our experts</CardDescription>
@@ -102,7 +104,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="h-8 w-8 text-blue-600" />
+                  <Envelope size={32} className="text-blue-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Email Support</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Get detailed responses</CardDescription>
@@ -119,7 +121,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-8 w-8 text-purple-600" />
+                  <ChatCircle size={32} className="text-purple-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Live Chat</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Instant assistance</CardDescription>
@@ -136,7 +138,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="h-8 w-8 text-orange-600" />
+                  <MapPin size={32} className="text-orange-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Visit Us</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Our office location</CardDescription>
@@ -234,7 +236,7 @@ export default function ContactPage() {
                   </div>
                   
                   <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                    <Send className="h-4 w-4 mr-2" />
+                    <PaperPlaneTilt size={16} className="mr-2" />
                     Send Message
                   </Button>
                 </form>
@@ -298,21 +300,21 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="h-8 w-8 text-white" />
+                  <Clock size={32} className="text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">Lightning Fast</h3>
                 <p className="text-green-100">Average response time under 2 minutes</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-8 w-8 text-white" />
+                  <Users size={32} className="text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">Expert Team</h3>
                 <p className="text-green-100">Certified professionals ready to help</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="h-8 w-8 text-white" />
+                  <Trophy size={32} className="text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-2">Award Winning</h3>
                 <p className="text-green-100">Rated 4.9/5 by 50,000+ customers</p>
@@ -351,7 +353,7 @@ export default function ContactPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
+                  <Lightning size={20} className="text-white" />
                 </div>
                 <span className="text-xl font-bold">TADA VTU</span>
               </div>
@@ -359,7 +361,7 @@ export default function ContactPage() {
                 Nigeria's most trusted VTU platform for airtime, data, and bill payments.
               </p>
               <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <Star className="h-4 w-4" />
+                <Star size={16} />
                 <span>Rated 4.9/5 by customers</span>
               </div>
             </div>

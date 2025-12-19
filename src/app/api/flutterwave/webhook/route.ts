@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Force dynamic to prevent caching issues
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
   return createClient(url, serviceKey);
+}
+
+// GET endpoint for testing webhook URL accessibility
+export async function GET() {
+  return NextResponse.json({ 
+    status: 'ok', 
+    message: 'Flutterwave webhook endpoint is active',
+    timestamp: new Date().toISOString()
+  });
 }
 
 export async function POST(request: NextRequest) {

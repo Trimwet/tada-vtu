@@ -100,41 +100,40 @@
         scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
     }
 
-    /* Hide scrollbar for sidebar and other elements */
-    .sidebar-scroll,
+    /* Mini floating scrollbar for sidebar */
+    .sidebar-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--primary) / 0.4) transparent;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 8px 0;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+        background: hsl(var(--primary) / 0.4);
+        border-radius: 10px;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--primary) / 0.6);
+    }
+
+    /* Hide scrollbar utility */
     .no-scrollbar {
         scrollbar-width: none !important;
         -ms-overflow-style: none !important;
     }
 
-    .sidebar-scroll::-webkit-scrollbar,
     .no-scrollbar::-webkit-scrollbar {
         display: none !important;
         width: 0 !important;
         height: 0 !important;
-    }
-
-    /* Hide scrollbar on aside elements (sidebar) */
-    aside {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    aside::-webkit-scrollbar {
-        display: none;
-        width: 0;
-        height: 0;
-    }
-
-    aside nav {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    aside nav::-webkit-scrollbar {
-        display: none;
-        width: 0;
-        height: 0;
     }
 
     /* Thin scrollbar for smaller containers */
@@ -574,4 +573,109 @@
 [data-sonner-toast] [data-close-button]:hover {
   background: rgba(255, 255, 255, 0.2) !important;
   transform: scale(1.1);
+}
+
+
+/* Gift Card Confetti Animation */
+@keyframes confetti {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-out forwards;
+}
+
+/* Hearts animation for love gifts */
+@keyframes hearts-float {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-hearts {
+  animation: hearts-float 4s ease-out forwards;
+}
+
+/* Balloons animation */
+@keyframes balloons {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(50vh) scale(1);
+  }
+  100% {
+    transform: translateY(-100vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-balloons {
+  animation: balloons 5s ease-out forwards;
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+  0%, 100% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Gift box shake animation */
+@keyframes gift-shake {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-gift-shake {
+  animation: gift-shake 0.5s ease-in-out infinite;
+}
+
+/* Celebration burst */
+@keyframes burst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-burst {
+  animation: burst 0.6s ease-out forwards;
 }

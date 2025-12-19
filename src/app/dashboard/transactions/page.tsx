@@ -48,6 +48,8 @@ export default function TransactionsPage() {
     switch (type) {
       case "deposit":
         return "arrow-down";
+      case "withdrawal":
+        return "arrow-up";
       case "airtime":
         return "call";
       case "data":
@@ -56,8 +58,12 @@ export default function TransactionsPage() {
         return "tv";
       case "electricity":
         return "flash";
+      case "referral":
+        return "people";
+      case "cashback":
+        return "gift";
       default:
-        return "swap-horizontal";
+        return "receipt";
     }
   };
 

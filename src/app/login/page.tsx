@@ -9,6 +9,7 @@ import { IonIcon } from '@/components/ion-icon';
 import { Logo } from '@/components/logo';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { AnimatedBackgroundWrapper } from '@/components/animated-background-wrapper';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -78,36 +79,44 @@ export default function LoginPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen bg-black relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Animated Background */}
+      <AnimatedBackgroundWrapper />
+      
+      {/* Green gradient accents */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[128px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
+      
+      <div className="w-full max-w-md space-y-6 relative z-10">
         <div className="flex justify-center">
           <Logo size="lg" href="/" />
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 space-y-6">
+        {/* Glassmorphism card */}
+        <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl shadow-green-500/5">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-semibold text-foreground">Welcome Back</h1>
-            <p className="text-muted-foreground text-sm">Sign in to your account to continue</p>
+            <h1 className="text-2xl font-semibold text-white">Welcome Back</h1>
+            <p className="text-gray-400 text-sm">Sign in to your account to continue</p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-300">Email</Label>
               <div className="relative">
-                <IonIcon name="mail-outline" size="18px" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <input ref={emailRef} id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full h-11 pl-10 pr-3 rounded-lg bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-colors" />
+                <IonIcon name="mail-outline" size="18px" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                <input ref={emailRef} id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full h-11 pl-10 pr-3 rounded-lg bg-white/[0.05] border border-white/10 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-colors" />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium text-gray-300">Password</Label>
                 <Link href="/forgot-password" className="text-sm text-green-500 hover:text-green-400 transition-colors">Forgot password?</Link>
               </div>
               <div className="relative">
-                <IonIcon name="lock-closed-outline" size="18px" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <input ref={passwordRef} id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full h-11 pl-10 pr-10 rounded-lg bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-colors" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                <IonIcon name="lock-closed-outline" size="18px" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                <input ref={passwordRef} id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full h-11 pl-10 pr-10 rounded-lg bg-white/[0.05] border border-white/10 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-colors" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                   <IonIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size="18px" />
                 </button>
               </div>
@@ -124,13 +133,13 @@ export default function LoginPage() {
           </form>
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-transparent backdrop-blur-sm px-2 text-gray-500">Or continue with</span>
             </div>
           </div>
 
-          <Button type="button" variant="outline" className="w-full h-11 border-border hover:bg-muted transition-colors" disabled={googleLoading}
+          <Button type="button" variant="outline" className="w-full h-11 border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08] transition-colors" disabled={googleLoading}
             onClick={async () => {
               setGoogleLoading(true);
               try { await signInWithGoogle(); } catch { toast.error('Failed to sign in with Google'); setGoogleLoading(false); }
@@ -154,7 +163,7 @@ export default function LoginPage() {
           </Button>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Don&apos;t have an account? </span>
+            <span className="text-gray-500">Don&apos;t have an account? </span>
             <Link href="/register" className="text-green-500 hover:text-green-400 font-medium transition-colors">Sign up</Link>
           </div>
         </div>

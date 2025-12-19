@@ -2,10 +2,13 @@
 import Link from "next/link";
 import { LogoInline } from "@/components/logo";
 import { LiveTransactionTicker } from "@/components/stats-counter";
+import { AnimatedBackgroundWrapper } from "@/components/animated-background-wrapper";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Animated Background */}
+      <AnimatedBackgroundWrapper />
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/90 backdrop-blur-xl border-b border-white/10 z-50">
         <div className="container mx-auto px-6 py-4">

@@ -79,10 +79,23 @@ export interface PaymentResponse {
   link: string;
 }
 
-// Calculate service charge: minimum ₦50 or 1% of amount (your platform fee)
+// Calculate TADA platform fee using tiered structure
+// Psychology: ₦29/₦49/₦99/₦149 feel cheaper than round numbers
 export function calculateServiceCharge(amount: number): number {
-  const percentageCharge = Math.ceil(amount * 0.01); // 1%
-  return Math.max(50, percentageCharge); // Minimum ₦50
+  if (amount < 1000) return 29;        // ₦100 - ₦999: ₦29
+  if (amount < 5000) return 29;        // ₦1,000 - ₦4,999: ₦29
+  if (amount < 10000) return 49;       // ₦5,000 - ₦9,999: ₦49
+  if (amount < 50000) return 99;       // ₦10,000 - ₦49,999: ₦99
+  return 149;                          // ₦50,000+: ₦149
+}
+
+// Fee tier breakdown for display purposes
+export function getFeeTier(amount: number): { fee: number; tier: string } {
+  if (amount < 1000) return { fee: 29, tier: '₦100 - ₦999' };
+  if (amount < 5000) return { fee: 29, tier: '₦1,000 - ₦4,999' };
+  if (amount < 10000) return { fee: 49, tier: '₦5,000 - ₦9,999' };
+  if (amount < 50000) return { fee: 99, tier: '₦10,000 - ₦49,999' };
+  return { fee: 149, tier: '₦50,000+' };
 }
 
 // Calculate Flutterwave processing fee (approximately 1.4% for cards, capped at ₦2000)
@@ -116,8 +129,9 @@ export async function initiatePayment(payload: PaymentPayload) {
   return flutterwaveRequest<PaymentResponse>('/payments', 'POST', {
     ...payload,
     currency: payload.currency || 'NGN',
-    // Bank transfer first (lower fees), then card, then USSD
-    payment_options: 'banktransfer,card,ussd',
+    // Card, Bank Transfer, and USSD only
+    // Note: "bank" (direct debit) removed due to Flutterwave fingerprint API issues
+    payment_options: 'card,banktransfer,ussd',
     // pass_charge: false = merchant pays Flutterwave fee (deducted from settlement)
     // Customer pays exactly what we show them - no surprises!
     pass_charge: false,

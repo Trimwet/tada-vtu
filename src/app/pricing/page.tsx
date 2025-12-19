@@ -1,7 +1,9 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, X, Star, TrendingUp, Shield, Clock, Users, Award, Zap } from "lucide-react"
+import { CheckCircle, X, Star, TrendUp, Shield, Clock, Users, Trophy, Lightning } from "@phosphor-icons/react"
 import Link from "next/link"
 
 export default function PricingPage() {
@@ -68,7 +70,7 @@ export default function PricingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
+                <Lightning size={20} className="text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">TADA VTU</span>
             </div>
@@ -89,7 +91,7 @@ export default function PricingPage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-4 py-2 rounded-full mb-6">
-              <Award className="h-4 w-4" />
+              <Trophy size={16} />
               <span className="text-sm font-medium">Transparent Pricing</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
@@ -101,15 +103,15 @@ export default function PricingPage() {
             </p>
             <div className="flex items-center justify-center space-x-8 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>No Hidden Fees</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>Cancel Anytime</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle size={16} className="text-green-600" />
                 <span>14-Day Free Trial</span>
               </div>
             </div>
@@ -129,7 +131,7 @@ export default function PricingPage() {
               }`}>
                 {plan.popular && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-1">
-                    <Star className="h-3 w-3 mr-1" />
+                    <Star size={12} className="mr-1" />
                     Most Popular
                   </Badge>
                 )}
@@ -152,9 +154,9 @@ export default function PricingPage() {
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center space-x-3">
                         {feature.included ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          <CheckCircle size={20} className="text-green-600 flex-shrink-0" />
                         ) : (
-                          <X className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <X size={20} className="text-gray-400 flex-shrink-0" />
                         )}
                         <span className={`text-sm ${
                           feature.included 
@@ -223,20 +225,20 @@ export default function PricingPage() {
                       <td className="py-4 px-6 text-gray-900 dark:text-white font-medium">{feature}</td>
                       <td className="py-4 px-6 text-center">
                         {index < 4 ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                          <CheckCircle size={20} className="text-green-600 mx-auto" />
                         ) : (
-                          <X className="h-5 w-5 text-gray-400 mx-auto" />
+                          <X size={20} className="text-gray-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-6 text-center">
                         {index < 6 ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                          <CheckCircle size={20} className="text-green-600 mx-auto" />
                         ) : (
-                          <X className="h-5 w-5 text-gray-400 mx-auto" />
+                          <X size={20} className="text-gray-400 mx-auto" />
                         )}
                       </td>
                       <td className="py-4 px-6 text-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
+                        <CheckCircle size={20} className="text-green-600 mx-auto" />
                       </td>
                     </tr>
                   ))}
@@ -320,7 +322,7 @@ export default function PricingPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
+                  <Lightning size={20} className="text-white" />
                 </div>
                 <span className="text-xl font-bold">TADA VTU</span>
               </div>

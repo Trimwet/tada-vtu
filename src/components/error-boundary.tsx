@@ -37,6 +37,26 @@ export class ErrorBoundary extends Component<Props, State> {
       timestamp: new Date().toISOString(),
       url: typeof window !== 'undefined' ? window.location.href : 'unknown'
     });
+
+    // Detect RSC/chunk loading errors and auto-refresh
+    const isChunkError = error.message.includes('is not a function') ||
+                         error.message.includes('Loading chunk') ||
+                         error.message.includes('Failed to fetch RSC') ||
+                         error.message.includes('ChunkLoadError');
+    
+    if (isChunkError && typeof window !== 'undefined') {
+      // Clear service worker caches and reload
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(names => {
+          Promise.all(names.map(name => caches.delete(name))).then(() => {
+            console.log('[ErrorBoundary] Cleared caches, reloading...');
+            window.location.reload();
+          });
+        });
+      } else {
+        window.location.reload();
+      }
+    }
   }
 
   render() {

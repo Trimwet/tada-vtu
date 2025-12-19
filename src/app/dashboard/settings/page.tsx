@@ -13,10 +13,14 @@ import { LogoutDialog } from "@/components/logout-dialog";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const push = usePushNotifications(user?.id);
+  
   const [notifications, setNotifications] = useState({
-    push: true,
     email: true,
     sms: false,
     promotions: true,
@@ -27,6 +31,26 @@ export default function SettingsPage() {
     biometric: false,
     autoLogout: true,
   });
+
+  const handlePushToggle = async () => {
+    if (push.isSubscribed) {
+      const success = await push.unsubscribe();
+      if (success) {
+        toast.success("Push notifications disabled");
+      } else {
+        toast.error(push.error || "Failed to disable notifications");
+      }
+    } else {
+      const success = await push.subscribe();
+      if (success) {
+        toast.success("Push notifications enabled! 🔔");
+      } else if (push.permission === 'denied') {
+        toast.error("Please enable notifications in your browser settings");
+      } else {
+        toast.error(push.error || "Failed to enable notifications");
+      }
+    }
+  };
 
   const Toggle = ({
     enabled,
@@ -295,18 +319,21 @@ export default function SettingsPage() {
                   Push Notifications
                 </p>
                 <p className="text-muted-foreground text-sm">
-                  Receive alerts on your device
+                  {push.isSupported 
+                    ? push.isSubscribed 
+                      ? "You'll receive alerts on this device" 
+                      : "Enable to receive alerts on this device"
+                    : "Not supported on this browser"}
                 </p>
               </div>
-              <Toggle
-                enabled={notifications.push}
-                onChange={() =>
-                  setNotifications({
-                    ...notifications,
-                    push: !notifications.push,
-                  })
-                }
-              />
+              {push.isSupported ? (
+                <Toggle
+                  enabled={push.isSubscribed}
+                  onChange={handlePushToggle}
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground">Unavailable</span>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <div>

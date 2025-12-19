@@ -1,14 +1,12 @@
 // Service Worker for TADA VTU - Advanced Caching & Performance
-const CACHE_NAME = 'tada-vtu-v1';
-const DYNAMIC_CACHE = 'tada-vtu-dynamic-v1';
+// IMPORTANT: Increment this version on each deployment to bust caches
+const SW_VERSION = '2';
+const CACHE_NAME = `tada-vtu-v${SW_VERSION}`;
+const DYNAMIC_CACHE = `tada-vtu-dynamic-v${SW_VERSION}`;
 const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
-// Assets to cache immediately on install
+// Assets to cache immediately on install (only truly static assets)
 const STATIC_ASSETS = [
-  '/',
-  '/login',
-  '/register',
-  '/dashboard',
   '/logo-icon.svg',
   '/logo.svg',
   '/logo-dark.svg',
@@ -18,33 +16,36 @@ const STATIC_ASSETS = [
 
 // Patterns for resources to cache
 const CACHE_PATTERNS = {
-  // Cache-first strategy (static assets)
+  // Cache-first strategy (only immutable static assets like images/fonts)
   cacheFirst: [
-    /\.(?:css|js|woff2?|ttf|otf|eot)$/,
-    /\/_next\/static\//,
+    /\.(?:woff2?|ttf|otf|eot)$/,
     /\/fonts\//,
     /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/
   ],
-  // Network-first strategy (API calls, dynamic content)
+  // Network-first strategy (API calls, dynamic content, JS/CSS)
   networkFirst: [
     /\/api\//,
     /\/_next\/data\//,
+    /\/_next\/static\//,  // JS/CSS chunks - network first to avoid stale code
+    /\.(?:css|js)$/,
     /\.json$/
   ],
-  // Stale-while-revalidate strategy
-  staleWhileRevalidate: [
-    /\/dashboard/,
-    /\/profile/,
-    /\/transactions/
-  ],
-  // Never cache
+  // Stale-while-revalidate strategy (pages - but not RSC payloads)
+  staleWhileRevalidate: [],
+  // Never cache - critical for RSC and real-time data
   neverCache: [
     /\/api\/auth/,
     /\/api\/admin/,
     /\/api\/flutterwave/,
     /\/api\/inlomax\/.*\/(airtime|data|cable|electricity|betting)/,
     /socket\.io/,
-    /hot-update/
+    /hot-update/,
+    /\.rsc$/,           // RSC payloads
+    /\?_rsc=/,          // RSC query params
+    /\/dashboard/,      // Dashboard pages - always fresh
+    /\/profile/,
+    /\/transactions/,
+    /\/rewards/
   ]
 };
 
@@ -74,21 +75,31 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean old caches
+// Activate event - clean old caches and force refresh clients
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker');
+  console.log('[SW] Activating Service Worker v' + SW_VERSION);
 
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
+          // Delete ALL old caches that don't match current version
           if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    })
+    .then(() => self.clients.claim())
+    .then(() => {
+      // Notify all clients to refresh if they have stale code
+      self.clients.matchAll({ type: 'window' }).then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'SW_UPDATED', version: SW_VERSION });
+        });
+      });
+    })
   );
 });
 
@@ -254,6 +265,97 @@ self.addEventListener('message', (event) => {
       names.forEach(name => caches.delete(name));
     });
   }
+});
+
+// ==========================================
+// PUSH NOTIFICATIONS
+// ==========================================
+
+// Handle push notification received
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received');
+
+  let data = {
+    title: 'TADA VTU',
+    body: 'You have a new notification!',
+    icon: '/logo-icon.svg',
+    badge: '/logo-icon.svg',
+    tag: 'default',
+    data: { url: '/dashboard' },
+  };
+
+  try {
+    if (event.data) {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    }
+  } catch (e) {
+    console.log('[SW] Error parsing push data:', e);
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/logo-icon.svg',
+    badge: data.badge || '/logo-icon.svg',
+    tag: data.tag || 'tada-notification',
+    data: data.data || { url: '/dashboard' },
+    vibrate: [100, 50, 100],
+    requireInteraction: data.tag === 'gift',
+    actions: data.actions || [],
+    // Renotify if same tag
+    renotify: true,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.action);
+
+  event.notification.close();
+
+  // Get the URL to open
+  let urlToOpen = '/dashboard';
+  
+  if (event.notification.data && event.notification.data.url) {
+    urlToOpen = event.notification.data.url;
+  }
+
+  // Handle action buttons
+  if (event.action === 'open') {
+    // Open gift action
+    urlToOpen = '/dashboard/send-gift?tab=received';
+  } else if (event.action === 'later') {
+    // Just close the notification
+    return;
+  }
+
+  // Focus existing window or open new one
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window open
+        for (const client of windowClients) {
+          if (client.url.includes('tadavtu.com') && 'focus' in client) {
+            client.navigate(urlToOpen);
+            return client.focus();
+          }
+        }
+        // Open new window if none exists
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Handle notification close
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed');
+  // Could track analytics here
 });
 
 // Periodic cache cleanup (every 24 hours when SW is active)

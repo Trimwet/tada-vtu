@@ -216,7 +216,7 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 py-6">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-700 pb-4">
+        <div className="flex gap-2 mb-6 border-b border-gray-700 pb-4 flex-wrap">
           {(['overview', 'users', 'transactions'] as const).map((tab) => (
             <Button
               key={tab}
@@ -230,6 +230,13 @@ export default function AdminDashboard() {
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </Button>
           ))}
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/admin/analytics')}
+            className="text-gray-400 hover:text-white hover:bg-gray-800 ml-auto"
+          >
+            📈 Analytics
+          </Button>
         </div>
 
         {/* OVERVIEW TAB */}
