@@ -75,28 +75,20 @@ export function useNotifications(userId: string | undefined): UseNotificationsRe
 }
 
 // Check if user needs to add phone number and create notification if needed
-export async function checkAndNotifyMissingPhone(userId: string, phoneNumber: string | null | undefined) {
+export async function checkAndNotifyMissingPhone(
+  userId: string,
+  phoneNumber: string | null | undefined
+) {
   if (phoneNumber) return; // Already has phone number
 
-  const supabase = getSupabase();
-
-  // Check if we already sent this notification
-  const { data: existing } = await supabase
-    .from('notifications')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('title', '📱 Add Your Phone Number')
-    .limit(1);
-
-  if (existing && existing.length > 0) return; // Already notified
-
-  // Create notification - cast to any to bypass strict typing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from('notifications').insert({
-    user_id: userId,
-    type: 'warning',
-    title: '📱 Add Your Phone Number',
-    message: 'Please add your phone number in Settings to receive airtime and data. This is required for purchases.',
-    is_read: false,
-  });
+  try {
+    // Use API route which has admin access to insert notifications
+    await fetch("/api/notifications/check-phone", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+  } catch (err) {
+    console.error("Error checking phone notification:", err);
+  }
 }
