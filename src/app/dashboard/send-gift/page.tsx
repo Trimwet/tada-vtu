@@ -187,7 +187,7 @@ export default function SendGiftPage() {
       });
       const result = await response.json();
       if (result.status) {
-        toast.success("Gift cancelled", `₦${result.data.refundAmount.toLocaleString()} refunded`);
+        toast.success("Gift cancelled", { description: `₦${result.data.refundAmount.toLocaleString()} refunded` });
         await refreshProfile();
         await fetchGifts();
       } else {
@@ -210,7 +210,7 @@ export default function SendGiftPage() {
       });
       const result = await response.json();
       if (result.status) {
-        toast.success("Email sent!", "Notification resent to recipient");
+        toast.success("Email sent!", { description: "Notification resent to recipient" });
       } else {
         toast.error(result.message || "Failed to resend email");
       }
