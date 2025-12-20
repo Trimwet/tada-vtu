@@ -30,9 +30,10 @@ export async function sendGiftNotificationEmail(data: GiftEmailData) {
 
   try {
     const { data: result, error } = await resend.emails.send({
-      from: `TADA VTU <${FROM_EMAIL}>`,
+      from: `TADA VTU Gifts <${FROM_EMAIL}>`,
+      replyTo: 'support@tadavtu.com',
       to: data.recipientEmail,
-      subject: `${occasionEmoji} ${data.senderName} sent you a gift!`,
+      subject: `${data.senderName} sent you a ₦${data.amount.toLocaleString()} gift on TADA VTU`,
       html: generateGiftEmailHtml({
         ...data,
         giftLink,
