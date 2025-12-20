@@ -59,13 +59,9 @@ export function AiMessageGenerator({
       if (result.status) {
         onGenerate(result.data.message);
         if (result.data.fallback) {
-          toast.info("Generated using fallback templates", {
-            description: "AI service unavailable"
-          });
+          toast.info("Generated using fallback templates");
         } else {
-          toast.success("Message generated!", {
-            description: "AI-powered personalized message"
-          });
+          toast.success("Message generated!");
         }
         setShowToneSelector(false);
       } else {
@@ -78,8 +74,6 @@ export function AiMessageGenerator({
       setIsGenerating(false);
     }
   };
-
-  const selectedToneOption = TONE_OPTIONS.find(t => t.value === selectedTone);
 
   return (
     <div className="space-y-3">

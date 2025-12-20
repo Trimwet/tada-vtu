@@ -14,7 +14,6 @@ import {
   GIFT_AMOUNTS,
   getThemesByOccasion,
   getGiftStatusDisplay,
-  getThemeById,
 } from "@/lib/gift-cards";
 import { AiMessageGenerator } from "@/components/ai-message-generator";
 import { ShareGiftModal } from "@/components/share-gift-modal";

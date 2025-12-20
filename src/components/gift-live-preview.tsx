@@ -1,7 +1,7 @@
 "use client";
 
 import { IonIcon } from "@/components/ion-icon";
-import { OCCASION_CONFIG, getThemeById } from "@/lib/gift-cards";
+import { OCCASION_CONFIG } from "@/lib/gift-cards";
 import type { GiftOccasion } from "@/types/database";
 
 interface GiftLivePreviewProps {
@@ -33,7 +33,6 @@ export function GiftLivePreview({
   }
 
   const config = OCCASION_CONFIG[occasion];
-  const theme = getThemeById(themeId);
   const occasionColor = config?.color || "#22c55e";
   const numAmount = parseInt(amount) || 0;
 
