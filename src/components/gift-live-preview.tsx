@@ -6,7 +6,6 @@ import type { GiftOccasion } from "@/types/database";
 
 interface GiftLivePreviewProps {
   occasion: GiftOccasion | null;
-  themeId: string;
   amount: string;
   senderName: string;
   recipientEmail: string;
@@ -15,7 +14,6 @@ interface GiftLivePreviewProps {
 
 export function GiftLivePreview({
   occasion,
-  themeId,
   amount,
   senderName,
   recipientEmail,
