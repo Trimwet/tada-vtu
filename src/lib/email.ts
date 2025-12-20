@@ -1,4 +1,4 @@
-y// Email service using Resend
+// Email service using Resend
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
