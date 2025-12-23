@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface Shape {
   x: number;
   y: number;
+  z: number; // 3D depth (0 = far, 1 = close)
   size: number;
+  baseSize: number;
   speedX: number;
   speedY: number;
+  speedZ: number; // Movement in depth
+  rotation: number;
+  rotationSpeed: number;
   opacity: number;
-  type: "circle" | "square";
+  type: "circle" | "square" | "triangle" | "hexagon" | "ring";
   color: string;
 }
 
@@ -17,76 +22,64 @@ export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shapesRef = useRef<Shape[]>([]);
   const animationRef = useRef<number>(0);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Only start animation when component is visible
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    if (canvasRef.current) {
-      observer.observe(canvasRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
-    // Optimize canvas settings
-    ctx.imageSmoothingEnabled = false;
 
     // Set canvas size
     const resizeCanvas = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limit DPR for performance
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
-      ctx.scale(dpr, dpr);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
-    // Reduced colors for better performance
+    // Colors - green theme
     const colors = [
-      "rgba(34, 197, 94, 0.08)",  // green-500
-      "rgba(16, 185, 129, 0.06)", // emerald-500
-      "rgba(52, 211, 153, 0.04)",  // emerald-400
+      "rgba(34, 197, 94, 0.15)",  // green-500
+      "rgba(16, 185, 129, 0.12)", // emerald-500
+      "rgba(52, 211, 153, 0.1)",  // emerald-400
+      "rgba(74, 222, 128, 0.08)", // green-400
+      "rgba(134, 239, 172, 0.06)", // green-300
     ];
 
-    // Initialize fewer shapes for better performance
+    // Initialize shapes with 3D depth
     const initShapes = () => {
       const shapes: Shape[] = [];
-      const shapeCount = Math.min(Math.floor((window.innerWidth * window.innerHeight) / 80000), 15); // Reduced count
+      const shapeCount = Math.floor((canvas.width * canvas.height) / 40000); // Slightly more shapes
 
-      for (let i = 0; i < shapeCount; i++) {
+      for (let i = 0; i < Math.min(shapeCount, 30); i++) {
+        const z = Math.random(); // 0 = far background, 1 = close foreground
+        const baseSize = Math.random() * 50 + 15;
         shapes.push({
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          size: Math.random() * 30 + 10, // Smaller sizes
-          speedX: (Math.random() - 0.5) * 0.3, // Slower movement
-          speedY: (Math.random() - 0.5) * 0.3,
-          opacity: Math.random() * 0.15 + 0.05, // Lower opacity
-          type: Math.random() > 0.5 ? "circle" : "square", // Only 2 types
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          z,
+          baseSize,
+          size: baseSize * (0.3 + z * 0.7), // Far shapes smaller, close shapes bigger
+          speedX: (Math.random() - 0.5) * 0.2 * (0.3 + z * 0.7), // Far shapes move slower
+          speedY: (Math.random() - 0.5) * 0.2 * (0.3 + z * 0.7),
+          speedZ: (Math.random() - 0.5) * 0.003, // Slow depth movement
+          rotation: Math.random() * Math.PI * 2,
+          rotationSpeed: (Math.random() - 0.5) * 0.003 * (0.5 + z * 0.5),
+          opacity: (Math.random() * 0.3 + 0.05) * (0.4 + z * 0.6), // Far shapes more transparent
+          type: ["circle", "square", "triangle", "hexagon", "ring"][
+            Math.floor(Math.random() * 5)
+          ] as Shape["type"],
           color: colors[Math.floor(Math.random() * colors.length)],
         });
       }
+      // Sort by depth so far shapes render first (behind)
+      shapes.sort((a, b) => a.z - b.z);
       shapesRef.current = shapes;
     };
     initShapes();
 
-    // Optimized draw functions
+    // Draw functions
     const drawCircle = (ctx: CanvasRenderingContext2D, shape: Shape) => {
       ctx.beginPath();
       ctx.arc(shape.x, shape.y, shape.size / 2, 0, Math.PI * 2);
@@ -94,73 +87,136 @@ export function AnimatedBackground() {
     };
 
     const drawSquare = (ctx: CanvasRenderingContext2D, shape: Shape) => {
-      ctx.fillRect(shape.x - shape.size / 2, shape.y - shape.size / 2, shape.size, shape.size);
+      ctx.save();
+      ctx.translate(shape.x, shape.y);
+      ctx.rotate(shape.rotation);
+      ctx.fillRect(-shape.size / 2, -shape.size / 2, shape.size, shape.size);
+      ctx.restore();
     };
 
-    // Optimized animation loop with reduced frame rate
-    let lastTime = 0;
-    const targetFPS = 30; // Reduced from 60fps
-    const frameInterval = 1000 / targetFPS;
+    const drawTriangle = (ctx: CanvasRenderingContext2D, shape: Shape) => {
+      ctx.save();
+      ctx.translate(shape.x, shape.y);
+      ctx.rotate(shape.rotation);
+      ctx.beginPath();
+      ctx.moveTo(0, -shape.size / 2);
+      ctx.lineTo(shape.size / 2, shape.size / 2);
+      ctx.lineTo(-shape.size / 2, shape.size / 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
 
-    const animate = (currentTime: number) => {
-      if (currentTime - lastTime < frameInterval) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
+    const drawHexagon = (ctx: CanvasRenderingContext2D, shape: Shape) => {
+      ctx.save();
+      ctx.translate(shape.x, shape.y);
+      ctx.rotate(shape.rotation);
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        const x = (shape.size / 2) * Math.cos(angle);
+        const y = (shape.size / 2) * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       }
-      lastTime = currentTime;
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
 
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    const drawRing = (ctx: CanvasRenderingContext2D, shape: Shape) => {
+      ctx.beginPath();
+      ctx.arc(shape.x, shape.y, shape.size / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = shape.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    };
+
+
+    // Animation loop with 3D depth
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Sort by depth each frame for proper layering
+      shapesRef.current.sort((a, b) => a.z - b.z);
 
       shapesRef.current.forEach((shape) => {
         // Update position
         shape.x += shape.speedX;
         shape.y += shape.speedY;
+        shape.rotation += shape.rotationSpeed;
+
+        // Update depth (z) with oscillation for floating 3D effect
+        shape.z += shape.speedZ;
+        if (shape.z > 1) {
+          shape.z = 1;
+          shape.speedZ *= -1;
+        } else if (shape.z < 0) {
+          shape.z = 0;
+          shape.speedZ *= -1;
+        }
+
+        // Update size and opacity based on depth (parallax effect)
+        shape.size = shape.baseSize * (0.3 + shape.z * 0.7);
+        shape.opacity = (0.05 + shape.z * 0.15);
 
         // Wrap around edges
-        if (shape.x < -shape.size) shape.x = window.innerWidth + shape.size;
-        if (shape.x > window.innerWidth + shape.size) shape.x = -shape.size;
-        if (shape.y < -shape.size) shape.y = window.innerHeight + shape.size;
-        if (shape.y > window.innerHeight + shape.size) shape.y = -shape.size;
+        if (shape.x < -shape.size) shape.x = canvas.width + shape.size;
+        if (shape.x > canvas.width + shape.size) shape.x = -shape.size;
+        if (shape.y < -shape.size) shape.y = canvas.height + shape.size;
+        if (shape.y > canvas.height + shape.size) shape.y = -shape.size;
 
-        // Set fill style
-        ctx.fillStyle = shape.color;
+        // Apply depth-based blur effect via shadow
+        const blurAmount = (1 - shape.z) * 8; // Far = more blur
+        ctx.shadowBlur = blurAmount;
+        ctx.shadowColor = shape.color;
 
-        // Draw shape
-        if (shape.type === "circle") {
-          drawCircle(ctx, shape);
-        } else {
-          drawSquare(ctx, shape);
+        // Draw shape with depth-adjusted color
+        const depthAlpha = 0.4 + shape.z * 0.6;
+        ctx.fillStyle = shape.color.replace(/[\d.]+\)$/, `${shape.opacity * depthAlpha})`);
+
+        switch (shape.type) {
+          case "circle":
+            drawCircle(ctx, shape);
+            break;
+          case "square":
+            drawSquare(ctx, shape);
+            break;
+          case "triangle":
+            drawTriangle(ctx, shape);
+            break;
+          case "hexagon":
+            drawHexagon(ctx, shape);
+            break;
+          case "ring":
+            drawRing(ctx, shape);
+            break;
         }
+
+        ctx.shadowBlur = 0;
       });
 
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
-
-    // Cleanup resize listener
-    const handleResize = () => {
-      resizeCanvas();
-      initShapes();
-    };
-    window.addEventListener("resize", handleResize);
+    animate();
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", resizeCanvas);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.4 }}
+      style={{ opacity: 0.6 }}
     />
   );
 }
 
-// Lightweight floating particles - even more optimized
+// Floating particles version - lighter weight
 export function FloatingParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Array<{
@@ -169,32 +225,16 @@ export function FloatingParticles() {
     size: number;
     speedY: number;
     opacity: number;
+    pulse: number;
+    pulseSpeed: number;
   }>>([]);
   const animationRef = useRef<number>(0);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    if (canvasRef.current) {
-      observer.observe(canvasRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const resizeCanvas = () => {
@@ -202,65 +242,66 @@ export function FloatingParticles() {
       canvas.height = window.innerHeight;
     };
     resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
-    // Initialize fewer particles
+    // Initialize particles
     const initParticles = () => {
       const particles = [];
-      const count = Math.min(Math.floor((window.innerWidth * window.innerHeight) / 50000), 20);
+      const count = Math.floor((canvas.width * canvas.height) / 30000);
 
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < Math.min(count, 40); i++) {
         particles.push({
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          size: Math.random() * 2 + 1, // Smaller particles
-          speedY: Math.random() * 0.3 + 0.1, // Slower movement
-          opacity: Math.random() * 0.3 + 0.1,
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 4 + 1,
+          speedY: Math.random() * 0.5 + 0.1,
+          opacity: Math.random() * 0.5 + 0.2,
+          pulse: 0,
+          pulseSpeed: Math.random() * 0.02 + 0.01,
         });
       }
       particlesRef.current = particles;
     };
     initParticles();
 
-    // Reduced frame rate animation
-    let lastTime = 0;
-    const frameInterval = 1000 / 20; // 20fps for particles
-
-    const animate = (currentTime: number) => {
-      if (currentTime - lastTime < frameInterval) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-      lastTime = currentTime;
-
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particlesRef.current.forEach((p) => {
+        // Float upward
         p.y -= p.speedY;
+        p.pulse += p.pulseSpeed;
 
+        // Reset when off screen
         if (p.y < -10) {
-          p.y = window.innerHeight + 10;
-          p.x = Math.random() * window.innerWidth;
+          p.y = canvas.height + 10;
+          p.x = Math.random() * canvas.width;
         }
 
-        // Simple circle draw - no gradients for performance
+        // Pulsing opacity
+        const currentOpacity = p.opacity * (0.5 + 0.5 * Math.sin(p.pulse));
+
+        // Draw glowing particle
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        gradient.addColorStop(0, `rgba(34, 197, 94, ${currentOpacity})`);
+        gradient.addColorStop(1, "rgba(34, 197, 94, 0)");
+
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(34, 197, 94, ${p.opacity})`;
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
         ctx.fill();
       });
 
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    animationRef.current = requestAnimationFrame(animate);
-
-    window.addEventListener("resize", resizeCanvas);
+    animate();
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
     <canvas

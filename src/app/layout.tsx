@@ -92,7 +92,10 @@ export default function RootLayout({
             .bg-black { background-color: #000; }
             .text-white { color: #fff; }
             .hidden { display: none; }
-            @media (min-width: 768px) { .md\\:flex { display: flex; } }
+            @media (min-width: 1024px) { 
+              .lg\\:flex { display: flex; }
+              .lg\\:pl-64 { padding-left: 16rem; }
+            }
           `
         }} />
       </head>

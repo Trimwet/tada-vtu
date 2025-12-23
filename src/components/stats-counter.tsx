@@ -193,7 +193,7 @@ const TypeIconComponent: Record<string, () => React.ReactNode> = {
   Electricity: BoltIcon,
 };
 
-// Live transaction ticker - Optimized version
+// Live transaction ticker - Dark theme optimized with ECG border
 export function LiveTransactionTicker() {
   const [mounted, setMounted] = useState(false);
   const [transactions, setTransactions] = useState<Array<{
@@ -205,19 +205,23 @@ export function LiveTransactionTicker() {
     phone: string;
   }>>([]);
 
-  // Realistic transaction templates - simplified
+  // Realistic transaction templates with correct type-network-amount combinations
   const transactionTemplates = [
-    { type: "Airtime", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [100, 200, 500, 1000, 2000] },
-    { type: "Data", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [300, 500, 1000, 1500, 2000] },
-    { type: "Cable TV", networks: ["DStv", "GOtv"], amounts: [1850, 2950, 4150, 7900] },
-    { type: "Electricity", networks: ["IKEDC", "EKEDC"], amounts: [1000, 2000, 5000, 10000] },
+    // Airtime - mobile networks only, realistic amounts (₦100-₦5000)
+    { type: "Airtime", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [100, 200, 500, 1000, 2000, 3000, 5000] },
+    // Data - mobile networks only, realistic data prices
+    { type: "Data", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [300, 500, 1000, 1500, 2000, 3000, 5000] },
+    // Cable TV - DStv/GOtv only, subscription amounts
+    { type: "Cable TV", networks: ["DStv", "GOtv"], amounts: [1850, 2950, 4150, 7900, 12500, 15700, 21000] },
+    // Electricity - disco companies, token amounts
+    { type: "Electricity", networks: ["IKEDC", "EKEDC"], amounts: [1000, 2000, 3000, 5000, 10000, 15000, 20000] },
   ];
 
   const generateTransaction = () => {
     const template = transactionTemplates[Math.floor(Math.random() * transactionTemplates.length)];
     const network = template.networks[Math.floor(Math.random() * template.networks.length)];
     const amount = template.amounts[Math.floor(Math.random() * template.amounts.length)];
-    const prefixes = ["0803", "0805", "0701", "0802"];
+    const prefixes = ["0803", "0805", "0701", "0802", "0810", "0903", "0706", "0816", "0813"];
     
     return {
       id: Date.now() + Math.random(),
@@ -229,7 +233,7 @@ export function LiveTransactionTicker() {
     };
   };
 
-  // Initialize transactions only on client
+  // Initialize transactions only on client to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
     setTransactions([
@@ -245,7 +249,7 @@ export function LiveTransactionTicker() {
     const interval = setInterval(() => {
       const newTransaction = generateTransaction();
       setTransactions(prev => [newTransaction, ...prev.slice(0, 2)]);
-    }, 8000); // Slower updates for better performance
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [mounted]);
@@ -255,7 +259,7 @@ export function LiveTransactionTicker() {
     return <IconComponent />;
   };
 
-  // Show skeleton on server/initial render
+  // Show skeleton on server/initial render to avoid hydration mismatch
   if (!mounted) {
     return (
       <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-full max-w-[360px] shadow-2xl shadow-green-500/5">
@@ -286,7 +290,7 @@ export function LiveTransactionTicker() {
   }
 
   return (
-    <SimpleBorderWrapper>
+    <EcgBorderWrapper>
       <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-full max-w-[360px] shadow-2xl shadow-green-500/5">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
@@ -351,21 +355,291 @@ export function LiveTransactionTicker() {
         </div>
       </div>
       </div>
-    </SimpleBorderWrapper>
+    </EcgBorderWrapper>
   );
 }
 
-// Simplified border wrapper - much more performant
-function SimpleBorderWrapper({ children }: { children: React.ReactNode }) {
+// Electric Border Wrapper Component - Fluid lightning effect
+function EcgBorderWrapper({ children }: { children: React.ReactNode }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    };
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(container);
+
+    const borderRadius = 16;
+    const padding = 4;
+
+    // Lightning bolt particles traveling around the border
+    interface Bolt {
+      progress: number;
+      speed: number;
+      intensity: number;
+      jitter: number[];
+      life: number;
+      maxLife: number;
+      depth: number; // 3D depth layer (0-1, closer = brighter/faster)
+    }
+
+    const bolts: Bolt[] = [];
+    
+    // Spawn new bolts periodically
+    const spawnBolt = () => {
+      const depth = Math.random(); // 0 = far, 1 = close
+      bolts.push({
+        progress: Math.random(),
+        speed: 0.008 + Math.random() * 0.012 + depth * 0.01, // Much faster! 4-6x speed increase
+        intensity: 0.4 + depth * 0.6, // Closer = brighter
+        jitter: Array.from({ length: 20 }, () => (Math.random() - 0.5) * (4 + depth * 4)), // Thinner jitter
+        life: 0,
+        maxLife: 40 + Math.random() * 60, // Shorter life for snappier feel
+        depth,
+      });
+    };
+
+    // Start with a few bolts
+    for (let i = 0; i < 3; i++) spawnBolt();
+
+    // Get point on rounded rectangle perimeter
+    const getPerimeterPoint = (progress: number): { x: number; y: number; nx: number; ny: number } => {
+      const w = canvas.width - padding * 2;
+      const h = canvas.height - padding * 2;
+      const r = Math.min(borderRadius, w / 2, h / 2);
+      
+      const straightW = w - 2 * r;
+      const straightH = h - 2 * r;
+      const cornerLen = (Math.PI * r) / 2;
+      const total = 2 * straightW + 2 * straightH + 4 * cornerLen;
+      
+      let dist = (progress % 1) * total;
+      const ox = padding;
+      const oy = padding;
+
+      // Top edge
+      if (dist < straightW) {
+        return { x: ox + r + dist, y: oy, nx: 0, ny: -1 };
+      }
+      dist -= straightW;
+
+      // Top-right corner
+      if (dist < cornerLen) {
+        const a = (dist / cornerLen) * (Math.PI / 2);
+        return {
+          x: ox + w - r + Math.sin(a) * r,
+          y: oy + r - Math.cos(a) * r,
+          nx: Math.sin(a),
+          ny: -Math.cos(a),
+        };
+      }
+      dist -= cornerLen;
+
+      // Right edge
+      if (dist < straightH) {
+        return { x: ox + w, y: oy + r + dist, nx: 1, ny: 0 };
+      }
+      dist -= straightH;
+
+      // Bottom-right corner
+      if (dist < cornerLen) {
+        const a = (dist / cornerLen) * (Math.PI / 2);
+        return {
+          x: ox + w - r + Math.cos(a) * r,
+          y: oy + h - r + Math.sin(a) * r,
+          nx: Math.cos(a),
+          ny: Math.sin(a),
+        };
+      }
+      dist -= cornerLen;
+
+      // Bottom edge
+      if (dist < straightW) {
+        return { x: ox + w - r - dist, y: oy + h, nx: 0, ny: 1 };
+      }
+      dist -= straightW;
+
+      // Bottom-left corner
+      if (dist < cornerLen) {
+        const a = (dist / cornerLen) * (Math.PI / 2);
+        return {
+          x: ox + r - Math.sin(a) * r,
+          y: oy + h - r + Math.cos(a) * r,
+          nx: -Math.sin(a),
+          ny: Math.cos(a),
+        };
+      }
+      dist -= cornerLen;
+
+      // Left edge
+      if (dist < straightH) {
+        return { x: ox, y: oy + h - r - dist, nx: -1, ny: 0 };
+      }
+      dist -= straightH;
+
+      // Top-left corner
+      const a = (dist / cornerLen) * (Math.PI / 2);
+      return {
+        x: ox + r - Math.cos(a) * r,
+        y: oy + r - Math.sin(a) * r,
+        nx: -Math.cos(a),
+        ny: -Math.sin(a),
+      };
+    };
+
+    // Draw a lightning segment with 3D depth
+    const drawLightning = (bolt: Bolt) => {
+      const segmentCount = 12; // Fewer segments for sharper look
+      const fadeIn = Math.min(bolt.life / 10, 1); // Faster fade in
+      const fadeOut = Math.max(0, 1 - (bolt.life - bolt.maxLife + 20) / 20);
+      const alpha = bolt.intensity * fadeIn * fadeOut;
+
+      if (alpha <= 0) return;
+
+      // 3D depth affects size and blur - closer bolts are sharper and brighter
+      const depthScale = 0.3 + bolt.depth * 0.7; // 0.3 to 1.0
+      const mainWidth = 0.5 + bolt.depth * 0.8; // Thinner! 0.5 to 1.3px
+      const glowWidth = 1 + bolt.depth * 1.5; // 1 to 2.5px glow
+      const blurAmount = 3 + bolt.depth * 6; // Less blur for far, more for close
+
+      // Main bright bolt - THIN and sharp
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(74, 222, 128, ${alpha * depthScale})`;
+      ctx.lineWidth = mainWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = `rgba(34, 197, 94, ${0.6 + bolt.depth * 0.4})`;
+      ctx.shadowBlur = blurAmount;
+
+      for (let i = 0; i <= segmentCount; i++) {
+        const t = i / segmentCount;
+        const prog = bolt.progress - 0.02 + t * 0.04; // Shorter trail
+        const point = getPerimeterPoint(prog);
+        
+        // Add jagged lightning jitter - scaled by depth
+        const jitterIdx = Math.floor(t * (bolt.jitter.length - 1));
+        const jitterVal = bolt.jitter[jitterIdx] * (1 - Math.abs(t - 0.5) * 2) * depthScale;
+        
+        const x = point.x + point.nx * jitterVal;
+        const y = point.y + point.ny * jitterVal;
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Glow layer - also thinner
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(134, 239, 172, ${alpha * 0.4 * depthScale})`;
+      ctx.lineWidth = glowWidth;
+      ctx.shadowBlur = blurAmount * 1.5;
+
+      for (let i = 0; i <= segmentCount; i++) {
+        const t = i / segmentCount;
+        const prog = bolt.progress - 0.02 + t * 0.04;
+        const point = getPerimeterPoint(prog);
+        const jitterIdx = Math.floor(t * (bolt.jitter.length - 1));
+        const jitterVal = bolt.jitter[jitterIdx] * 0.4 * (1 - Math.abs(t - 0.5) * 2) * depthScale;
+        
+        const x = point.x + point.nx * jitterVal;
+        const y = point.y + point.ny * jitterVal;
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+    };
+
+    // Draw subtle base glow around border
+    const drawBaseGlow = () => {
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.15)";
+      ctx.lineWidth = 1;
+      
+      const steps = 100;
+      for (let i = 0; i <= steps; i++) {
+        const point = getPerimeterPoint(i / steps);
+        if (i === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    };
+
+    let frameCount = 0;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawBaseGlow();
+
+      // Sort bolts by depth (far ones first, close ones on top for 3D effect)
+      bolts.sort((a, b) => a.depth - b.depth);
+
+      // Update and draw bolts
+      for (let i = bolts.length - 1; i >= 0; i--) {
+        const bolt = bolts[i];
+        bolt.progress += bolt.speed;
+        bolt.life++;
+
+        // Randomly regenerate jitter for crackling effect - thinner jitter
+        if (Math.random() < 0.4) {
+          const idx = Math.floor(Math.random() * bolt.jitter.length);
+          bolt.jitter[idx] = (Math.random() - 0.5) * (4 + bolt.depth * 4);
+        }
+
+        drawLightning(bolt);
+
+        // Remove dead bolts
+        if (bolt.life > bolt.maxLife) {
+          bolts.splice(i, 1);
+        }
+      }
+
+      // Spawn new bolts more frequently for faster action
+      if (frameCount % 15 === 0 && bolts.length < 8 && Math.random() < 0.8) {
+        spawnBolt();
+      }
+
+      // Occasional burst of multiple bolts at different depths
+      if (frameCount % 90 === 0 && Math.random() < 0.5) {
+        for (let i = 0; i < 3; i++) spawnBolt();
+      }
+
+      frameCount++;
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="relative">
-      {/* Simple animated border using CSS */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-green-500/20 animate-pulse" 
-           style={{ animationDuration: '3s' }} />
-      <div className="absolute inset-[1px] rounded-2xl bg-black/50" />
-      <div className="relative z-10">
-        {children}
-      </div>
+    <div ref={containerRef} className="relative">
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 pointer-events-none z-10"
+      />
+      {children}
     </div>
   );
 }
