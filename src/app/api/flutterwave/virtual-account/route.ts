@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         email,
         is_permanent: false,
         tx_ref: txRef,
-        amount: amount + 20, // Add ₦20 buffer for fees
+        amount: amount + 30, // Add ₦30 service fee
         firstname: firstname || 'TADA',
         lastname: lastname || 'User',
         narration: 'TADA VTU Wallet Funding',

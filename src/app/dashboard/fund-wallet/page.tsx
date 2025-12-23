@@ -617,10 +617,10 @@ export default function FundWalletPage() {
                           <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5" />
                           <div className="text-sm">
                             <p className="text-muted-foreground">
-                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 20).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
+                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 30).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦20 service fee applies.
+                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦30 service fee applies.
                             </p>
                           </div>
                         </div>
