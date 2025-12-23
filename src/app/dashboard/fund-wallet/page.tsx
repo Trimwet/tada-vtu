@@ -398,59 +398,90 @@ export default function FundWalletPage() {
               ) : tempAccount ? (
                 <>
                   {/* Temporary Account Details */}
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-amber-500">⏱️ Temporary Account</span>
-                      <span className="text-xs bg-amber-500/20 text-amber-600 px-2 py-1 rounded-full">
-                        {formatExpiry(tempAccount.expiry_date)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Bank</span>
-                      <span className="font-semibold text-foreground">{tempAccount.bank_name}</span>
-                    </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Account Number</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg text-green-500 font-mono">
-                          {tempAccount.account_number}
-                        </span>
-                        <button
-                          onClick={async () => {
-                            await navigator.clipboard.writeText(tempAccount.account_number);
-                            setCopied(true);
-                            toast.success("Copied!");
-                            setTimeout(() => setCopied(false), 2000);
-                          }}
-                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                        >
-                          <IonIcon 
-                            name={copied ? "checkmark" : "copy-outline"} 
-                            size="18px" 
-                            color={copied ? "#22c55e" : "#888"} 
-                          />
-                        </button>
+                  <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-orange-500/10 border border-amber-500/30 rounded-2xl p-6 relative overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                    
+                    <div className="relative">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center">
+                            <IonIcon name="time" size="18px" color="#f59e0b" />
+                          </div>
+                          <span className="text-sm font-semibold text-amber-600">Temporary Account</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-amber-500/20 px-3 py-1.5 rounded-full">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium text-amber-700">
+                            {formatExpiry(tempAccount.expiry_date)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-muted-foreground">Amount to Transfer</span>
-                      <span className="font-bold text-foreground">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Account Name</span>
-                      <span className="font-medium text-foreground text-sm">{tempAccount.account_name}</span>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="bg-background/80 backdrop-blur-sm rounded-xl p-4 border border-border/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-muted-foreground">Bank</span>
+                            <span className="font-semibold text-foreground">{tempAccount.bank_name}</span>
+                          </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-muted-foreground">Account Number</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-lg text-green-500 font-mono tracking-wider">
+                                {tempAccount.account_number}
+                              </span>
+                              <button
+                                onClick={async () => {
+                                  await navigator.clipboard.writeText(tempAccount.account_number);
+                                  setCopied(true);
+                                  toast.success("Copied!");
+                                  setTimeout(() => setCopied(false), 2000);
+                                }}
+                                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                              >
+                                <IonIcon 
+                                  name={copied ? "checkmark" : "copy-outline"} 
+                                  size="18px" 
+                                  color={copied ? "#22c55e" : "#888"} 
+                                />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-muted-foreground">Amount to Transfer</span>
+                            <span className="font-bold text-xl text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Account Name</span>
+                            <span className="font-medium text-foreground text-sm">{tempAccount.account_name}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                    <div className="flex items-start gap-2">
-                      <IonIcon name="warning" size="18px" color="#f59e0b" className="mt-0.5" />
+                  <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0">
+                        <IonIcon name="warning" size="20px" color="#f59e0b" />
+                      </div>
                       <div className="text-sm">
-                        <p className="font-medium text-amber-500">Important</p>
-                        <p className="text-muted-foreground mt-1">
-                          Transfer exactly ₦{parseFloat(tempAccount.amount).toLocaleString()} before the account expires. 
-                          This is a one-time account for this specific amount.
-                        </p>
+                        <p className="font-semibold text-amber-600 mb-2">Important Instructions</p>
+                        <ul className="space-y-1 text-muted-foreground">
+                          <li className="flex items-start gap-2">
+                            <span className="text-amber-500 mt-1">•</span>
+                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span> before the account expires</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-amber-500 mt-1">•</span>
+                            <span>This is a one-time account for this specific amount only</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="text-amber-500 mt-1">•</span>
+                            <span>Your wallet will be credited automatically after transfer</span>
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </div>
@@ -459,21 +490,22 @@ export default function FundWalletPage() {
                     <Button
                       variant="outline"
                       onClick={clearTempAccount}
-                      className="flex-1"
+                      className="flex-1 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
                     >
+                      <IonIcon name="refresh" size="18px" className="mr-2" />
                       Create New
                     </Button>
                     <Button
                       onClick={async () => {
                         await navigator.clipboard.writeText(tempAccount.account_number);
                         setCopied(true);
-                        toast.success("Copied!");
+                        toast.success("Account number copied!");
                         setTimeout(() => setCopied(false), 2000);
                       }}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg"
                     >
-                      <IonIcon name={copied ? "checkmark-circle" : "copy"} size="20px" />
-                      <span className="ml-2">{copied ? "Copied!" : "Copy"}</span>
+                      <IonIcon name={copied ? "checkmark-circle" : "copy"} size="18px" className="mr-2" />
+                      {copied ? "Copied!" : "Copy Details"}
                     </Button>
                   </div>
                 </>
@@ -495,11 +527,11 @@ export default function FundWalletPage() {
                           setAccountOption('temporary');
                           setShowTempOption(true);
                         }}
-                        className="w-full p-4 rounded-xl border-2 border-green-500/50 bg-green-500/5 hover:bg-green-500/10 transition-all text-left"
+                        className="w-full p-4 rounded-xl border-2 border-border hover:border-green-500/50 hover:bg-green-500/5 transition-all text-left group"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
-                            <IonIcon name="flash" size="20px" color="#22c55e" />
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                            <IonIcon name="flash" size="20px" color="#888" className="group-hover:!text-green-500 transition-colors" />
                           </div>
                           <div>
                             <p className="font-semibold text-foreground flex items-center gap-2">
@@ -519,11 +551,11 @@ export default function FundWalletPage() {
                           setAccountOption('permanent');
                           setShowBvnInput(true);
                         }}
-                        className="w-full p-4 rounded-xl border-2 border-border hover:border-green-500/50 transition-all text-left"
+                        className="w-full p-4 rounded-xl border-2 border-border hover:border-green-500/50 hover:bg-green-500/5 transition-all text-left group"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
-                            <IonIcon name="shield-checkmark" size="20px" color="#888" />
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                            <IonIcon name="shield-checkmark" size="20px" color="#888" className="group-hover:!text-green-500 transition-colors" />
                           </div>
                           <div>
                             <p className="font-semibold text-foreground">Permanent Account</p>
@@ -585,10 +617,10 @@ export default function FundWalletPage() {
                           <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5" />
                           <div className="text-sm">
                             <p className="text-muted-foreground">
-                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 30).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
+                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 20).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦30 service fee applies.
+                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦20 service fee applies.
                             </p>
                           </div>
                         </div>
