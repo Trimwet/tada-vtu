@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Important pages
+Allow: /login
+Allow: /register
+Allow: /dashboard
+Allow: /pricing
+Allow: /contact
+
+# Block admin and API routes from indexing
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /_next/
+Disallow: /sw.js
+
+# Sitemap
+Sitemap: https://tadavtu.com/sitemap.xml

@@ -20,6 +20,7 @@ import {
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
+import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
@@ -31,6 +32,8 @@ interface FeeInfo {
   merchant_pays_fee: boolean;
 }
 
+type PaymentMethod = "card" | "bank";
+
 export default function FundWalletPage() {
   const searchParams = useSearchParams();
   const { user } = useSupabaseUser();
@@ -39,6 +42,27 @@ export default function FundWalletPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [feeInfo, setFeeInfo] = useState<FeeInfo | null>(null);
   const [loadingFees, setLoadingFees] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank");
+  const [copied, setCopied] = useState(false);
+  const [bvn, setBvn] = useState("");
+  const [showBvnInput, setShowBvnInput] = useState(false);
+  const [tempAmount, setTempAmount] = useState("");
+  const [showTempOption, setShowTempOption] = useState(false);
+  const [accountOption, setAccountOption] = useState<'permanent' | 'temporary' | null>(null);
+
+  // Virtual account hook
+  const { 
+    virtualAccount, 
+    tempAccount,
+    loading: vaLoading, 
+    creating: vaCreating,
+    creatingTemp,
+    error: vaError,
+    createVirtualAccount,
+    createTempAccount,
+    clearTempAccount,
+    copyAccountNumber 
+  } = useVirtualAccount();
 
   // Fetch fee info when amount changes
   useEffect(() => {
@@ -143,6 +167,69 @@ export default function FundWalletPage() {
     }
   };
 
+  const handleCreateVirtualAccount = async () => {
+    if (!bvn || bvn.length !== 11) {
+      toast.error("Please enter a valid 11-digit BVN");
+      return;
+    }
+    const result = await createVirtualAccount(bvn);
+    if (result) {
+      toast.success("Virtual account created!", { description: "You can now fund via bank transfer" });
+      setShowBvnInput(false);
+      setBvn("");
+      setAccountOption(null);
+    }
+    // Error toast is handled via useEffect below
+  };
+
+  const handleCreateTempAccount = async () => {
+    const amt = parseInt(tempAmount);
+    if (!amt || amt < 100) {
+      toast.error("Please enter a valid amount (minimum ₦100)");
+      return;
+    }
+    const result = await createTempAccount(amt);
+    if (result) {
+      toast.success("Temporary account created!", { description: "Transfer within 1 hour to fund your wallet" });
+      setShowTempOption(false);
+      setTempAmount("");
+      setAccountOption(null);
+    }
+  };
+
+  const formatExpiry = (expiryDate: string) => {
+    const expiry = new Date(expiryDate);
+    const now = new Date();
+    const diff = expiry.getTime() - now.getTime();
+    const minutes = Math.floor(diff / (1000 * 60));
+    if (minutes <= 0) return "Expired";
+    if (minutes < 60) return `${minutes} min left`;
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m left`;
+  };
+
+  // Show toast when virtual account error occurs
+  useEffect(() => {
+    if (vaError) {
+      // Map technical errors to user-friendly messages
+      let friendlyMessage = vaError;
+      if (vaError.toLowerCase().includes('invalid bvn')) {
+        friendlyMessage = "The BVN you entered is invalid. Please check and try again.";
+      } else if (vaError.toLowerCase().includes('bvn') && vaError.toLowerCase().includes('required')) {
+        friendlyMessage = "BVN is required to create a virtual account.";
+      }
+      toast.error("Account creation failed", friendlyMessage);
+    }
+  }, [vaError]);
+
+  const handleCopyAccount = async () => {
+    const success = await copyAccountNumber();
+    if (success) {
+      setCopied(true);
+      toast.success("Copied!", { description: "Account number copied to clipboard", confetti: false });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const deposits = transactions.filter((t) => t.type === "deposit");
 
   const formatDate = (dateStr: string) => {
@@ -184,122 +271,575 @@ export default function FundWalletPage() {
           </CardContent>
         </Card>
 
-        {/* Fund Wallet Card */}
-        <Card className="border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <IonIcon name="card" size="20px" color="#22c55e" />
-              Fund Your Wallet
-            </CardTitle>
-            <CardDescription>Pay with card, bank transfer, or USSD via Flutterwave</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Quick Select</Label>
-              <div className="flex flex-wrap gap-2">
-                {QUICK_AMOUNTS.map((value) => (
-                  <button
-                    key={value}
-                    onClick={() => handleQuickAmount(value)}
-                    className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${
-                      amount === value.toString()
-                        ? "border-green-500 bg-green-500/10 text-green-500"
-                        : "border-border hover:border-green-500/50 text-foreground"
-                    }`}
-                  >
-                    ₦{value.toLocaleString()}
-                  </button>
-                ))}
+        {/* Payment Method Selector */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setPaymentMethod("bank")}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              paymentMethod === "bank"
+                ? "border-green-500 bg-green-500/10"
+                : "border-border hover:border-green-500/50"
+            }`}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                paymentMethod === "bank" ? "bg-green-500/20" : "bg-muted"
+              }`}>
+                <IonIcon name="business" size="20px" color={paymentMethod === "bank" ? "#22c55e" : "#888"} />
+              </div>
+              <div className="text-center">
+                <p className={`font-semibold text-sm ${paymentMethod === "bank" ? "text-green-500" : "text-foreground"}`}>
+                  Bank Transfer
+                </p>
+                <p className="text-xs text-muted-foreground">₦30 fee</p>
               </div>
             </div>
+          </button>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Or enter custom amount</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₦</span>
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="pl-8 bg-background border-border text-lg font-semibold h-12"
-                  min="100"
-                />
+          <button
+            onClick={() => setPaymentMethod("card")}
+            className={`p-4 rounded-xl border-2 transition-all ${
+              paymentMethod === "card"
+                ? "border-green-500 bg-green-500/10"
+                : "border-border hover:border-green-500/50"
+            }`}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                paymentMethod === "card" ? "bg-green-500/20" : "bg-muted"
+              }`}>
+                <IonIcon name="card" size="20px" color={paymentMethod === "card" ? "#22c55e" : "#888"} />
+              </div>
+              <div className="text-center">
+                <p className={`font-semibold text-sm ${paymentMethod === "card" ? "text-green-500" : "text-foreground"}`}>
+                  Card/USSD
+                </p>
+                <p className="text-xs text-muted-foreground">1.4% fee</p>
               </div>
             </div>
+          </button>
+        </div>
 
-            {amount && parseInt(amount) >= 100 && (
-              <div className="bg-muted/50 rounded-lg p-4">
-                {loadingFees ? (
-                  <div className="flex items-center justify-center py-2">
-                    <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="ml-2 text-sm text-muted-foreground">Calculating...</span>
-                  </div>
-                ) : feeInfo ? (
-                  <>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Wallet Credit</span>
-                      <span className="font-bold text-foreground">₦{feeInfo.wallet_credit.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm mt-2">
-                      <span className="text-muted-foreground">Service Fee</span>
-                      <span className="font-medium text-orange-500">₦{feeInfo.service_fee.toLocaleString()}</span>
-                    </div>
-                    {feeInfo.processing_fee > 0 && (
-                      <div className="flex items-center justify-between text-sm mt-2">
-                        <span className="text-muted-foreground">Payment Processing</span>
-                        <span className="font-medium text-orange-500">₦{feeInfo.processing_fee.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-border mt-3 pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Total to Pay</span>
-                        <span className="font-bold text-green-500 text-lg">₦{feeInfo.total_to_pay.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      ₦{feeInfo.wallet_credit.toLocaleString()} will be credited to your wallet
-                    </p>
-                  </>
-                ) : null}
-              </div>
-            )}
-
-            <Button
-              onClick={handleFundWallet}
-              disabled={!amount || parseInt(amount) < 100 || isProcessing || paymentLoading || loadingFees || !feeInfo}
-              className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
-            >
-              {isProcessing || paymentLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Processing...
+        {/* Bank Transfer Section */}
+        {paymentMethod === "bank" && (
+          <Card className="border-green-500/30 bg-green-500/5">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <IonIcon name="business" size="20px" color="#22c55e" />
+                Bank Transfer
+              </CardTitle>
+              <CardDescription>
+                Transfer to your dedicated account. ₦30 service fee.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {vaLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-muted-foreground">Loading...</span>
                 </div>
+              ) : virtualAccount ? (
+                <>
+                  {/* Permanent Virtual Account Details */}
+                  <div className="bg-background rounded-xl p-4 border border-border">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Bank</span>
+                      <span className="font-semibold text-foreground">{virtualAccount.bank_name}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Account Number</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-green-500 font-mono">
+                          {virtualAccount.account_number}
+                        </span>
+                        <button
+                          onClick={handleCopyAccount}
+                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <IonIcon 
+                            name={copied ? "checkmark" : "copy-outline"} 
+                            size="18px" 
+                            color={copied ? "#22c55e" : "#888"} 
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Account Name</span>
+                      <span className="font-medium text-foreground text-sm">{virtualAccount.account_name}</span>
+                    </div>
+                  </div>
+
+                  {/* Fee Info */}
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-500">How it works</p>
+                        <p className="text-muted-foreground mt-1">
+                          Transfer any amount from your bank app. Your wallet will be credited automatically within 1-2 minutes.
+                        </p>
+                        <p className="text-muted-foreground mt-1">
+                          <span className="text-green-500 font-semibold">₦30 service fee</span> - still cheaper than card payments!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Copy Button */}
+                  <Button
+                    onClick={handleCopyAccount}
+                    className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                  >
+                    <IonIcon name={copied ? "checkmark-circle" : "copy"} size="20px" />
+                    <span className="ml-2">{copied ? "Copied!" : "Copy Account Number"}</span>
+                  </Button>
+                </>
+              ) : tempAccount ? (
+                <>
+                  {/* Temporary Account Details */}
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-amber-500">⏱️ Temporary Account</span>
+                      <span className="text-xs bg-amber-500/20 text-amber-600 px-2 py-1 rounded-full">
+                        {formatExpiry(tempAccount.expiry_date)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Bank</span>
+                      <span className="font-semibold text-foreground">{tempAccount.bank_name}</span>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Account Number</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-green-500 font-mono">
+                          {tempAccount.account_number}
+                        </span>
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(tempAccount.account_number);
+                            setCopied(true);
+                            toast.success("Copied!");
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <IonIcon 
+                            name={copied ? "checkmark" : "copy-outline"} 
+                            size="18px" 
+                            color={copied ? "#22c55e" : "#888"} 
+                          />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Amount to Transfer</span>
+                      <span className="font-bold text-foreground">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Account Name</span>
+                      <span className="font-medium text-foreground text-sm">{tempAccount.account_name}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <IonIcon name="warning" size="18px" color="#f59e0b" className="mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-amber-500">Important</p>
+                        <p className="text-muted-foreground mt-1">
+                          Transfer exactly ₦{parseFloat(tempAccount.amount).toLocaleString()} before the account expires. 
+                          This is a one-time account for this specific amount.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={clearTempAccount}
+                      className="flex-1"
+                    >
+                      Create New
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(tempAccount.account_number);
+                        setCopied(true);
+                        toast.success("Copied!");
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                    >
+                      <IonIcon name={copied ? "checkmark-circle" : "copy"} size="20px" />
+                      <span className="ml-2">{copied ? "Copied!" : "Copy"}</span>
+                    </Button>
+                  </div>
+                </>
               ) : (
-                <div className="flex items-center gap-2">
-                  <IonIcon name="card-outline" size="20px" />
-                  Pay ₦{feeInfo ? feeInfo.total_to_pay.toLocaleString() : "0"}
+                <>
+                  {/* Choose Account Type */}
+                  {!accountOption && !showBvnInput && !showTempOption && (
+                    <div className="space-y-4">
+                      <div className="text-center py-2">
+                        <h3 className="font-semibold text-foreground mb-2">Choose Account Type</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Select how you want to fund your wallet via bank transfer
+                        </p>
+                      </div>
+
+                      {/* Temporary Account Option */}
+                      <button
+                        onClick={() => {
+                          setAccountOption('temporary');
+                          setShowTempOption(true);
+                        }}
+                        className="w-full p-4 rounded-xl border-2 border-green-500/50 bg-green-500/5 hover:bg-green-500/10 transition-all text-left"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
+                            <IonIcon name="flash" size="20px" color="#22c55e" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground flex items-center gap-2">
+                              Quick Transfer
+                              <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full">Recommended</span>
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              No BVN required • Amount-specific • Expires in 1 hour
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Permanent Account Option */}
+                      <button
+                        onClick={() => {
+                          setAccountOption('permanent');
+                          setShowBvnInput(true);
+                        }}
+                        className="w-full p-4 rounded-xl border-2 border-border hover:border-green-500/50 transition-all text-left"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0">
+                            <IonIcon name="shield-checkmark" size="20px" color="#888" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">Permanent Account</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Requires BVN • Reusable • Transfer any amount anytime
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Temporary Account Form */}
+                  {showTempOption && (
+                    <div className="space-y-4">
+                      <div className="text-center py-2">
+                        <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <IonIcon name="flash" size="28px" color="#22c55e" />
+                        </div>
+                        <h3 className="font-semibold text-foreground">Quick Transfer</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Enter the amount you want to fund
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Amount to Fund</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₦</span>
+                          <Input
+                            type="number"
+                            placeholder="Enter amount (min ₦100)"
+                            value={tempAmount}
+                            onChange={(e) => setTempAmount(e.target.value)}
+                            className="pl-8 h-12 text-lg font-semibold"
+                            min="100"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {[500, 1000, 2000, 5000].map((amt) => (
+                          <button
+                            key={amt}
+                            onClick={() => setTempAmount(amt.toString())}
+                            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                              tempAmount === amt.toString()
+                                ? "border-green-500 bg-green-500/10 text-green-500"
+                                : "border-border hover:border-green-500/50"
+                            }`}
+                          >
+                            ₦{amt.toLocaleString()}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5" />
+                          <div className="text-sm">
+                            <p className="text-muted-foreground">
+                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 30).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
+                            </p>
+                            <p className="text-muted-foreground mt-1">
+                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦30 service fee applies.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowTempOption(false);
+                            setTempAmount("");
+                            setAccountOption(null);
+                          }}
+                          className="flex-1"
+                        >
+                          Back
+                        </Button>
+                        <Button
+                          onClick={handleCreateTempAccount}
+                          disabled={creatingTemp || !tempAmount || parseInt(tempAmount) < 100}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                        >
+                          {creatingTemp ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Creating...
+                            </div>
+                          ) : (
+                            "Generate Account"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Permanent Account (BVN) Form */}
+                  {showBvnInput && (
+                    <div className="space-y-4">
+                      <div className="text-center py-2">
+                        <div className="w-14 h-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <IonIcon name="shield-checkmark" size="28px" color="#22c55e" />
+                        </div>
+                        <h3 className="font-semibold text-foreground">Permanent Account</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Create a reusable account for unlimited transfers
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">BVN (Bank Verification Number)</Label>
+                        <Input
+                          type="tel"
+                          placeholder="Enter your 11-digit BVN"
+                          value={bvn}
+                          onChange={(e) => setBvn(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                          maxLength={11}
+                          className="h-12"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Your BVN is required by Flutterwave for account verification.
+                        </p>
+                      </div>
+                      
+                      <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                        <div className="flex items-start gap-2">
+                          <IonIcon name="shield-checkmark" size="18px" color="#f59e0b" className="mt-0.5" />
+                          <div className="text-sm">
+                            <p className="font-medium text-amber-500">Your BVN is safe</p>
+                            <p className="text-muted-foreground">
+                              We don&apos;t store your BVN. It&apos;s sent directly to Flutterwave for verification.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowBvnInput(false);
+                            setBvn("");
+                            setAccountOption(null);
+                          }}
+                          className="flex-1"
+                        >
+                          Back
+                        </Button>
+                        <Button
+                          onClick={handleCreateVirtualAccount}
+                          disabled={vaCreating || bvn.length !== 11}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                        >
+                          {vaCreating ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Creating...
+                            </div>
+                          ) : (
+                            "Create Account"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card Payment Section */}
+        {paymentMethod === "card" && (
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <IonIcon name="card" size="20px" color="#22c55e" />
+                Card / USSD Payment
+              </CardTitle>
+              <CardDescription>Pay with card, bank transfer, or USSD via Flutterwave</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Quick Select</Label>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_AMOUNTS.map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => handleQuickAmount(value)}
+                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${
+                        amount === value.toString()
+                          ? "border-green-500 bg-green-500/10 text-green-500"
+                          : "border-border hover:border-green-500/50 text-foreground"
+                      }`}
+                    >
+                      ₦{value.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Or enter custom amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₦</span>
+                  <Input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="pl-8 bg-background border-border text-lg font-semibold h-12"
+                    min="100"
+                  />
+                </div>
+              </div>
+
+              {amount && parseInt(amount) >= 100 && (
+                <div className="bg-muted/50 rounded-lg p-4">
+                  {loadingFees ? (
+                    <div className="flex items-center justify-center py-2">
+                      <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-2 text-sm text-muted-foreground">Calculating...</span>
+                    </div>
+                  ) : feeInfo ? (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Wallet Credit</span>
+                        <span className="font-bold text-foreground">₦{feeInfo.wallet_credit.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm mt-2">
+                        <span className="text-muted-foreground">Service Fee</span>
+                        <span className="font-medium text-orange-500">₦{feeInfo.service_fee.toLocaleString()}</span>
+                      </div>
+                      {feeInfo.processing_fee > 0 && (
+                        <div className="flex items-center justify-between text-sm mt-2">
+                          <span className="text-muted-foreground">Payment Processing</span>
+                          <span className="font-medium text-orange-500">₦{feeInfo.processing_fee.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border mt-3 pt-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Total to Pay</span>
+                          <span className="font-bold text-green-500 text-lg">₦{feeInfo.total_to_pay.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        ₦{feeInfo.wallet_credit.toLocaleString()} will be credited to your wallet
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               )}
-            </Button>
 
-            <div className="flex items-center justify-center gap-4 pt-2">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <IonIcon name="card" size="14px" />
-                <span>Card</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <IonIcon name="business" size="14px" />
-                <span>Bank</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <IonIcon name="phone-portrait" size="14px" />
-                <span>USSD</span>
-              </div>
-            </div>
+              <Button
+                onClick={handleFundWallet}
+                disabled={!amount || parseInt(amount) < 100 || isProcessing || paymentLoading || loadingFees || !feeInfo}
+                className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
+              >
+                {isProcessing || paymentLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <IonIcon name="card-outline" size="20px" />
+                    Pay ₦{feeInfo ? feeInfo.total_to_pay.toLocaleString() : "0"}
+                  </div>
+                )}
+              </Button>
 
-            <div className="text-center pt-2">
-              <span className="text-xs text-muted-foreground">Secured by Flutterwave</span>
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <IonIcon name="card" size="14px" />
+                  <span>Card</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <IonIcon name="business" size="14px" />
+                  <span>Bank</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <IonIcon name="phone-portrait" size="14px" />
+                  <span>USSD</span>
+                </div>
+              </div>
+
+              <div className="text-center pt-2">
+                <span className="text-xs text-muted-foreground">Secured by Flutterwave</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fee Comparison */}
+        <Card className="border-border bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+              <IonIcon name="calculator" size="18px" color="#22c55e" />
+              Fee Comparison
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/10">
+                <span className="text-muted-foreground">₦10,000 via Bank Transfer</span>
+                <span className="font-semibold text-green-500">₦10 fee</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                <span className="text-muted-foreground">₦10,000 via Card</span>
+                <span className="font-semibold text-orange-500">~₦189 fee</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Save up to <span className="text-green-500 font-semibold">95%</span> on fees with bank transfer!
+              </p>
             </div>
           </CardContent>
         </Card>

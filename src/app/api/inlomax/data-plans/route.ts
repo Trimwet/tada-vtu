@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServices, ServiceDataPlan } from '@/lib/api/inlomax';
-import { DATA_PLANS } from '@/lib/constants';
 
 // Map Inlomax data types to our internal types
 function mapDataType(inlomaxType: string): string {
@@ -26,15 +25,17 @@ function parseAmount(amount: string): number {
 }
 
 // Transform Inlomax data plan to our format
-function transformPlan(plan: ServiceDataPlan) {
+function transformPlan(plan: ServiceDataPlan, index: number) {
   return {
-    id: plan.serviceID,
+    id: `${plan.serviceID}-${plan.dataType || 'default'}-${index}`, // Unique ID
+    serviceID: plan.serviceID, // Keep original for purchase
     name: plan.dataPlan,
     size: plan.dataPlan,
     price: parseAmount(plan.amount),
-    validity: plan.validity,
-    type: mapDataType(plan.dataType),
-    network: plan.network,
+    validity: plan.validity || '30 Days',
+    type: mapDataType(plan.dataType || 'SME'),
+    network: plan.network.toUpperCase(),
+    dataType: plan.dataType, // Keep original type for display
   };
 }
 
@@ -50,20 +51,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const useSandbox = process.env.INLOMAX_SANDBOX !== 'false';
-
-
-    // In sandbox mode, return static plans
-    if (useSandbox) {
-      const networkKey = network as keyof typeof DATA_PLANS;
-      const plans = DATA_PLANS[networkKey] || [];
-      
-      return NextResponse.json({
-        status: 'success',
-        data: plans,
-        source: 'static',
-      });
-    }
+    // Normalize network name (handle 9MOBILE/ETISALAT)
+    const normalizedNetwork = network === 'ETISALAT' ? '9MOBILE' : network;
 
     // Fetch real plans from Inlomax API
     try {
@@ -72,30 +61,47 @@ export async function GET(request: NextRequest) {
       if (result.status === 'success' && result.data?.dataPlans) {
         // Filter plans by network and transform to our format
         const networkPlans = result.data.dataPlans
-          .filter((plan) => plan.network.toUpperCase() === network)
-          .map(transformPlan)
+          .filter((plan) => {
+            const planNetwork = plan.network.toUpperCase();
+            return planNetwork === normalizedNetwork || 
+                   (planNetwork === 'ETISALAT' && normalizedNetwork === '9MOBILE');
+          })
+          .map((plan, index) => transformPlan(plan, index))
+          .filter((plan) => plan.price > 0) // Filter out zero-price plans
           .sort((a, b) => a.price - b.price); // Sort by price
+
+        console.log(`[DATA-PLANS] Found ${networkPlans.length} plans for ${normalizedNetwork}`);
+        
+        // Get unique types for this network
+        const types = [...new Set(networkPlans.map(p => p.type))];
+        console.log(`[DATA-PLANS] Types available: ${types.join(', ')}`);
 
         return NextResponse.json({
           status: 'success',
           data: networkPlans,
           source: 'inlomax',
+          network: normalizedNetwork,
+          totalPlans: networkPlans.length,
+          types,
+        }, {
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+          },
         });
       }
+      
+      throw new Error('Invalid response from Inlomax');
     } catch (apiError) {
-      console.error('Inlomax API error, falling back to static plans:', apiError);
+      console.error('Inlomax API error:', apiError);
+      return NextResponse.json(
+        {
+          status: 'error',
+          message: 'Failed to fetch plans from provider',
+          error: apiError instanceof Error ? apiError.message : 'Unknown error',
+        },
+        { status: 500 }
+      );
     }
-
-    // Fallback to static plans if API fails
-    const networkKey = network as keyof typeof DATA_PLANS;
-    const plans = DATA_PLANS[networkKey] || [];
-
-    return NextResponse.json({
-      status: 'success',
-      data: plans,
-      source: 'static',
-      message: 'Using cached plans',
-    });
 
   } catch (error) {
     console.error('Error fetching data plans:', error);

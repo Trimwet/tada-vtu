@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { purchaseData, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { purchaseData as purchaseDataSmeplug } from '@/lib/api/smeplug';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+
+type Provider = 'inlomax' | 'smeplug';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
     
     const { network, phone, planId, amount, planName, userId } = validation.data!;
+    const provider: Provider = (body.provider as Provider) || 'inlomax';
 
     // Rate limiting
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
@@ -72,7 +76,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique reference
-    const reference = `DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const prefix = provider === 'inlomax' ? 'INL' : 'SMP';
+    const reference = `${prefix}_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
     // Create pending transaction FIRST
     const { data: transaction, error: txnError } = await supabase
@@ -99,10 +104,29 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Call Inlomax API - planId is the serviceID
-      console.log(`[DATA] Calling Inlomax API: ${network} ${planName} (ID: ${planId}) to ${phone}`);
-      const result = await purchaseData({ serviceID: planId, phone });
-      console.log(`[DATA] Inlomax response:`, result.status, result.message);
+      // Call the appropriate provider API
+      console.log(`[DATA] Calling ${provider} API: ${network} ${planName} (ID: ${planId}) to ${phone}`);
+      
+      let result;
+      if (provider === 'smeplug') {
+        // SMEPlug API
+        const smeplugResult = await purchaseDataSmeplug({
+          network,
+          planId,
+          phone,
+          reference,
+        });
+        result = {
+          status: smeplugResult.status ? 'success' : 'failed',
+          message: smeplugResult.message || 'Data purchase completed',
+          data: { reference: smeplugResult.reference },
+        };
+      } else {
+        // Inlomax API - planId is the serviceID
+        result = await purchaseDataInlomax({ serviceID: planId, phone });
+      }
+      
+      console.log(`[DATA] ${provider} response:`, result.status, result.message);
 
       if (result.status === 'success') {
         const newBalance = currentBalance - numAmount;

@@ -23,11 +23,13 @@ import { EchoTipModal, useEchoTip } from "@/components/echo-tip-modal";
 
 interface DataPlan {
   id: string;
+  serviceID?: string; // Original Inlomax serviceID for purchase
   name: string;
   size: string;
   price: number;
   validity: string;
   type: string;
+  dataType?: string; // Original Inlomax data type
 }
 
 // Data type labels for display
@@ -131,13 +133,16 @@ export default function BuyDataPage() {
     setIsProcessing(true);
 
     try {
+      // Use serviceID if available (from Inlomax), otherwise use id
+      const planIdForPurchase = selectedPlanDetails.serviceID || selectedPlanDetails.id.split('-')[0];
+      
       const response = await fetch("/api/inlomax/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           network: selectedNetwork,
           phone: phoneNumber,
-          planId: selectedPlan,
+          planId: planIdForPurchase,
           amount: selectedPlanDetails.price,
           planName: selectedPlanDetails.size,
           userId: user?.id,
@@ -360,9 +365,9 @@ export default function BuyDataPage() {
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">
                     Select Data Plan
-                    {dataPlans.length > 0 && (
+                    {availablePlans.length > 0 && (
                       <span className="text-muted-foreground font-normal ml-2">
-                        ({dataPlans.length} plans available)
+                        ({availablePlans.length} {selectedType ? `${selectedType.toUpperCase()} ` : ''}plans)
                       </span>
                     )}
                   </Label>
@@ -387,9 +392,9 @@ export default function BuyDataPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
-                      {availablePlans.map((plan) => (
+                      {availablePlans.map((plan, idx) => (
                         <button
-                          key={plan.id}
+                          key={`plan-${idx}-${plan.id}`}
                           type="button"
                           onClick={() => setSelectedPlan(plan.id)}
                           className={`p-3 rounded-xl border-2 transition-smooth text-left relative ${

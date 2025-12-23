@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { BANK_TRANSFER_FEE } from '@/lib/api/flutterwave';
 
 // Force dynamic to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,200 @@ export async function POST(request: NextRequest) {
 
     console.log('Flutterwave webhook received:', event, data?.tx_ref);
 
+    // Handle virtual account transfers (bank transfers to dedicated accounts)
+    if (event === 'charge.completed' && data.payment_type === 'bank_transfer') {
+      const supabase = getSupabaseAdmin();
+      const txRef = data.tx_ref;
+      const amount = data.amount;
+      const flwRef = data.flw_ref;
+      const virtualAccountNumber = data.virtual_account_number || data.account_number;
+
+      console.log('Virtual account transfer received:', { txRef, amount, flwRef, virtualAccountNumber });
+
+      // Extract user_id - try multiple methods
+      let userId = data.meta?.user_id;
+
+      // Method 1: Find by virtual account number (most reliable)
+      if (!userId && virtualAccountNumber) {
+        const { data: vaRecord } = await supabase
+          .from('virtual_accounts')
+          .select('user_id')
+          .eq('account_number', virtualAccountNumber)
+          .eq('is_active', true)
+          .single();
+
+        if (vaRecord) {
+          userId = vaRecord.user_id;
+          console.log('Found user by virtual account number:', userId);
+        }
+      }
+
+      // Method 2: Find by order_ref in virtual_accounts table
+      if (!userId) {
+        const { data: vaRecord } = await supabase
+          .from('virtual_accounts')
+          .select('user_id')
+          .eq('order_ref', data.meta?.order_ref || txRef)
+          .single();
+
+        if (vaRecord) {
+          userId = vaRecord.user_id;
+          console.log('Found user by order_ref:', userId);
+        }
+      }
+
+      // Method 3: Extract from tx_ref pattern (TADA-VA-{user_id_prefix}-{timestamp})
+      if (!userId && txRef?.startsWith('TADA-VA-')) {
+        const parts = txRef.split('-');
+        if (parts.length >= 3) {
+          const userIdPrefix = parts[2];
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('id', `${userIdPrefix}%`)
+            .limit(1);
+          
+          if (profiles && profiles.length > 0) {
+            userId = profiles[0].id;
+            console.log('Found user by tx_ref pattern:', userId);
+          }
+        }
+      }
+
+      if (!userId) {
+        console.error('Could not identify user for virtual account transfer:', { txRef, virtualAccountNumber });
+        return NextResponse.json({ status: 'error', message: 'User not found' }, { status: 400 });
+      }
+
+      // Check if transaction already processed
+      const { data: existingTxn } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('external_reference', flwRef)
+        .single();
+
+      if (existingTxn) {
+        console.log('Virtual account transfer already processed:', flwRef);
+        return NextResponse.json({ status: 'success', message: 'Already processed' });
+      }      // Get user's current balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('balance, referred_by')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('User not found for VA transfer:', userId);
+        return NextResponse.json({ status: 'error', message: 'User not found' }, { status: 404 });
+      }
+
+      // Calculate wallet credit after deducting TADA platform fee (₦30)
+      // User transfers (amount), gets (amount - 30) in wallet
+      // Example: User transfers ₦1,030 → gets ₦1,000 in wallet
+      const walletCredit = amount - BANK_TRANSFER_FEE;
+      
+      // Ensure minimum credit (don't allow negative or zero credits)
+      if (walletCredit < 50) {
+        console.error('Transfer amount too low after fee:', { amount, walletCredit });
+        // Still credit the full amount for very small transfers (edge case)
+        // This prevents user frustration for transfers under ₦80
+      }
+      
+      const finalCredit = walletCredit > 0 ? walletCredit : amount;
+      const newBalance = (profile.balance || 0) + finalCredit;
+
+      await supabase
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('id', userId);
+
+      // Create transaction record
+      const reference = `VA-${Date.now()}-${flwRef.slice(-8)}`;
+      await supabase.from('transactions').insert({
+        user_id: userId,
+        type: 'deposit',
+        amount: finalCredit,
+        status: 'success',
+        description: `Bank transfer (₦${BANK_TRANSFER_FEE} fee deducted)`,
+        reference,
+        external_reference: flwRef,
+        response_data: {
+          payment_type: 'bank_transfer',
+          flw_ref: flwRef,
+          tx_ref: txRef,
+          customer_email: data.customer?.email,
+          transfer_amount: amount,
+          platform_fee: BANK_TRANSFER_FEE,
+        }
+      });
+
+      // Create notification
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type: 'success',
+        title: 'Wallet Funded! 💰',
+        message: `₦${finalCredit.toLocaleString()} has been added to your wallet via bank transfer.`,
+      });
+
+      console.log('Virtual account transfer credited:', { userId, transferAmount: amount, walletCredit: finalCredit, fee: BANK_TRANSFER_FEE, newBalance, flwRef });
+
+      // Handle referral bonus for first deposit (same logic as card payments)
+      if (profile.referred_by) {
+        const { data: existingBonus } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('user_id', profile.referred_by)
+          .eq('type', 'deposit')
+          .ilike('description', `%Referral bonus%${userId}%`)
+          .single();
+
+        if (!existingBonus) {
+          const { count: depositCount } = await supabase
+            .from('transactions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('type', 'deposit')
+            .eq('status', 'success');
+
+          if (depositCount === 1) {
+            const REFERRAL_BONUS = 100;
+            const { data: referrer } = await supabase
+              .from('profiles')
+              .select('balance')
+              .eq('id', profile.referred_by)
+              .single();
+
+            if (referrer) {
+              const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS;
+              await supabase
+                .from('profiles')
+                .update({ balance: referrerNewBalance })
+                .eq('id', profile.referred_by);
+
+              await supabase.from('transactions').insert({
+                user_id: profile.referred_by,
+                type: 'deposit',
+                amount: REFERRAL_BONUS,
+                status: 'success',
+                description: `Referral bonus - ${userId.slice(0, 8)}`,
+                reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
+              });
+
+              await supabase.from('notifications').insert({
+                user_id: profile.referred_by,
+                type: 'success',
+                title: 'Referral Bonus! 🎉',
+                message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
+              });
+            }
+          }
+        }
+      }
+
+      return NextResponse.json({ status: 'success', message: 'Virtual account transfer credited' });
+    }
+
+    // Handle card/USSD payments (existing flow)
     if (event === 'charge.completed' && data.status === 'successful') {
       const supabase = getSupabaseAdmin();
       const userId = data.meta?.user_id;

@@ -17,36 +17,20 @@ import {
   useSupabaseUser,
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
-import { Typewriter } from "@/components/typewriter";
+import { AITypewriter } from "@/components/ai-typewriter";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getSupabase } from "@/lib/supabase/client";
 import { TierBadge } from "@/components/tier-badge";
+
 import { getUserTier } from "@/lib/pricing-tiers";
 import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
 import dynamic from "next/dynamic";
 
 // Lazy load heavy components
-const WithdrawalModal = dynamic(
-  () => import("@/components/withdrawal-modal").then(mod => ({ default: mod.WithdrawalModal })),
+const BankWithdrawalModal = dynamic(
+  () => import("@/components/bank-withdrawal-modal").then(mod => ({ default: mod.BankWithdrawalModal })),
   { ssr: false }
 );
-
-// Greeting messages - clean and professional
-const GREETING_MESSAGES = [
-  "What would you like to do today?",
-  "Ready to top up your airtime?",
-  "Need some data? We've got you covered!",
-  "Fast, reliable VTU services at your fingertips",
-  "Save more with our amazing discounts!",
-  "Your one-stop shop for all recharges",
-  "Instant delivery, zero stress!",
-  "Top up anytime, anywhere",
-  "Enjoy seamless transactions today!",
-  "The best rates in town, guaranteed!",
-  "Stay connected with TADA VTU",
-  "Quick, easy, and affordable",
-  "Your wallet is waiting for action",
-];
 
 
 
@@ -105,8 +89,14 @@ export default function DashboardPage() {
       totalSpent: 0,
       airtimeSpent: 0,
       dataSpent: 0,
+      cableSpent: 0,
+      electricitySpent: 0,
       dataGB: 0,
+      transactionCount: 0,
+      topNetwork: "",
     };
+
+    const networkCounts: Record<string, number> = {};
 
     allTransactions.forEach((txn) => {
       // Only count successful transactions
@@ -115,7 +105,9 @@ export default function DashboardPage() {
       if (txn.amount < 0) {
         const amount = Math.abs(txn.amount);
         stats.totalSpent += amount;
+        stats.transactionCount++;
 
+        // Track by type
         if (txn.type === "airtime") {
           stats.airtimeSpent += amount;
         } else if (txn.type === "data") {
@@ -125,9 +117,24 @@ export default function DashboardPage() {
           if (gbMatch) {
             stats.dataGB += parseFloat(gbMatch[1]);
           }
+        } else if (txn.type === "cable") {
+          stats.cableSpent += amount;
+        } else if (txn.type === "electricity") {
+          stats.electricitySpent += amount;
+        }
+
+        // Track network usage
+        const networkMatch = txn.description?.match(/^(MTN|AIRTEL|GLO|9MOBILE|9mobile)/i);
+        if (networkMatch) {
+          const network = networkMatch[1].toUpperCase();
+          networkCounts[network] = (networkCounts[network] || 0) + 1;
         }
       }
     });
+
+    // Find top network
+    const topNetworkEntry = Object.entries(networkCounts).sort((a, b) => b[1] - a[1])[0];
+    stats.topNetwork = topNetworkEntry?.[0] || "MTN";
 
     return stats;
   }, [allTransactions]);
@@ -200,11 +207,11 @@ export default function DashboardPage() {
             <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
           </div>
           <p className="text-muted-foreground h-6">
-            <Typewriter
-              texts={GREETING_MESSAGES}
-              typingSpeed={50}
-              deletingSpeed={25}
-              pauseDuration={5000}
+            <AITypewriter 
+              userName={(user.full_name || "User").split(" ")[0]} 
+              balance={user.balance || 0} 
+              type="greeting" 
+              speed={40}
             />
           </p>
         </div>
@@ -260,11 +267,14 @@ export default function DashboardPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
+                  className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm relative"
                   onClick={() => setShowWithdrawal(true)}
                 >
                   <IonIcon name="arrow-up-circle-outline" size="16px" />
                   Withdraw
+                  <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-400 text-amber-900 text-[8px] font-bold rounded-full">
+                    FREE
+                  </span>
                 </Button>
               </div>
             </div>
@@ -544,10 +554,11 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
+
       </main>
 
-      {/* Withdrawal Modal */}
-      <WithdrawalModal
+      {/* Bank Withdrawal Modal - Zero Fees via SMEPlug */}
+      <BankWithdrawalModal
         isOpen={showWithdrawal}
         onClose={() => setShowWithdrawal(false)}
         userId={user.id}

@@ -76,7 +76,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head />
+      <head>
+        {/* Critical CSS for preventing FOUC */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            html { background-color: #000; }
+            body { 
+              background-color: #000; 
+              color: #fff; 
+              font-family: system-ui, -apple-system, sans-serif;
+              margin: 0;
+              padding: 0;
+            }
+            .min-h-screen { min-height: 100vh; }
+            .bg-black { background-color: #000; }
+            .text-white { color: #fff; }
+            .hidden { display: none; }
+            @media (min-width: 768px) { .md\\:flex { display: flex; } }
+          `
+        }} />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
           <ServiceWorkerRegister />

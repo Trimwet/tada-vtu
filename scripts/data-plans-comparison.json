@@ -1,0 +1,7297 @@
+{
+  "inlomax": {
+    "MTN": [
+      {
+        "provider": "INLOMAX",
+        "id": "16",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 620,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "245",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 530,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "17",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 1320,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "246",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 1100,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "18",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 1600,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "19",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 2300,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "97",
+        "name": "500MB [DATA SHARE]",
+        "price": 380,
+        "type": "DATA SHARE",
+        "size": 500,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "240",
+        "name": "1GB [DATA SHARE]",
+        "price": 460,
+        "type": "DATA SHARE",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "98",
+        "name": "1GB [DATA SHARE]",
+        "price": 580,
+        "type": "DATA SHARE",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "99",
+        "name": "2GB [DATA SHARE]",
+        "price": 1030,
+        "type": "DATA SHARE",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "100",
+        "name": "3GB [DATA SHARE]",
+        "price": 1530,
+        "type": "DATA SHARE",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "101",
+        "name": "5GB [DATA SHARE]",
+        "price": 1950,
+        "type": "DATA SHARE",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "258",
+        "name": "230MB [GIFTING]",
+        "price": 196,
+        "type": "GIFTING",
+        "size": 230,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "259",
+        "name": "500MB [GIFTING]",
+        "price": 343,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "252",
+        "name": "600MB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 600,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "202",
+        "name": "1GB + 3 mins [GIFTING]",
+        "price": 488,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "Daily"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "210",
+        "name": "1GB+5mins [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "Weekly"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "234",
+        "name": "1.2GB (MTN PULSE) [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1228.8,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "253",
+        "name": "1.5GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "257",
+        "name": "1.5GB [GIFTING]",
+        "price": 588,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "229",
+        "name": "1.8GB + 35mins talktime [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 1843.2,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "216",
+        "name": "2GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "260",
+        "name": "2GB [GIFTING]",
+        "price": 739,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "203",
+        "name": "2.5GB [GIFTING]",
+        "price": 738,
+        "type": "GIFTING",
+        "size": 2560,
+        "validity": "Daily"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "205",
+        "name": "2.5GB [GIFTING]",
+        "price": 882,
+        "type": "GIFTING",
+        "size": 2560,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "217",
+        "name": "2.7GB+5mins [GIFTING]",
+        "price": 1960,
+        "type": "GIFTING",
+        "size": 2764.8,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "126",
+        "name": "3.2GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 3276.8,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "227",
+        "name": "3.5GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "254",
+        "name": "3.5GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "214",
+        "name": "6GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 6144,
+        "validity": "Weekly"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "226",
+        "name": "10GB+10mins [GIFTING]",
+        "price": 4410,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "256",
+        "name": "11GB [GIFTING]",
+        "price": 3430,
+        "type": "GIFTING",
+        "size": 11264,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "222",
+        "name": "12.5GB [GIFTING]",
+        "price": 5390,
+        "type": "GIFTING",
+        "size": 12800,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "223",
+        "name": "16.5GB+10mins [GIFTING]",
+        "price": 6370,
+        "type": "GIFTING",
+        "size": 16896,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "255",
+        "name": "20GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 20480,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "228",
+        "name": "36GB [GIFTING]",
+        "price": 10780,
+        "type": "GIFTING",
+        "size": 36864,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "235",
+        "name": "90GB [GIFTING]",
+        "price": 24500,
+        "type": "GIFTING",
+        "size": 92160,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "237",
+        "name": "150GB [GIFTING]",
+        "price": 39000,
+        "type": "GIFTING",
+        "size": 153600,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "236",
+        "name": "165GB [GIFTING]",
+        "price": 34300,
+        "type": "GIFTING",
+        "size": 168960,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "238",
+        "name": "200GB [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 204800,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "239",
+        "name": "800GB [GIFTING]",
+        "price": 123000,
+        "type": "GIFTING",
+        "size": 819200,
+        "validity": "1 Year"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "247",
+        "name": "Talkmore (₦1000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 320,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "248",
+        "name": "Talkmore (₦4000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 1330,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "249",
+        "name": "Talkmore (₦8000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 2370,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "250",
+        "name": "Talkmore (₦20000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 6300,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "251",
+        "name": "Talkmore (₦400 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 165,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "232",
+        "name": "1.2GB (All Social Media) [SOCIAL BUNDLES]",
+        "price": 441,
+        "type": "SOCIAL BUNDLES",
+        "size": 1228.8,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "231",
+        "name": "2GB (TikTok) [SOCIAL BUNDLES]",
+        "price": 392,
+        "type": "SOCIAL BUNDLES",
+        "size": 2048,
+        "validity": "7 Days"
+      }
+    ],
+    "AIRTEL": [
+      {
+        "provider": "INLOMAX",
+        "id": "104",
+        "name": "150MB [AWOOF]",
+        "price": 65,
+        "type": "AWOOF",
+        "size": 150,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "105",
+        "name": "300MB [AWOOF]",
+        "price": 121,
+        "type": "AWOOF",
+        "size": 300,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "111",
+        "name": "600MB [AWOOF]",
+        "price": 224,
+        "type": "AWOOF",
+        "size": 600,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "352",
+        "name": "1.5GB (Binge) [AWOOF]",
+        "price": 500,
+        "type": "AWOOF",
+        "size": 1536,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "353",
+        "name": "2GB (Binge) [AWOOF]",
+        "price": 600,
+        "type": "AWOOF",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "320",
+        "name": "3GB [AWOOF]",
+        "price": 1030,
+        "type": "AWOOF",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "354",
+        "name": "3GB (Binge) [AWOOF]",
+        "price": 750,
+        "type": "AWOOF",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "355",
+        "name": "5GB (Binge) [AWOOF]",
+        "price": 1500,
+        "type": "AWOOF",
+        "size": 5120,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "109",
+        "name": "10GB [AWOOF]",
+        "price": 3040,
+        "type": "AWOOF",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "342",
+        "name": "75MB [GIFTING]",
+        "price": 74,
+        "type": "GIFTING",
+        "size": 75,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "334",
+        "name": "100MB [GIFTING]",
+        "price": 98,
+        "type": "GIFTING",
+        "size": 100,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "335",
+        "name": "200MB [GIFTING]",
+        "price": 196,
+        "type": "GIFTING",
+        "size": 200,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "336",
+        "name": "250MB [GIFTING]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 250,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "337",
+        "name": "300MB [GIFTING]",
+        "price": 294,
+        "type": "GIFTING",
+        "size": 300,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "309",
+        "name": "500MB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "7 days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "331",
+        "name": "1GB [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "338",
+        "name": "1GB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "340",
+        "name": "1.5GB [GIFTING]",
+        "price": 588,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "341",
+        "name": "1.5GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "300",
+        "name": "2GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "339",
+        "name": "2GB [GIFTING]",
+        "price": 735,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "301",
+        "name": "3GB [GIFTING]",
+        "price": 1960,
+        "type": "GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "341",
+        "name": "3GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "310",
+        "name": "3.5 GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "302",
+        "name": "4GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 4096,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "328",
+        "name": "5GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 5120,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "329",
+        "name": "6GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 6144,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "303",
+        "name": "8GB [GIFTING]",
+        "price": 2940,
+        "type": "GIFTING",
+        "size": 8192,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "304",
+        "name": "10GB [GIFTING]",
+        "price": 3920,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "330",
+        "name": "10GB [GIFTING]",
+        "price": 2940,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "305",
+        "name": "13GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 13312,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "349",
+        "name": "13GB + 1GB daily (MIFI) [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 13312,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "306",
+        "name": "18GB [GIFTING]",
+        "price": 5880,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "333",
+        "name": "18GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "307",
+        "name": "25GB [GIFTING]",
+        "price": 7840,
+        "type": "GIFTING",
+        "size": 25600,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "321",
+        "name": "35GB [GIFTING]",
+        "price": 9800,
+        "type": "GIFTING",
+        "size": 35840,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "350",
+        "name": "35GB + 2 daily (MIFI) [GIFTING]",
+        "price": 9800,
+        "type": "GIFTING",
+        "size": 35840,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "322",
+        "name": "60GB [GIFTING]",
+        "price": 14700,
+        "type": "GIFTING",
+        "size": 61440,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "323",
+        "name": "100GB [GIFTING]",
+        "price": 19600,
+        "type": "GIFTING",
+        "size": 102400,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "324",
+        "name": "210GB [GIFTING]",
+        "price": 39200,
+        "type": "GIFTING",
+        "size": 215040,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "325",
+        "name": "300GB [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 307200,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "326",
+        "name": "350GB [GIFTING]",
+        "price": 58800,
+        "type": "GIFTING",
+        "size": 358400,
+        "validity": "120 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "327",
+        "name": "650GB [GIFTING]",
+        "price": 98000,
+        "type": "GIFTING",
+        "size": 665600,
+        "validity": "365 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "344",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 29400,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "346",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 78400,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "348",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 147000,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "180 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "345",
+        "name": "ROUTER UNLIMITED 60MBPS [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 60,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "347",
+        "name": "ROUTER UNLIMITED 60MBPS [GIFTING]",
+        "price": 132300,
+        "type": "GIFTING",
+        "size": 60,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "343",
+        "name": "100GB + 2GB daily (ROUTER UILTRA) [GIFTING]",
+        "price": 19600,
+        "type": "GIFTING",
+        "size": 102400,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "313",
+        "name": "200MB [SOCIAL BUNDLES]",
+        "price": 98,
+        "type": "SOCIAL BUNDLES",
+        "size": 200,
+        "validity": "5 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "314",
+        "name": "1GB [SOCIAL BUNDLES]",
+        "price": 294,
+        "type": "SOCIAL BUNDLES",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "308",
+        "name": "1.5 GB [SOCIAL BUNDLES]",
+        "price": 490,
+        "type": "SOCIAL BUNDLES",
+        "size": 1536,
+        "validity": "7 Days"
+      }
+    ],
+    "GLO": [
+      {
+        "provider": "INLOMAX",
+        "id": "35",
+        "name": "500MB [CORPORATE GIFTING]",
+        "price": 205,
+        "type": "CORPORATE GIFTING",
+        "size": 500,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "36",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 410,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "409",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 280,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "412",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 330,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "37",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 820,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "38",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 1230,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "410",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 835,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "413",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 980,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "39",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 2050,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "411",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 1395,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "414",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 1620,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "40",
+        "name": "10GB [CORPORATE GIFTING]",
+        "price": 4100,
+        "type": "CORPORATE GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "113",
+        "name": "750MB [AWOOF]",
+        "price": 200,
+        "type": "AWOOF",
+        "size": 750,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "114",
+        "name": "1.5GB [AWOOF]",
+        "price": 290,
+        "type": "AWOOF",
+        "size": 1536,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "115",
+        "name": "2.5GB [AWOOF]",
+        "price": 485,
+        "type": "AWOOF",
+        "size": 2560,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "116",
+        "name": "10GB [AWOOF]",
+        "price": 1910,
+        "type": "AWOOF",
+        "size": 10240,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "425",
+        "name": "45MB [GIFTING]",
+        "price": 50,
+        "type": "GIFTING",
+        "size": 45,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "426",
+        "name": "100MB + 5MB Night [GIFTING]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 100,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "427",
+        "name": "210MB + 25MB Night [GIFTING]",
+        "price": 193,
+        "type": "GIFTING",
+        "size": 210,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "428",
+        "name": "500MB + 1GB Night [GIFTING]",
+        "price": 483,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "408",
+        "name": "875MB [GIFTING]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 875,
+        "validity": "Saturday &amp; Sunday (2 Day)"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "400",
+        "name": "1.0 GB [GIFTING]",
+        "price": 480,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "429",
+        "name": "1GB + 1GB Night [GIFTING]",
+        "price": 483,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "430",
+        "name": "1.55GB + 2GB Night [GIFTING]",
+        "price": 579,
+        "type": "GIFTING",
+        "size": 1587.2,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "401",
+        "name": "2.6 GB [GIFTING]",
+        "price": 960,
+        "type": "GIFTING",
+        "size": 2662.4,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "431",
+        "name": "3.1GB + 2GB night [GIFTING]",
+        "price": 965,
+        "type": "GIFTING",
+        "size": 3174.4,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "432",
+        "name": "3.9GB + 2GB Night [GIFTING]",
+        "price": 1448,
+        "type": "GIFTING",
+        "size": 3993.6,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "402",
+        "name": "6.15 GB [GIFTING]",
+        "price": 1900,
+        "type": "GIFTING",
+        "size": 6297.6,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "403",
+        "name": "7.5 GB [GIFTING]",
+        "price": 2400,
+        "type": "GIFTING",
+        "size": 7680,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "404",
+        "name": "10.0 GB [GIFTING]",
+        "price": 2850,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "405",
+        "name": "14.0 GB [GIFTING]",
+        "price": 3800,
+        "type": "GIFTING",
+        "size": 14336,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "406",
+        "name": "18.0 GB [GIFTING]",
+        "price": 4800,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "407",
+        "name": "28GB [GIFTING]",
+        "price": 7238,
+        "type": "GIFTING",
+        "size": 28672,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "416",
+        "name": "300MB [SOCIAL BUNDLES]",
+        "price": 97,
+        "type": "SOCIAL BUNDLES",
+        "size": 300,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "417",
+        "name": "1GB [SOCIAL BUNDLES]",
+        "price": 290,
+        "type": "SOCIAL BUNDLES",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "415",
+        "name": "1.5 GB [SOCIAL BUNDLES]",
+        "price": 483,
+        "type": "SOCIAL BUNDLES",
+        "size": 1536,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "418",
+        "name": "3.5GB [SOCIAL BUNDLES]",
+        "price": 965,
+        "type": "SOCIAL BUNDLES",
+        "size": 3584,
+        "validity": "30 Days"
+      }
+    ],
+    "9MOBILE": []
+  },
+  "smeplug": {
+    "MTN": [
+      {
+        "provider": "SMEPLUG",
+        "id": 169,
+        "name": "50MB Share",
+        "price": 0,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 170,
+        "name": "100MB Share",
+        "price": 250,
+        "type": "OTHER",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 171,
+        "name": "200MB Share",
+        "price": 0,
+        "type": "OTHER",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 172,
+        "name": "500MB Share",
+        "price": 395,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 173,
+        "name": "1GB Share",
+        "price": 550,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 174,
+        "name": "2GB Share",
+        "price": 1090,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 175,
+        "name": "3GB Share",
+        "price": 1590,
+        "type": "OTHER",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 176,
+        "name": "5GB Share",
+        "price": 2450,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 423,
+        "name": "500MB Share - Weekly",
+        "price": 300,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 424,
+        "name": "1GB Share - Weekly",
+        "price": 420,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 425,
+        "name": "2GB Share - Weekly",
+        "price": 840,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 426,
+        "name": "3GB Share - Weekly",
+        "price": 1260,
+        "type": "OTHER",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 427,
+        "name": "5GB Share - Weekly",
+        "price": 2000,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 228,
+        "name": "2.5GB - 1Day Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 262,
+        "name": "20GB Weekly Plan [Gifting]",
+        "price": 4850,
+        "type": "GIFTING",
+        "size": 20480
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 259,
+        "name": "ThryveData 1500 (1.8GB + 35 minutes) - Gifting",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 1843.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 260,
+        "name": "ThryveData 3000 5GB [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 6,
+        "name": "75MB Daily Plan [Gifting]",
+        "price": 73,
+        "type": "GIFTING",
+        "size": 75
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 7,
+        "name": "100MB Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 8,
+        "name": "750MB + Free 1hr (YT/IG/TT) [Gifting] / 3 Days",
+        "price": 437,
+        "type": "GIFTING",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 9,
+        "name": "200MB 2-Day Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 10,
+        "name": "250MB 2-Day Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 11,
+        "name": "1GB+1.5mins Daily Plan [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 12,
+        "name": "750MB + Free 1hr (YT/IG/TT) [Gifting]",
+        "price": 437,
+        "type": "GIFTING",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 13,
+        "name": "2.5GB 2-Day Plan [Gifting]",
+        "price": 873,
+        "type": "GIFTING",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 15,
+        "name": "1GB Weekly Plan [Gifting]",
+        "price": 776,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 16,
+        "name": "1.5GB Weekly Plan [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 17,
+        "name": "6GB Weekly Plan [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 18,
+        "name": "2GB+2mins Monthly Plan [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 19,
+        "name": "2.7GB+2mins Monthly Plan [Gifting]",
+        "price": 1940,
+        "type": "GIFTING",
+        "size": 2764.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 20,
+        "name": "3.5GB+5mins Monthly Plan [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 21,
+        "name": "7GB Monthly Plan [Gifting]",
+        "price": 3395,
+        "type": "GIFTING",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 22,
+        "name": "10GB + 10mins Monthly Plan [Gifting]",
+        "price": 4365,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 23,
+        "name": "12.5 Monthly Plan [Gifting]",
+        "price": 5335,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 24,
+        "name": "16.5GB+10mins Monthly Plan [Gifting]",
+        "price": 6305,
+        "type": "GIFTING",
+        "size": 16896
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 25,
+        "name": "20GB Monthly Plan [Gifting]",
+        "price": 7275,
+        "type": "GIFTING",
+        "size": 20480
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 26,
+        "name": "25GB Monthly Plan [Gifting]",
+        "price": 8730,
+        "type": "GIFTING",
+        "size": 25600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 27,
+        "name": "36GB Monthly Plan [Gifting]",
+        "price": 10670,
+        "type": "GIFTING",
+        "size": 36864
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 28,
+        "name": "75GB Monthly Plan [Gifting]",
+        "price": 17460,
+        "type": "GIFTING",
+        "size": 76800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 29,
+        "name": "165GB Monthly Plan [Gifting]",
+        "price": 33950,
+        "type": "GIFTING",
+        "size": 168960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 30,
+        "name": "250GB Monthly Plan [Gifting]",
+        "price": 53350,
+        "type": "GIFTING",
+        "size": 256000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 31,
+        "name": "150GB 2-Month Plan  [Gifting]",
+        "price": 38800,
+        "type": "GIFTING",
+        "size": 153600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 32,
+        "name": "200GB 2-Month Plan [Gifting]",
+        "price": 48500,
+        "type": "GIFTING",
+        "size": 204800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 120,
+        "name": "30GB Monthly Broadband Plan - Monthly",
+        "price": 8730,
+        "type": "OTHER",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 121,
+        "name": "60GB Monthly Broadband Plan - Monthly",
+        "price": 14065,
+        "type": "OTHER",
+        "size": 61440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 123,
+        "name": "Silver (150GB FUP Monthly Unlimited) Broadband - Monthly",
+        "price": 29100,
+        "type": "OTHER",
+        "size": 153600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 124,
+        "name": "200GB Monthly Broadband Plan ",
+        "price": 36375,
+        "type": "OTHER",
+        "size": 204800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 125,
+        "name": "Ruby (300GB FUP Monthly Unlimited) Broadband",
+        "price": 43650,
+        "type": "OTHER",
+        "size": 307200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 129,
+        "name": "450GB HyNetFlex - 3 Monthly",
+        "price": 0,
+        "type": "OTHER",
+        "size": 460800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 226,
+        "name": "11GB (Digital Bundle) - 7 Days",
+        "price": 3430,
+        "type": "OTHER",
+        "size": 11264
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 227,
+        "name": "2GB 2-Day Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 229,
+        "name": "3.2GB 2-Day Plan [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 3276.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 230,
+        "name": "110MB Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 110
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 231,
+        "name": "1.5GB 2-Day Plan [Gifting]",
+        "price": 582,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 232,
+        "name": "6.75GB Value Data Plan Monthly [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 6912
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 233,
+        "name": "14.5GB Value Data Monthly Plan [Gifting]",
+        "price": 4850,
+        "type": "GIFTING",
+        "size": 14848
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 234,
+        "name": "35GB Postpaid Monthly [Gifting]",
+        "price": 6790,
+        "type": "GIFTING",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 235,
+        "name": "40GB Postpaid 2-Month [Gifting]",
+        "price": 8730,
+        "type": "GIFTING",
+        "size": 40960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 236,
+        "name": "90GB 2-Month [Gifting]",
+        "price": 24250,
+        "type": "GIFTING",
+        "size": 92160
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 237,
+        "name": "230MB Daily Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 230
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 238,
+        "name": "1.2GB Pulse Weekly Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 1228.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 239,
+        "name": "20MB Facebook Daily Plan [Social] [Gifting]",
+        "price": 24,
+        "type": "GIFTING",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 240,
+        "name": "20MB WhatsApp Daily Plan [Social] [Gifting]",
+        "price": 24,
+        "type": "GIFTING",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 241,
+        "name": "500MB Pulse Nightlife bundle [Social] [Gifting]",
+        "price": 73,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 242,
+        "name": "150MB TikTok Daily Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 150
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 243,
+        "name": "4 hrs YouTube Buffet Daily Bundle [Social] [Gifting]",
+        "price": 243,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 244,
+        "name": "120MB Facebook Monthly Plan [Social] [Gifting]",
+        "price": 146,
+        "type": "GIFTING",
+        "size": 120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 245,
+        "name": "120MB WhatsApp Monthly Plan [Social] [Gifting]",
+        "price": 146,
+        "type": "GIFTING",
+        "size": 120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 246,
+        "name": "40MB Facebook Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 247,
+        "name": "40MB WhatsApp Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 248,
+        "name": "40MB Ayoba Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 249,
+        "name": "1GB IG/TT/YT Weekly Plan [Soclai] [Gifting]",
+        "price": 291,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 250,
+        "name": "2GB TikTok Weekly Plan [Social] [Gifting]",
+        "price": 388,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 256,
+        "name": "1.2GB All Social Monthly",
+        "price": 437,
+        "type": "OTHER",
+        "size": 1228.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 258,
+        "name": "500MB Weekly Plan [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 261,
+        "name": "3.5GB Weekly Plan [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 263,
+        "name": "800GB Yearly Plan [Gifting]",
+        "price": 121250,
+        "type": "GIFTING",
+        "size": 819200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 264,
+        "name": "500MB Daily Plan [Gifting]",
+        "price": 340,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 265,
+        "name": "200MB All Social Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 266,
+        "name": "470MB All Social Weekly Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 470
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 267,
+        "name": "XtraData More 600 Daily [Gifting]",
+        "price": 582,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 268,
+        "name": "XtraData More 1000 Daily [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 269,
+        "name": "XtraData 500 - 600MB - Weekly [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 270,
+        "name": "XtraData More 2500 - 6GB - Weekly [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 271,
+        "name": "XtraData 1500 - 1.8GB - Monthly [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 1843.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 272,
+        "name": "XtraData 3000 - 5.5GB - Monthly [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 5632
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 274,
+        "name": "XtraData 5500 - 12.5GB - Monthly [Gifting]",
+        "price": 5335,
+        "type": "GIFTING",
+        "size": 12800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 275,
+        "name": "XtraData 11000 Monthly [Gifting]",
+        "price": 10670,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 393,
+        "name": "65GB Monthly Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 66560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 405,
+        "name": "480GB 3-Month Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 491520
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 412,
+        "name": "120GB Monthly Broadband Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 122880
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 413,
+        "name": "450GB 3-Month Broadband Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 460800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 414,
+        "name": "1.5TB Yearly Broadband ",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1572864
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 445,
+        "name": "7GB - 2 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 133,
+        "name": "25GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 25600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 134,
+        "name": "30GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 135,
+        "name": "50GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 452,
+        "name": "1GB Daily - N200 [Awoof]",
+        "price": 250,
+        "type": "AWOOF",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 453,
+        "name": "2.5GB Daily - N500 [Awoof]",
+        "price": 550,
+        "type": "AWOOF",
+        "size": 2560
+      }
+    ],
+    "AIRTEL": [
+      {
+        "provider": "SMEPLUG",
+        "id": 320,
+        "name": "150MB - 1 Day [Awoof]",
+        "price": 60,
+        "type": "AWOOF",
+        "size": 150
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 321,
+        "name": "300MB - 2 Days [Awoof]",
+        "price": 115,
+        "type": "AWOOF",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 322,
+        "name": "600MB - 2 Days [Awoof]",
+        "price": 230,
+        "type": "AWOOF",
+        "size": 600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 325,
+        "name": "10GB - 30 Days  [Awoof]",
+        "price": 3045,
+        "type": "AWOOF",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 327,
+        "name": "13GB - 30 Days [Awoof]",
+        "price": 4900,
+        "type": "AWOOF",
+        "size": 13312
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 407,
+        "name": "Binge 400 -  Data - 1.5 GB - 1 Day [Awoof]",
+        "price": 450,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 409,
+        "name": "3GB -  Data - 2Days [Awoof]",
+        "price": 800,
+        "type": "AWOOF",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 411,
+        "name": "Binge 500 -  Data - 1.5GB - 1Day [Awoof]",
+        "price": 550,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 448,
+        "name": "3.2 GB - 3 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 3276.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 449,
+        "name": "6.5 GB - 7 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 6656
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 450,
+        "name": "8.0 GB - 30 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 8192
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 451,
+        "name": "60.0 GB - 365 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 61440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 284,
+        "name": "Night Plan 50 -  Data - 250MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 285,
+        "name": "Daily Plan 75 -  Data - 75MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 75
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 286,
+        "name": "Daily Plan 100 -  Data - 100MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 287,
+        "name": "Social Plan 100 (2 Days) -  Data - 200MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 288,
+        "name": "Daily Plan 200 -  Data - 200MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 289,
+        "name": "Daily Plan 300 -  Data - 300MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 290,
+        "name": "Social Plan 300 (3 Days) -  Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 291,
+        "name": "Binge 500 (1 Day) - Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 292,
+        "name": "Binge 600 (2 Days) -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 293,
+        "name": "Binge 750 (2 Days) -  Data - 2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 294,
+        "name": "Binge 1000 (2 Days) -  Data - 3.2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3276.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 295,
+        "name": "Binge 1500 -  Data - 5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 296,
+        "name": "Weekly Plan 500 (7 Days) -  Data - 500MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 297,
+        "name": "Social Plan 500 (7 Days) -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 298,
+        "name": "Weekly Plan 800 (7 Days) -  Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 299,
+        "name": "Weekly Plan 1000 -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 300,
+        "name": "Weekly Plan 1500 -  Data - 3.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 301,
+        "name": "Weekly Plan 2500 -  Data - 6GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 302,
+        "name": "Weekly Plan 3000 -  Data - 10GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 303,
+        "name": "Weekly Plan 5000 -  Data - 18GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 18432
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 304,
+        "name": "Monthly Plan 1500 -  Data - 2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 305,
+        "name": "Monthly Plan 2000 -  Data - 3GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 306,
+        "name": "Monthly Plan 2500 -  Data - 4GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 4096
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 307,
+        "name": "Monthly Plan 4000 -  Data - 10GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 308,
+        "name": "Monthly Plan 5000 -  Data - 13GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 13312
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 309,
+        "name": "Monthly Plan 6000 -  Data - 18GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 18432
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 310,
+        "name": "Monthly Plan 8000 -  Data - 25GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 25600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 311,
+        "name": "Monthly Plan 10000 -  Data - 35GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 312,
+        "name": "Monthly Plan 15000 -  Data - 60GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 61440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 313,
+        "name": "Monthly Plan 20000 -  Data - 100GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 102400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 314,
+        "name": "Monthly Plan 30000 -  Data - 160GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 163840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 315,
+        "name": "Monthly Plan 40000 -  Data - 210GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 215040
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 316,
+        "name": "Monthly Plan 50000 -  Data - 300GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 307200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 317,
+        "name": "Monthly Plan 60000 -  Data - 350GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 358400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 318,
+        "name": "3 Months plan 100000 -  Data - 650GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 665600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 319,
+        "name": "Monthly Plan 3000 -  Data - 8GB - 30 Days [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 8192
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 379,
+        "name": "Router Ultra 100GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 102400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 380,
+        "name": "Router 160GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 163840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 381,
+        "name": "Router 210GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 215040
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 382,
+        "name": "Router 300GB - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 307200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 383,
+        "name": "Router 350GB - 120 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 358400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 384,
+        "name": "685GB - 365 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 701440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 385,
+        "name": "Router - Unlimited 20.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 386,
+        "name": "Router - Unlimited 40.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 387,
+        "name": "Router - Unlimited 60.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 388,
+        "name": "Router - Unlimited 20.0 MBPS - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 389,
+        "name": "Router - Unlimited 60.0 MBPS - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 390,
+        "name": "Router - Unlimited 20.0 MBPS - 180 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 391,
+        "name": "Router - Unlimited 60.0 MBPS - 180 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 394,
+        "name": "2GB - 2 Days [Awoof]",
+        "price": 540,
+        "type": "AWOOF",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 401,
+        "name": "Flexi 500 - (10 mins + 400MB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 402,
+        "name": "Flexi 1000 - (20 mins + 1.2GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1228.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 403,
+        "name": "Flexi 2000 - (40 mins + 2.5GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 404,
+        "name": "Flexi 5000 - (100 mins + 12GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 410,
+        "name": "5GB Weekly Plan 1500 - 7 Days",
+        "price": 1500,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 446,
+        "name": "Router - Unlimited 50.0 MBPS - 30days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 447,
+        "name": "Router - Unlimited 100.0 MBPS - 30days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 100
+      }
+    ],
+    "GLO": [
+      {
+        "provider": "SMEPLUG",
+        "id": 331,
+        "name": "750MB - 1 Day - Awoof *",
+        "price": 192,
+        "type": "AWOOF",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 332,
+        "name": "1.5 GB - 1 Day - Awoof *",
+        "price": 288,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 333,
+        "name": "2.5GB - 2 Days - Awoof *",
+        "price": 480,
+        "type": "AWOOF",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 334,
+        "name": " 10GB - 7 Days - Awoof *",
+        "price": 1920,
+        "type": "AWOOF",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 335,
+        "name": "45 MB incl. 5MB Night Data - 1 Day *",
+        "price": 48,
+        "type": "OTHER",
+        "size": 45
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 336,
+        "name": "105 MB incl. 5MB Night - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 105
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 337,
+        "name": "235 MB incl. 25MB Night - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 235
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 338,
+        "name": "2.6 GB incl. 1.5GB Night Data - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 2662.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 339,
+        "name": "5 GB incl. 3GB Night Data - 30 Days *",
+        "price": 1440,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 340,
+        "name": "6.15 GB incl. 3GB Night - 30 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 6297.6
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 341,
+        "name": "7.25 GB incl. 3GB Night - 30 Days *",
+        "price": 2400,
+        "type": "OTHER",
+        "size": 7424
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 342,
+        "name": "10 GB incl. 2GB Night - 30 Days *",
+        "price": 2880,
+        "type": "OTHER",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 343,
+        "name": "12.5 GB incl. 2GB Night - 30 Days *",
+        "price": 3840,
+        "type": "OTHER",
+        "size": 12800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 344,
+        "name": "16 GB incl. 2.5GB Night - 30 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 16384
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 345,
+        "name": "20.5GB incl 2GB Night - 30 Days *",
+        "price": 5760,
+        "type": "OTHER",
+        "size": 20992
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 346,
+        "name": "28 GB incl. 2GB Night - 30 Days *",
+        "price": 7680,
+        "type": "OTHER",
+        "size": 28672
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 347,
+        "name": "38 GB incl. 2GB Night - 30 Days *",
+        "price": 9600,
+        "type": "OTHER",
+        "size": 38912
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 348,
+        "name": "64 GB incl. 2GB Night - 30 Days *",
+        "price": 14400,
+        "type": "OTHER",
+        "size": 65536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 349,
+        "name": "107 GB incl. 2GB Night - 30 Days",
+        "price": 19200,
+        "type": "OTHER",
+        "size": 109568
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 350,
+        "name": "350MB Night *",
+        "price": 58,
+        "type": "OTHER",
+        "size": 350
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 351,
+        "name": "750MB Night *",
+        "price": 115,
+        "type": "OTHER",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 352,
+        "name": "135MB Social - 3 Days *",
+        "price": 48,
+        "type": "OTHER",
+        "size": 135
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 353,
+        "name": "335MB Social - 7 Days *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 335
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 354,
+        "name": "1.1GB Social - 10 Days *",
+        "price": 288,
+        "type": "OTHER",
+        "size": 1126.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 355,
+        "name": "1.8GB Social - 15 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1843.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 356,
+        "name": "300 MB + 1 Hour - My-G Bundle  - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 357,
+        "name": "1 GB + 1 Hour - My-G Bundle - 3 Days *",
+        "price": 288,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 358,
+        "name": "1.5 GB + 1 Hour - My-G Bundle - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 359,
+        "name": "3.5 GB + 1 - My-G Bundle - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 360,
+        "name": "1GB - Special Plan - 1 Day *",
+        "price": 336,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 361,
+        "name": "2 GB incl. 1GB Night Data - Special Plan - 1 Day *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 362,
+        "name": "3.55GB incl 2GB Night  - Special Plan - 1 Day *",
+        "price": 576,
+        "type": "OTHER",
+        "size": 3635.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 363,
+        "name": "5.1GB incl 2GB Night - Special Plan - 2 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 5222.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 364,
+        "name": "5.9GB incl. 2GB Night - Special Plan - 7 Days *",
+        "price": 1440,
+        "type": "OTHER",
+        "size": 6041.6
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 365,
+        "name": "875 MB - Weekend Plan (Sat-Sun)  - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 875
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 366,
+        "name": "2.5 GB - Weekend Plan (Sat-Sun) - 2 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 367,
+        "name": "500 MB for GLO TV - 3 Days *",
+        "price": 144,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 368,
+        "name": "2 GB for GLO TV - 7 Days *",
+        "price": 432,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 369,
+        "name": "2 GB for GLO TV - Lite Plan - 7 Days *",
+        "price": 864,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 370,
+        "name": "6 GB for GLO TV (VOD Plan) - 30 Days *",
+        "price": 1344,
+        "type": "OTHER",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 371,
+        "name": "6 GB for GLO TV (GloTV Max) - 30 Days *",
+        "price": 3072,
+        "type": "OTHER",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 372,
+        "name": "200 MB - Campus Booster - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 373,
+        "name": "445 MB incl. 25MB Night - Campus Booster - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 445
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 374,
+        "name": "2 GB incl. 1GB Night Data - Campus Booster - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 375,
+        "name": "4.2 GB incl. 2GB Night Data - Campus Booster - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 4300.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 376,
+        "name": "9.8 GB incl. 3.5GB Night -  Campus Booster - 30 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 10035.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 377,
+        "name": " 30 GB incl. 3GB Night - Campus Booster - 30 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 396,
+        "name": "1.5 GB incl. 1GB Night Data - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 397,
+        "name": "1.1GB - 14 Days *",
+        "price": 720,
+        "type": "OTHER",
+        "size": 1126.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 398,
+        "name": "3.5GB incl 2GB Night Data - 7 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 399,
+        "name": "8.5GB incl 2.5GB Night Data - 7 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 8704
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 400,
+        "name": "20.5GB incl 2GB Night - 7 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 20992
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 415,
+        "name": "135GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 138240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 416,
+        "name": "165GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 168960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 417,
+        "name": "220 GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 225280
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 418,
+        "name": "310 GB - 60 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 317440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 419,
+        "name": "380GB - 90 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 389120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 420,
+        "name": "475GB - 90 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 486400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 421,
+        "name": "1000 GB - 365 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1024000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 428,
+        "name": "1GB [Corporate] - 3 Days",
+        "price": 290,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 429,
+        "name": "1GB [Corporate] - 7 Days",
+        "price": 350,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 430,
+        "name": "1GB [Corporate] - 14 Days (Night)",
+        "price": 350,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 431,
+        "name": "1GB [Corporate] -  30 Days",
+        "price": 450,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 432,
+        "name": "500MB [Corporate] - 30 Days",
+        "price": 220,
+        "type": "CORPORATE",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 433,
+        "name": "3GB [Corporate] - 3 Days",
+        "price": 870,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 434,
+        "name": "3GB [Corporate] - 7 Days",
+        "price": 1050,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 435,
+        "name": "3GB [Corporate] - 14 Days (Night)",
+        "price": 1050,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 436,
+        "name": "5GB [Corporate] - 3 Days",
+        "price": 1450,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 437,
+        "name": "5GB [Corporate] - 7 Days",
+        "price": 1750,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 438,
+        "name": "5GB [Corporate] - 14 Days",
+        "price": 1750,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 439,
+        "name": "3GB [Corporate] - 30 Days",
+        "price": 1320,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 440,
+        "name": "5GB [Corporate] - 30 Days",
+        "price": 2200,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 441,
+        "name": "10GB [Corporate] - 14 Days (Night)",
+        "price": 3500,
+        "type": "CORPORATE",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 442,
+        "name": "10GB [Corporate] - 30 Days",
+        "price": 4400,
+        "type": "CORPORATE",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 443,
+        "name": "200MB [Corporate] - 3 Days",
+        "price": 88,
+        "type": "CORPORATE",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 444,
+        "name": "2GB [Corporate] - 30 Days",
+        "price": 880,
+        "type": "CORPORATE",
+        "size": 2048
+      }
+    ],
+    "9MOBILE": [
+      {
+        "provider": "SMEPLUG",
+        "id": 73,
+        "name": "Low Cost Data 250MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 74,
+        "name": "Low Cost Data 500MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 75,
+        "name": "1GB Weekly data plan + social",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 76,
+        "name": "2GB (1GB +1GB Night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 77,
+        "name": "6.5GB (2.5GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 6656
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 78,
+        "name": " 4.2GB (2GB all time + 2.2GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 4300.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 79,
+        "name": "11GB (7GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 11264
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 80,
+        "name": "18.5GB (15GB all time + 3.5GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 18944
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 81,
+        "name": "35GB Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 82,
+        "name": "8GB (3.6 All time + 4.4GB Night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 8192
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 83,
+        "name": "7.1GB (7GB + 100MB free socials)",
+        "price": null,
+        "type": "OTHER",
+        "size": 7270.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 84,
+        "name": "1GB Weekly data plan + social",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 85,
+        "name": "Smartphone 500MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 181,
+        "name": "Smartphone 1GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 182,
+        "name": "Smartphone 2.5GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 183,
+        "name": "Smartphone 5GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 184,
+        "name": "24GB monthly data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 24576
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 185,
+        "name": "9.5GB (5.5GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 9728
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 186,
+        "name": "300MB Daily Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 187,
+        "name": "50MB Daily Data plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 188,
+        "name": "50GB Monthly Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 189,
+        "name": "80GB monthly data plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 81920
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 190,
+        "name": "12GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 191,
+        "name": "125GB Monthly Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 128000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 192,
+        "name": "EasyBlaze 30MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 30
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 193,
+        "name": "EasyBlaze 35MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 35
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 194,
+        "name": "EasyBlaze 40MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 195,
+        "name": "EasyBlaze 650MB Daily",
+        "price": null,
+        "type": "OTHER",
+        "size": 650
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 196,
+        "name": "100MB + 100MB Social Daily @ N100",
+        "price": null,
+        "type": "OTHER",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 197,
+        "name": "125GB Monthly @ N20000",
+        "price": null,
+        "type": "OTHER",
+        "size": 128000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 198,
+        "name": "12GB Monthly @ N3000",
+        "price": null,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 199,
+        "name": "15GB all time + 3.5GB night Monthly @ N4000",
+        "price": null,
+        "type": "OTHER",
+        "size": 15360
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 200,
+        "name": "165GB Bi-Annual @ N50000",
+        "price": null,
+        "type": "OTHER",
+        "size": 168960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 201,
+        "name": "1GB Daily + 100MB Social @ N300",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 202,
+        "name": "1GB Weekly + Social @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 203,
+        "name": "1TB Annual @ N100000",
+        "price": null,
+        "type": "OTHER",
+        "size": 1048576
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 204,
+        "name": "2.5GB all time + 4GB night Monthly @ N1200",
+        "price": null,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 205,
+        "name": "225GB 2Months @ N30000",
+        "price": null,
+        "type": "OTHER",
+        "size": 230400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 206,
+        "name": "24GB Monthly @ N5000",
+        "price": null,
+        "type": "OTHER",
+        "size": 24576
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 207,
+        "name": "250MB Weekly @ N200",
+        "price": null,
+        "type": "OTHER",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 208,
+        "name": "2GB 3-Days +100MB Social @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 209,
+        "name": "2GB all time + 2.2GB night Monthly @ N1000",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 210,
+        "name": "3.6GB all time + 4.4GB night Monthly @ N1500",
+        "price": null,
+        "type": "OTHER",
+        "size": 3686.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 211,
+        "name": "300MB + 300 Secs Daily @ N150",
+        "price": null,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 212,
+        "name": "35GB Monthly @ N7000",
+        "price": null,
+        "type": "OTHER",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 213,
+        "name": "425GB Quarterly @ N50000",
+        "price": null,
+        "type": "OTHER",
+        "size": 435200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 214,
+        "name": "5.5GB all time + 4GB night Monthly @ N2000",
+        "price": null,
+        "type": "OTHER",
+        "size": 5632
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 215,
+        "name": "500MB Monthly @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 216,
+        "name": "50GB Monthly @ N10000",
+        "price": null,
+        "type": "OTHER",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 217,
+        "name": "50MB Daily @ N50",
+        "price": null,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 218,
+        "name": "600GB Bi-Annual @ N70000",
+        "price": null,
+        "type": "OTHER",
+        "size": 614400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 219,
+        "name": "650MB Daily @ N200",
+        "price": null,
+        "type": "OTHER",
+        "size": 650
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 220,
+        "name": "75GB Quarterly @ N25000",
+        "price": null,
+        "type": "OTHER",
+        "size": 76800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 221,
+        "name": "7GB + 100MB Social Weekly @ N1500",
+        "price": null,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 222,
+        "name": "7GB all time + 4GB night Monthly @ N2500",
+        "price": null,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 223,
+        "name": "80GB Monthly @ N15000",
+        "price": null,
+        "type": "OTHER",
+        "size": 81920
+      }
+    ]
+  },
+  "combined": {
+    "MTN": [
+      {
+        "provider": "INLOMAX",
+        "id": "251",
+        "name": "Talkmore (₦400 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 165,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 243,
+        "name": "4 hrs YouTube Buffet Daily Bundle [Social] [Gifting]",
+        "price": 243,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "247",
+        "name": "Talkmore (₦1000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 320,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 267,
+        "name": "XtraData More 600 Daily [Gifting]",
+        "price": 582,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 268,
+        "name": "XtraData More 1000 Daily [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "248",
+        "name": "Talkmore (₦4000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 1330,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "249",
+        "name": "Talkmore (₦8000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 2370,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 23,
+        "name": "12.5 Monthly Plan [Gifting]",
+        "price": 5335,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "250",
+        "name": "Talkmore (₦20000 for Nat'l. Calls, SMS & Data) [TALKMORE]",
+        "price": 6300,
+        "type": "TALKMORE",
+        "size": 0,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 275,
+        "name": "XtraData 11000 Monthly [Gifting]",
+        "price": 10670,
+        "type": "GIFTING",
+        "size": 0
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 239,
+        "name": "20MB Facebook Daily Plan [Social] [Gifting]",
+        "price": 24,
+        "type": "GIFTING",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 240,
+        "name": "20MB WhatsApp Daily Plan [Social] [Gifting]",
+        "price": 24,
+        "type": "GIFTING",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 246,
+        "name": "40MB Facebook Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 247,
+        "name": "40MB WhatsApp Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 248,
+        "name": "40MB Ayoba Weekly Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 169,
+        "name": "50MB Share",
+        "price": 0,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 6,
+        "name": "75MB Daily Plan [Gifting]",
+        "price": 73,
+        "type": "GIFTING",
+        "size": 75
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 7,
+        "name": "100MB Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 170,
+        "name": "100MB Share",
+        "price": 250,
+        "type": "OTHER",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 230,
+        "name": "110MB Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 110
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 244,
+        "name": "120MB Facebook Monthly Plan [Social] [Gifting]",
+        "price": 146,
+        "type": "GIFTING",
+        "size": 120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 245,
+        "name": "120MB WhatsApp Monthly Plan [Social] [Gifting]",
+        "price": 146,
+        "type": "GIFTING",
+        "size": 120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 242,
+        "name": "150MB TikTok Daily Plan [Social] [Gifting]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 150
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 171,
+        "name": "200MB Share",
+        "price": 0,
+        "type": "OTHER",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 265,
+        "name": "200MB All Social Daily Plan [Gifting]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 9,
+        "name": "200MB 2-Day Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 237,
+        "name": "230MB Daily Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 230
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "258",
+        "name": "230MB [GIFTING]",
+        "price": 196,
+        "type": "GIFTING",
+        "size": 230,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 10,
+        "name": "250MB 2-Day Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 266,
+        "name": "470MB All Social Weekly Plan [Gifting]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 470
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 241,
+        "name": "500MB Pulse Nightlife bundle [Social] [Gifting]",
+        "price": 73,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 423,
+        "name": "500MB Share - Weekly",
+        "price": 300,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 264,
+        "name": "500MB Daily Plan [Gifting]",
+        "price": 340,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "259",
+        "name": "500MB [GIFTING]",
+        "price": 343,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "97",
+        "name": "500MB [DATA SHARE]",
+        "price": 380,
+        "type": "DATA SHARE",
+        "size": 500,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 172,
+        "name": "500MB Share",
+        "price": 395,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 258,
+        "name": "500MB Weekly Plan [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 269,
+        "name": "XtraData 500 - 600MB - Weekly [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 600
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "252",
+        "name": "600MB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 600,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 8,
+        "name": "750MB + Free 1hr (YT/IG/TT) [Gifting] / 3 Days",
+        "price": 437,
+        "type": "GIFTING",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 12,
+        "name": "750MB + Free 1hr (YT/IG/TT) [Gifting]",
+        "price": 437,
+        "type": "GIFTING",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 452,
+        "name": "1GB Daily - N200 [Awoof]",
+        "price": 250,
+        "type": "AWOOF",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 249,
+        "name": "1GB IG/TT/YT Weekly Plan [Soclai] [Gifting]",
+        "price": 291,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 424,
+        "name": "1GB Share - Weekly",
+        "price": 420,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "240",
+        "name": "1GB [DATA SHARE]",
+        "price": 460,
+        "type": "DATA SHARE",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 11,
+        "name": "1GB+1.5mins Daily Plan [Gifting]",
+        "price": 485,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "202",
+        "name": "1GB + 3 mins [GIFTING]",
+        "price": 488,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "Daily"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "245",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 530,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 173,
+        "name": "1GB Share",
+        "price": 550,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "98",
+        "name": "1GB [DATA SHARE]",
+        "price": 580,
+        "type": "DATA SHARE",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "16",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 620,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 15,
+        "name": "1GB Weekly Plan [Gifting]",
+        "price": 776,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "210",
+        "name": "1GB+5mins [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "Weekly"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 256,
+        "name": "1.2GB All Social Monthly",
+        "price": 437,
+        "type": "OTHER",
+        "size": 1228.8
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "232",
+        "name": "1.2GB (All Social Media) [SOCIAL BUNDLES]",
+        "price": 441,
+        "type": "SOCIAL BUNDLES",
+        "size": 1228.8,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 238,
+        "name": "1.2GB Pulse Weekly Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 1228.8
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "234",
+        "name": "1.2GB (MTN PULSE) [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1228.8,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 231,
+        "name": "1.5GB 2-Day Plan [Gifting]",
+        "price": 582,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "257",
+        "name": "1.5GB [GIFTING]",
+        "price": 588,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 16,
+        "name": "1.5GB Weekly Plan [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "253",
+        "name": "1.5GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 259,
+        "name": "ThryveData 1500 (1.8GB + 35 minutes) - Gifting",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 1843.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 271,
+        "name": "XtraData 1500 - 1.8GB - Monthly [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 1843.2
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "229",
+        "name": "1.8GB + 35mins talktime [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 1843.2,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 250,
+        "name": "2GB TikTok Weekly Plan [Social] [Gifting]",
+        "price": 388,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "231",
+        "name": "2GB (TikTok) [SOCIAL BUNDLES]",
+        "price": 392,
+        "type": "SOCIAL BUNDLES",
+        "size": 2048,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 227,
+        "name": "2GB 2-Day Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "260",
+        "name": "2GB [GIFTING]",
+        "price": 739,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 425,
+        "name": "2GB Share - Weekly",
+        "price": 840,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "99",
+        "name": "2GB [DATA SHARE]",
+        "price": 1030,
+        "type": "DATA SHARE",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 174,
+        "name": "2GB Share",
+        "price": 1090,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "246",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 1100,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "17",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 1320,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 18,
+        "name": "2GB+2mins Monthly Plan [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "216",
+        "name": "2GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 453,
+        "name": "2.5GB Daily - N500 [Awoof]",
+        "price": 550,
+        "type": "AWOOF",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 228,
+        "name": "2.5GB - 1Day Plan [Gifting]",
+        "price": 728,
+        "type": "GIFTING",
+        "size": 2560
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "203",
+        "name": "2.5GB [GIFTING]",
+        "price": 738,
+        "type": "GIFTING",
+        "size": 2560,
+        "validity": "Daily"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 13,
+        "name": "2.5GB 2-Day Plan [Gifting]",
+        "price": 873,
+        "type": "GIFTING",
+        "size": 2560
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "205",
+        "name": "2.5GB [GIFTING]",
+        "price": 882,
+        "type": "GIFTING",
+        "size": 2560,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 19,
+        "name": "2.7GB+2mins Monthly Plan [Gifting]",
+        "price": 1940,
+        "type": "GIFTING",
+        "size": 2764.8
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "217",
+        "name": "2.7GB+5mins [GIFTING]",
+        "price": 1960,
+        "type": "GIFTING",
+        "size": 2764.8,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 426,
+        "name": "3GB Share - Weekly",
+        "price": 1260,
+        "type": "OTHER",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "100",
+        "name": "3GB [DATA SHARE]",
+        "price": 1530,
+        "type": "DATA SHARE",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 175,
+        "name": "3GB Share",
+        "price": 1590,
+        "type": "OTHER",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "18",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 1600,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 229,
+        "name": "3.2GB 2-Day Plan [Gifting]",
+        "price": 970,
+        "type": "GIFTING",
+        "size": 3276.8
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "126",
+        "name": "3.2GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 3276.8,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 261,
+        "name": "3.5GB Weekly Plan [Gifting]",
+        "price": 1455,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "254",
+        "name": "3.5GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 20,
+        "name": "3.5GB+5mins Monthly Plan [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "227",
+        "name": "3.5GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "101",
+        "name": "5GB [DATA SHARE]",
+        "price": 1950,
+        "type": "DATA SHARE",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 427,
+        "name": "5GB Share - Weekly",
+        "price": 2000,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "19",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 2300,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 176,
+        "name": "5GB Share",
+        "price": 2450,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 260,
+        "name": "ThryveData 3000 5GB [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 272,
+        "name": "XtraData 3000 - 5.5GB - Monthly [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 5632
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 17,
+        "name": "6GB Weekly Plan [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 270,
+        "name": "XtraData More 2500 - 6GB - Weekly [Gifting]",
+        "price": 2425,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "214",
+        "name": "6GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 6144,
+        "validity": "Weekly"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 232,
+        "name": "6.75GB Value Data Plan Monthly [Gifting]",
+        "price": 2910,
+        "type": "GIFTING",
+        "size": 6912
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 445,
+        "name": "7GB - 2 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 21,
+        "name": "7GB Monthly Plan [Gifting]",
+        "price": 3395,
+        "type": "GIFTING",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 22,
+        "name": "10GB + 10mins Monthly Plan [Gifting]",
+        "price": 4365,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "226",
+        "name": "10GB+10mins [GIFTING]",
+        "price": 4410,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "256",
+        "name": "11GB [GIFTING]",
+        "price": 3430,
+        "type": "GIFTING",
+        "size": 11264,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 226,
+        "name": "11GB (Digital Bundle) - 7 Days",
+        "price": 3430,
+        "type": "OTHER",
+        "size": 11264
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 274,
+        "name": "XtraData 5500 - 12.5GB - Monthly [Gifting]",
+        "price": 5335,
+        "type": "GIFTING",
+        "size": 12800
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "222",
+        "name": "12.5GB [GIFTING]",
+        "price": 5390,
+        "type": "GIFTING",
+        "size": 12800,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 233,
+        "name": "14.5GB Value Data Monthly Plan [Gifting]",
+        "price": 4850,
+        "type": "GIFTING",
+        "size": 14848
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 24,
+        "name": "16.5GB+10mins Monthly Plan [Gifting]",
+        "price": 6305,
+        "type": "GIFTING",
+        "size": 16896
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "223",
+        "name": "16.5GB+10mins [GIFTING]",
+        "price": 6370,
+        "type": "GIFTING",
+        "size": 16896,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 262,
+        "name": "20GB Weekly Plan [Gifting]",
+        "price": 4850,
+        "type": "GIFTING",
+        "size": 20480
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "255",
+        "name": "20GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 20480,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 25,
+        "name": "20GB Monthly Plan [Gifting]",
+        "price": 7275,
+        "type": "GIFTING",
+        "size": 20480
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 133,
+        "name": "25GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 25600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 26,
+        "name": "25GB Monthly Plan [Gifting]",
+        "price": 8730,
+        "type": "GIFTING",
+        "size": 25600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 134,
+        "name": "30GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 120,
+        "name": "30GB Monthly Broadband Plan - Monthly",
+        "price": 8730,
+        "type": "OTHER",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 234,
+        "name": "35GB Postpaid Monthly [Gifting]",
+        "price": 6790,
+        "type": "GIFTING",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 27,
+        "name": "36GB Monthly Plan [Gifting]",
+        "price": 10670,
+        "type": "GIFTING",
+        "size": 36864
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "228",
+        "name": "36GB [GIFTING]",
+        "price": 10780,
+        "type": "GIFTING",
+        "size": 36864,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 235,
+        "name": "40GB Postpaid 2-Month [Gifting]",
+        "price": 8730,
+        "type": "GIFTING",
+        "size": 40960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 135,
+        "name": "50GB [Corporate] - 30 Days",
+        "price": 0,
+        "type": "CORPORATE",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 121,
+        "name": "60GB Monthly Broadband Plan - Monthly",
+        "price": 14065,
+        "type": "OTHER",
+        "size": 61440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 393,
+        "name": "65GB Monthly Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 66560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 28,
+        "name": "75GB Monthly Plan [Gifting]",
+        "price": 17460,
+        "type": "GIFTING",
+        "size": 76800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 236,
+        "name": "90GB 2-Month [Gifting]",
+        "price": 24250,
+        "type": "GIFTING",
+        "size": 92160
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "235",
+        "name": "90GB [GIFTING]",
+        "price": 24500,
+        "type": "GIFTING",
+        "size": 92160,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 412,
+        "name": "120GB Monthly Broadband Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 122880
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 123,
+        "name": "Silver (150GB FUP Monthly Unlimited) Broadband - Monthly",
+        "price": 29100,
+        "type": "OTHER",
+        "size": 153600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 31,
+        "name": "150GB 2-Month Plan  [Gifting]",
+        "price": 38800,
+        "type": "GIFTING",
+        "size": 153600
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "237",
+        "name": "150GB [GIFTING]",
+        "price": 39000,
+        "type": "GIFTING",
+        "size": 153600,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 29,
+        "name": "165GB Monthly Plan [Gifting]",
+        "price": 33950,
+        "type": "GIFTING",
+        "size": 168960
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "236",
+        "name": "165GB [GIFTING]",
+        "price": 34300,
+        "type": "GIFTING",
+        "size": 168960,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 124,
+        "name": "200GB Monthly Broadband Plan ",
+        "price": 36375,
+        "type": "OTHER",
+        "size": 204800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 32,
+        "name": "200GB 2-Month Plan [Gifting]",
+        "price": 48500,
+        "type": "GIFTING",
+        "size": 204800
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "238",
+        "name": "200GB [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 204800,
+        "validity": "60 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 30,
+        "name": "250GB Monthly Plan [Gifting]",
+        "price": 53350,
+        "type": "GIFTING",
+        "size": 256000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 125,
+        "name": "Ruby (300GB FUP Monthly Unlimited) Broadband",
+        "price": 43650,
+        "type": "OTHER",
+        "size": 307200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 129,
+        "name": "450GB HyNetFlex - 3 Monthly",
+        "price": 0,
+        "type": "OTHER",
+        "size": 460800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 413,
+        "name": "450GB 3-Month Broadband Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 460800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 405,
+        "name": "480GB 3-Month Plan",
+        "price": 0,
+        "type": "OTHER",
+        "size": 491520
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 263,
+        "name": "800GB Yearly Plan [Gifting]",
+        "price": 121250,
+        "type": "GIFTING",
+        "size": 819200
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "239",
+        "name": "800GB [GIFTING]",
+        "price": 123000,
+        "type": "GIFTING",
+        "size": 819200,
+        "validity": "1 Year"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 414,
+        "name": "1.5TB Yearly Broadband ",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1572864
+      }
+    ],
+    "AIRTEL": [
+      {
+        "provider": "SMEPLUG",
+        "id": 385,
+        "name": "Router - Unlimited 20.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 388,
+        "name": "Router - Unlimited 20.0 MBPS - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 390,
+        "name": "Router - Unlimited 20.0 MBPS - 180 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 20
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "344",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 29400,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "346",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 78400,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "348",
+        "name": "ROUTER UNLIMITED 20MBPS [GIFTING]",
+        "price": 147000,
+        "type": "GIFTING",
+        "size": 20,
+        "validity": "180 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 386,
+        "name": "Router - Unlimited 40.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 446,
+        "name": "Router - Unlimited 50.0 MBPS - 30days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 387,
+        "name": "Router - Unlimited 60.0 MBPS - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 389,
+        "name": "Router - Unlimited 60.0 MBPS - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 391,
+        "name": "Router - Unlimited 60.0 MBPS - 180 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 60
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "345",
+        "name": "ROUTER UNLIMITED 60MBPS [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 60,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "347",
+        "name": "ROUTER UNLIMITED 60MBPS [GIFTING]",
+        "price": 132300,
+        "type": "GIFTING",
+        "size": 60,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 285,
+        "name": "Daily Plan 75 -  Data - 75MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 75
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "342",
+        "name": "75MB [GIFTING]",
+        "price": 74,
+        "type": "GIFTING",
+        "size": 75,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 286,
+        "name": "Daily Plan 100 -  Data - 100MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 447,
+        "name": "Router - Unlimited 100.0 MBPS - 30days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 100
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "334",
+        "name": "100MB [GIFTING]",
+        "price": 98,
+        "type": "GIFTING",
+        "size": 100,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 320,
+        "name": "150MB - 1 Day [Awoof]",
+        "price": 60,
+        "type": "AWOOF",
+        "size": 150
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "104",
+        "name": "150MB [AWOOF]",
+        "price": 65,
+        "type": "AWOOF",
+        "size": 150,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 287,
+        "name": "Social Plan 100 (2 Days) -  Data - 200MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 288,
+        "name": "Daily Plan 200 -  Data - 200MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 200
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "313",
+        "name": "200MB [SOCIAL BUNDLES]",
+        "price": 98,
+        "type": "SOCIAL BUNDLES",
+        "size": 200,
+        "validity": "5 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "335",
+        "name": "200MB [GIFTING]",
+        "price": 196,
+        "type": "GIFTING",
+        "size": 200,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 284,
+        "name": "Night Plan 50 -  Data - 250MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 250
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "336",
+        "name": "250MB [GIFTING]",
+        "price": 49,
+        "type": "GIFTING",
+        "size": 250,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 289,
+        "name": "Daily Plan 300 -  Data - 300MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 321,
+        "name": "300MB - 2 Days [Awoof]",
+        "price": 115,
+        "type": "AWOOF",
+        "size": 300
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "105",
+        "name": "300MB [AWOOF]",
+        "price": 121,
+        "type": "AWOOF",
+        "size": 300,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "337",
+        "name": "300MB [GIFTING]",
+        "price": 294,
+        "type": "GIFTING",
+        "size": 300,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 401,
+        "name": "Flexi 500 - (10 mins + 400MB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 296,
+        "name": "Weekly Plan 500 (7 Days) -  Data - 500MB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 500
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "309",
+        "name": "500MB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "7 days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "111",
+        "name": "600MB [AWOOF]",
+        "price": 224,
+        "type": "AWOOF",
+        "size": 600,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 322,
+        "name": "600MB - 2 Days [Awoof]",
+        "price": 230,
+        "type": "AWOOF",
+        "size": 600
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 290,
+        "name": "Social Plan 300 (3 Days) -  Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 291,
+        "name": "Binge 500 (1 Day) - Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 298,
+        "name": "Weekly Plan 800 (7 Days) -  Data - 1GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "314",
+        "name": "1GB [SOCIAL BUNDLES]",
+        "price": 294,
+        "type": "SOCIAL BUNDLES",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "338",
+        "name": "1GB [GIFTING]",
+        "price": 490,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "331",
+        "name": "1GB [GIFTING]",
+        "price": 784,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 402,
+        "name": "Flexi 1000 - (20 mins + 1.2GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1228.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 292,
+        "name": "Binge 600 (2 Days) -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 297,
+        "name": "Social Plan 500 (7 Days) -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 299,
+        "name": "Weekly Plan 1000 -  Data - 1.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 407,
+        "name": "Binge 400 -  Data - 1.5 GB - 1 Day [Awoof]",
+        "price": 450,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "308",
+        "name": "1.5 GB [SOCIAL BUNDLES]",
+        "price": 490,
+        "type": "SOCIAL BUNDLES",
+        "size": 1536,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "352",
+        "name": "1.5GB (Binge) [AWOOF]",
+        "price": 500,
+        "type": "AWOOF",
+        "size": 1536,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 411,
+        "name": "Binge 500 -  Data - 1.5GB - 1Day [Awoof]",
+        "price": 550,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "340",
+        "name": "1.5GB [GIFTING]",
+        "price": 588,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "341",
+        "name": "1.5GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 1536,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 293,
+        "name": "Binge 750 (2 Days) -  Data - 2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 304,
+        "name": "Monthly Plan 1500 -  Data - 2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 394,
+        "name": "2GB - 2 Days [Awoof]",
+        "price": 540,
+        "type": "AWOOF",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "353",
+        "name": "2GB (Binge) [AWOOF]",
+        "price": 600,
+        "type": "AWOOF",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "339",
+        "name": "2GB [GIFTING]",
+        "price": 735,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "300",
+        "name": "2GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 403,
+        "name": "Flexi 2000 - (40 mins + 2.5GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 305,
+        "name": "Monthly Plan 2000 -  Data - 3GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "354",
+        "name": "3GB (Binge) [AWOOF]",
+        "price": 750,
+        "type": "AWOOF",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 409,
+        "name": "3GB -  Data - 2Days [Awoof]",
+        "price": 800,
+        "type": "AWOOF",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "341",
+        "name": "3GB [GIFTING]",
+        "price": 980,
+        "type": "GIFTING",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "320",
+        "name": "3GB [AWOOF]",
+        "price": 1030,
+        "type": "AWOOF",
+        "size": 3072,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "301",
+        "name": "3GB [GIFTING]",
+        "price": 1960,
+        "type": "GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 448,
+        "name": "3.2 GB - 3 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 3276.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 294,
+        "name": "Binge 1000 (2 Days) -  Data - 3.2GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3276.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 300,
+        "name": "Weekly Plan 1500 -  Data - 3.5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 3584
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "310",
+        "name": "3.5 GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 3584,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 306,
+        "name": "Monthly Plan 2500 -  Data - 4GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 4096
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "302",
+        "name": "4GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 4096,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 295,
+        "name": "Binge 1500 -  Data - 5GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 5120
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "328",
+        "name": "5GB [GIFTING]",
+        "price": 1470,
+        "type": "GIFTING",
+        "size": 5120,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "355",
+        "name": "5GB (Binge) [AWOOF]",
+        "price": 1500,
+        "type": "AWOOF",
+        "size": 5120,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 410,
+        "name": "5GB Weekly Plan 1500 - 7 Days",
+        "price": 1500,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 301,
+        "name": "Weekly Plan 2500 -  Data - 6GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 6144
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "329",
+        "name": "6GB [GIFTING]",
+        "price": 2450,
+        "type": "GIFTING",
+        "size": 6144,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 449,
+        "name": "6.5 GB - 7 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 6656
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 450,
+        "name": "8.0 GB - 30 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 8192
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 319,
+        "name": "Monthly Plan 3000 -  Data - 8GB - 30 Days [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 8192
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "303",
+        "name": "8GB [GIFTING]",
+        "price": 2940,
+        "type": "GIFTING",
+        "size": 8192,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 302,
+        "name": "Weekly Plan 3000 -  Data - 10GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 307,
+        "name": "Monthly Plan 4000 -  Data - 10GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 10240
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "330",
+        "name": "10GB [GIFTING]",
+        "price": 2940,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "109",
+        "name": "10GB [AWOOF]",
+        "price": 3040,
+        "type": "AWOOF",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 325,
+        "name": "10GB - 30 Days  [Awoof]",
+        "price": 3045,
+        "type": "AWOOF",
+        "size": 10240
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "304",
+        "name": "10GB [GIFTING]",
+        "price": 3920,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 404,
+        "name": "Flexi 5000 - (100 mins + 12GB + 5 SMS )",
+        "price": 0,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 308,
+        "name": "Monthly Plan 5000 -  Data - 13GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 13312
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "305",
+        "name": "13GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 13312,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "349",
+        "name": "13GB + 1GB daily (MIFI) [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 13312,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 327,
+        "name": "13GB - 30 Days [Awoof]",
+        "price": 4900,
+        "type": "AWOOF",
+        "size": 13312
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 303,
+        "name": "Weekly Plan 5000 -  Data - 18GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 18432
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 309,
+        "name": "Monthly Plan 6000 -  Data - 18GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 18432
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "333",
+        "name": "18GB [GIFTING]",
+        "price": 4900,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "306",
+        "name": "18GB [GIFTING]",
+        "price": 5880,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 310,
+        "name": "Monthly Plan 8000 -  Data - 25GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 25600
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "307",
+        "name": "25GB [GIFTING]",
+        "price": 7840,
+        "type": "GIFTING",
+        "size": 25600,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 311,
+        "name": "Monthly Plan 10000 -  Data - 35GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 35840
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "321",
+        "name": "35GB [GIFTING]",
+        "price": 9800,
+        "type": "GIFTING",
+        "size": 35840,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "350",
+        "name": "35GB + 2 daily (MIFI) [GIFTING]",
+        "price": 9800,
+        "type": "GIFTING",
+        "size": 35840,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 451,
+        "name": "60.0 GB - 365 Days [Awoof]",
+        "price": null,
+        "type": "AWOOF",
+        "size": 61440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 312,
+        "name": "Monthly Plan 15000 -  Data - 60GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 61440
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "322",
+        "name": "60GB [GIFTING]",
+        "price": 14700,
+        "type": "GIFTING",
+        "size": 61440,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 313,
+        "name": "Monthly Plan 20000 -  Data - 100GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 102400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 379,
+        "name": "Router Ultra 100GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 102400
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "323",
+        "name": "100GB [GIFTING]",
+        "price": 19600,
+        "type": "GIFTING",
+        "size": 102400,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "343",
+        "name": "100GB + 2GB daily (ROUTER UILTRA) [GIFTING]",
+        "price": 19600,
+        "type": "GIFTING",
+        "size": 102400,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 314,
+        "name": "Monthly Plan 30000 -  Data - 160GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 163840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 380,
+        "name": "Router 160GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 163840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 315,
+        "name": "Monthly Plan 40000 -  Data - 210GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 215040
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 381,
+        "name": "Router 210GB - 30 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 215040
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "324",
+        "name": "210GB [GIFTING]",
+        "price": 39200,
+        "type": "GIFTING",
+        "size": 215040,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 316,
+        "name": "Monthly Plan 50000 -  Data - 300GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 307200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 382,
+        "name": "Router 300GB - 90 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 307200
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "325",
+        "name": "300GB [GIFTING]",
+        "price": 49000,
+        "type": "GIFTING",
+        "size": 307200,
+        "validity": "90 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 317,
+        "name": "Monthly Plan 60000 -  Data - 350GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 358400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 383,
+        "name": "Router 350GB - 120 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 358400
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "326",
+        "name": "350GB [GIFTING]",
+        "price": 58800,
+        "type": "GIFTING",
+        "size": 358400,
+        "validity": "120 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 318,
+        "name": "3 Months plan 100000 -  Data - 650GB [Gifting]",
+        "price": 0,
+        "type": "GIFTING",
+        "size": 665600
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "327",
+        "name": "650GB [GIFTING]",
+        "price": 98000,
+        "type": "GIFTING",
+        "size": 665600,
+        "validity": "365 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 384,
+        "name": "685GB - 365 Days",
+        "price": 0,
+        "type": "OTHER",
+        "size": 701440
+      }
+    ],
+    "GLO": [
+      {
+        "provider": "SMEPLUG",
+        "id": 335,
+        "name": "45 MB incl. 5MB Night Data - 1 Day *",
+        "price": 48,
+        "type": "OTHER",
+        "size": 45
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "425",
+        "name": "45MB [GIFTING]",
+        "price": 50,
+        "type": "GIFTING",
+        "size": 45,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "426",
+        "name": "100MB + 5MB Night [GIFTING]",
+        "price": 97,
+        "type": "GIFTING",
+        "size": 100,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 336,
+        "name": "105 MB incl. 5MB Night - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 105
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 352,
+        "name": "135MB Social - 3 Days *",
+        "price": 48,
+        "type": "OTHER",
+        "size": 135
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 443,
+        "name": "200MB [Corporate] - 3 Days",
+        "price": 88,
+        "type": "CORPORATE",
+        "size": 200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 372,
+        "name": "200 MB - Campus Booster - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 200
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "427",
+        "name": "210MB + 25MB Night [GIFTING]",
+        "price": 193,
+        "type": "GIFTING",
+        "size": 210,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 337,
+        "name": "235 MB incl. 25MB Night - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 235
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 356,
+        "name": "300 MB + 1 Hour - My-G Bundle  - 1 Day *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "416",
+        "name": "300MB [SOCIAL BUNDLES]",
+        "price": 97,
+        "type": "SOCIAL BUNDLES",
+        "size": 300,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 353,
+        "name": "335MB Social - 7 Days *",
+        "price": 96,
+        "type": "OTHER",
+        "size": 335
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 350,
+        "name": "350MB Night *",
+        "price": 58,
+        "type": "OTHER",
+        "size": 350
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 373,
+        "name": "445 MB incl. 25MB Night - Campus Booster - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 445
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 367,
+        "name": "500 MB for GLO TV - 3 Days *",
+        "price": 144,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "35",
+        "name": "500MB [CORPORATE GIFTING]",
+        "price": 205,
+        "type": "CORPORATE GIFTING",
+        "size": 500,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 432,
+        "name": "500MB [Corporate] - 30 Days",
+        "price": 220,
+        "type": "CORPORATE",
+        "size": 500
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "428",
+        "name": "500MB + 1GB Night [GIFTING]",
+        "price": 483,
+        "type": "GIFTING",
+        "size": 500,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 351,
+        "name": "750MB Night *",
+        "price": 115,
+        "type": "OTHER",
+        "size": 750
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 331,
+        "name": "750MB - 1 Day - Awoof *",
+        "price": 192,
+        "type": "AWOOF",
+        "size": 750
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "113",
+        "name": "750MB [AWOOF]",
+        "price": 200,
+        "type": "AWOOF",
+        "size": 750,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 365,
+        "name": "875 MB - Weekend Plan (Sat-Sun)  - 2 Days *",
+        "price": 192,
+        "type": "OTHER",
+        "size": 875
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "408",
+        "name": "875MB [GIFTING]",
+        "price": 194,
+        "type": "GIFTING",
+        "size": 875,
+        "validity": "Saturday &amp; Sunday (2 Day)"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "409",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 280,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 357,
+        "name": "1 GB + 1 Hour - My-G Bundle - 3 Days *",
+        "price": 288,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "417",
+        "name": "1GB [SOCIAL BUNDLES]",
+        "price": 290,
+        "type": "SOCIAL BUNDLES",
+        "size": 1024,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 428,
+        "name": "1GB [Corporate] - 3 Days",
+        "price": 290,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "412",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 330,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 360,
+        "name": "1GB - Special Plan - 1 Day *",
+        "price": 336,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 429,
+        "name": "1GB [Corporate] - 7 Days",
+        "price": 350,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 430,
+        "name": "1GB [Corporate] - 14 Days (Night)",
+        "price": 350,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "36",
+        "name": "1GB [CORPORATE GIFTING]",
+        "price": 410,
+        "type": "CORPORATE GIFTING",
+        "size": 1024,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 431,
+        "name": "1GB [Corporate] -  30 Days",
+        "price": 450,
+        "type": "CORPORATE",
+        "size": 1024
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "400",
+        "name": "1.0 GB [GIFTING]",
+        "price": 480,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "14 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "429",
+        "name": "1GB + 1GB Night [GIFTING]",
+        "price": 483,
+        "type": "GIFTING",
+        "size": 1024,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 354,
+        "name": "1.1GB Social - 10 Days *",
+        "price": 288,
+        "type": "OTHER",
+        "size": 1126.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 397,
+        "name": "1.1GB - 14 Days *",
+        "price": 720,
+        "type": "OTHER",
+        "size": 1126.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 332,
+        "name": "1.5 GB - 1 Day - Awoof *",
+        "price": 288,
+        "type": "AWOOF",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "114",
+        "name": "1.5GB [AWOOF]",
+        "price": 290,
+        "type": "AWOOF",
+        "size": 1536,
+        "validity": "1 Day"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 358,
+        "name": "1.5 GB + 1 Hour - My-G Bundle - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 396,
+        "name": "1.5 GB incl. 1GB Night Data - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1536
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "415",
+        "name": "1.5 GB [SOCIAL BUNDLES]",
+        "price": 483,
+        "type": "SOCIAL BUNDLES",
+        "size": 1536,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "430",
+        "name": "1.55GB + 2GB Night [GIFTING]",
+        "price": 579,
+        "type": "GIFTING",
+        "size": 1587.2,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 355,
+        "name": "1.8GB Social - 15 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 1843.2
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 368,
+        "name": "2 GB for GLO TV - 7 Days *",
+        "price": 432,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 361,
+        "name": "2 GB incl. 1GB Night Data - Special Plan - 1 Day *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 374,
+        "name": "2 GB incl. 1GB Night Data - Campus Booster - 7 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "37",
+        "name": "2GB [CORPORATE GIFTING]",
+        "price": 820,
+        "type": "CORPORATE GIFTING",
+        "size": 2048,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 369,
+        "name": "2 GB for GLO TV - Lite Plan - 7 Days *",
+        "price": 864,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 444,
+        "name": "2GB [Corporate] - 30 Days",
+        "price": 880,
+        "type": "CORPORATE",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 333,
+        "name": "2.5GB - 2 Days - Awoof *",
+        "price": 480,
+        "type": "AWOOF",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 366,
+        "name": "2.5 GB - Weekend Plan (Sat-Sun) - 2 Days *",
+        "price": 480,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "115",
+        "name": "2.5GB [AWOOF]",
+        "price": 485,
+        "type": "AWOOF",
+        "size": 2560,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "401",
+        "name": "2.6 GB [GIFTING]",
+        "price": 960,
+        "type": "GIFTING",
+        "size": 2662.4,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 338,
+        "name": "2.6 GB incl. 1.5GB Night Data - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 2662.4
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "410",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 835,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 433,
+        "name": "3GB [Corporate] - 3 Days",
+        "price": 870,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "413",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 980,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 434,
+        "name": "3GB [Corporate] - 7 Days",
+        "price": 1050,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 435,
+        "name": "3GB [Corporate] - 14 Days (Night)",
+        "price": 1050,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "38",
+        "name": "3GB [CORPORATE GIFTING]",
+        "price": 1230,
+        "type": "CORPORATE GIFTING",
+        "size": 3072,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 439,
+        "name": "3GB [Corporate] - 30 Days",
+        "price": 1320,
+        "type": "CORPORATE",
+        "size": 3072
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "431",
+        "name": "3.1GB + 2GB night [GIFTING]",
+        "price": 965,
+        "type": "GIFTING",
+        "size": 3174.4,
+        "validity": "2 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 359,
+        "name": "3.5 GB + 1 - My-G Bundle - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 3584
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 398,
+        "name": "3.5GB incl 2GB Night Data - 7 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 3584
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "418",
+        "name": "3.5GB [SOCIAL BUNDLES]",
+        "price": 965,
+        "type": "SOCIAL BUNDLES",
+        "size": 3584,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 362,
+        "name": "3.55GB incl 2GB Night  - Special Plan - 1 Day *",
+        "price": 576,
+        "type": "OTHER",
+        "size": 3635.2
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "432",
+        "name": "3.9GB + 2GB Night [GIFTING]",
+        "price": 1448,
+        "type": "GIFTING",
+        "size": 3993.6,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 375,
+        "name": "4.2 GB incl. 2GB Night Data - Campus Booster - 30 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 4300.8
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "411",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 1395,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "3 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 339,
+        "name": "5 GB incl. 3GB Night Data - 30 Days *",
+        "price": 1440,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 436,
+        "name": "5GB [Corporate] - 3 Days",
+        "price": 1450,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "414",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 1620,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 437,
+        "name": "5GB [Corporate] - 7 Days",
+        "price": 1750,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 438,
+        "name": "5GB [Corporate] - 14 Days",
+        "price": 1750,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "39",
+        "name": "5GB [CORPORATE GIFTING]",
+        "price": 2050,
+        "type": "CORPORATE GIFTING",
+        "size": 5120,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 440,
+        "name": "5GB [Corporate] - 30 Days",
+        "price": 2200,
+        "type": "CORPORATE",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 363,
+        "name": "5.1GB incl 2GB Night - Special Plan - 2 Days *",
+        "price": 960,
+        "type": "OTHER",
+        "size": 5222.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 364,
+        "name": "5.9GB incl. 2GB Night - Special Plan - 7 Days *",
+        "price": 1440,
+        "type": "OTHER",
+        "size": 6041.6
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 370,
+        "name": "6 GB for GLO TV (VOD Plan) - 30 Days *",
+        "price": 1344,
+        "type": "OTHER",
+        "size": 6144
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 371,
+        "name": "6 GB for GLO TV (GloTV Max) - 30 Days *",
+        "price": 3072,
+        "type": "OTHER",
+        "size": 6144
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "402",
+        "name": "6.15 GB [GIFTING]",
+        "price": 1900,
+        "type": "GIFTING",
+        "size": 6297.6,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 340,
+        "name": "6.15 GB incl. 3GB Night - 30 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 6297.6
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 341,
+        "name": "7.25 GB incl. 3GB Night - 30 Days *",
+        "price": 2400,
+        "type": "OTHER",
+        "size": 7424
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "403",
+        "name": "7.5 GB [GIFTING]",
+        "price": 2400,
+        "type": "GIFTING",
+        "size": 7680,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 399,
+        "name": "8.5GB incl 2.5GB Night Data - 7 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 8704
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 376,
+        "name": "9.8 GB incl. 3.5GB Night -  Campus Booster - 30 Days *",
+        "price": 1920,
+        "type": "OTHER",
+        "size": 10035.2
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "116",
+        "name": "10GB [AWOOF]",
+        "price": 1910,
+        "type": "AWOOF",
+        "size": 10240,
+        "validity": "7 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 334,
+        "name": " 10GB - 7 Days - Awoof *",
+        "price": 1920,
+        "type": "AWOOF",
+        "size": 10240
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "404",
+        "name": "10.0 GB [GIFTING]",
+        "price": 2850,
+        "type": "GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 342,
+        "name": "10 GB incl. 2GB Night - 30 Days *",
+        "price": 2880,
+        "type": "OTHER",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 441,
+        "name": "10GB [Corporate] - 14 Days (Night)",
+        "price": 3500,
+        "type": "CORPORATE",
+        "size": 10240
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "40",
+        "name": "10GB [CORPORATE GIFTING]",
+        "price": 4100,
+        "type": "CORPORATE GIFTING",
+        "size": 10240,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 442,
+        "name": "10GB [Corporate] - 30 Days",
+        "price": 4400,
+        "type": "CORPORATE",
+        "size": 10240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 343,
+        "name": "12.5 GB incl. 2GB Night - 30 Days *",
+        "price": 3840,
+        "type": "OTHER",
+        "size": 12800
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "405",
+        "name": "14.0 GB [GIFTING]",
+        "price": 3800,
+        "type": "GIFTING",
+        "size": 14336,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 344,
+        "name": "16 GB incl. 2.5GB Night - 30 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 16384
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "406",
+        "name": "18.0 GB [GIFTING]",
+        "price": 4800,
+        "type": "GIFTING",
+        "size": 18432,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 400,
+        "name": "20.5GB incl 2GB Night - 7 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 20992
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 345,
+        "name": "20.5GB incl 2GB Night - 30 Days *",
+        "price": 5760,
+        "type": "OTHER",
+        "size": 20992
+      },
+      {
+        "provider": "INLOMAX",
+        "id": "407",
+        "name": "28GB [GIFTING]",
+        "price": 7238,
+        "type": "GIFTING",
+        "size": 28672,
+        "validity": "30 Days"
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 346,
+        "name": "28 GB incl. 2GB Night - 30 Days *",
+        "price": 7680,
+        "type": "OTHER",
+        "size": 28672
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 377,
+        "name": " 30 GB incl. 3GB Night - Campus Booster - 30 Days *",
+        "price": 4800,
+        "type": "OTHER",
+        "size": 30720
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 347,
+        "name": "38 GB incl. 2GB Night - 30 Days *",
+        "price": 9600,
+        "type": "OTHER",
+        "size": 38912
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 348,
+        "name": "64 GB incl. 2GB Night - 30 Days *",
+        "price": 14400,
+        "type": "OTHER",
+        "size": 65536
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 349,
+        "name": "107 GB incl. 2GB Night - 30 Days",
+        "price": 19200,
+        "type": "OTHER",
+        "size": 109568
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 415,
+        "name": "135GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 138240
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 416,
+        "name": "165GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 168960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 417,
+        "name": "220 GB - 30 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 225280
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 418,
+        "name": "310 GB - 60 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 317440
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 419,
+        "name": "380GB - 90 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 389120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 420,
+        "name": "475GB - 90 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 486400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 421,
+        "name": "1000 GB - 365 Days - Mega *",
+        "price": 0,
+        "type": "OTHER",
+        "size": 1024000
+      }
+    ],
+    "9MOBILE": [
+      {
+        "provider": "SMEPLUG",
+        "id": 192,
+        "name": "EasyBlaze 30MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 30
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 193,
+        "name": "EasyBlaze 35MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 35
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 194,
+        "name": "EasyBlaze 40MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 40
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 187,
+        "name": "50MB Daily Data plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 217,
+        "name": "50MB Daily @ N50",
+        "price": null,
+        "type": "OTHER",
+        "size": 50
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 196,
+        "name": "100MB + 100MB Social Daily @ N100",
+        "price": null,
+        "type": "OTHER",
+        "size": 100
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 73,
+        "name": "Low Cost Data 250MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 207,
+        "name": "250MB Weekly @ N200",
+        "price": null,
+        "type": "OTHER",
+        "size": 250
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 186,
+        "name": "300MB Daily Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 211,
+        "name": "300MB + 300 Secs Daily @ N150",
+        "price": null,
+        "type": "OTHER",
+        "size": 300
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 74,
+        "name": "Low Cost Data 500MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 85,
+        "name": "Smartphone 500MB",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 215,
+        "name": "500MB Monthly @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 500
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 195,
+        "name": "EasyBlaze 650MB Daily",
+        "price": null,
+        "type": "OTHER",
+        "size": 650
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 219,
+        "name": "650MB Daily @ N200",
+        "price": null,
+        "type": "OTHER",
+        "size": 650
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 75,
+        "name": "1GB Weekly data plan + social",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 84,
+        "name": "1GB Weekly data plan + social",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 181,
+        "name": "Smartphone 1GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 201,
+        "name": "1GB Daily + 100MB Social @ N300",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 202,
+        "name": "1GB Weekly + Social @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 1024
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 76,
+        "name": "2GB (1GB +1GB Night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 208,
+        "name": "2GB 3-Days +100MB Social @ N500",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 209,
+        "name": "2GB all time + 2.2GB night Monthly @ N1000",
+        "price": null,
+        "type": "OTHER",
+        "size": 2048
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 182,
+        "name": "Smartphone 2.5GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 204,
+        "name": "2.5GB all time + 4GB night Monthly @ N1200",
+        "price": null,
+        "type": "OTHER",
+        "size": 2560
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 210,
+        "name": "3.6GB all time + 4.4GB night Monthly @ N1500",
+        "price": null,
+        "type": "OTHER",
+        "size": 3686.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 78,
+        "name": " 4.2GB (2GB all time + 2.2GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 4300.8
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 183,
+        "name": "Smartphone 5GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 5120
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 214,
+        "name": "5.5GB all time + 4GB night Monthly @ N2000",
+        "price": null,
+        "type": "OTHER",
+        "size": 5632
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 77,
+        "name": "6.5GB (2.5GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 6656
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 221,
+        "name": "7GB + 100MB Social Weekly @ N1500",
+        "price": null,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 222,
+        "name": "7GB all time + 4GB night Monthly @ N2500",
+        "price": null,
+        "type": "OTHER",
+        "size": 7168
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 83,
+        "name": "7.1GB (7GB + 100MB free socials)",
+        "price": null,
+        "type": "OTHER",
+        "size": 7270.4
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 82,
+        "name": "8GB (3.6 All time + 4.4GB Night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 8192
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 185,
+        "name": "9.5GB (5.5GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 9728
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 79,
+        "name": "11GB (7GB all time + 4GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 11264
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 190,
+        "name": "12GB",
+        "price": null,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 198,
+        "name": "12GB Monthly @ N3000",
+        "price": null,
+        "type": "OTHER",
+        "size": 12288
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 199,
+        "name": "15GB all time + 3.5GB night Monthly @ N4000",
+        "price": null,
+        "type": "OTHER",
+        "size": 15360
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 80,
+        "name": "18.5GB (15GB all time + 3.5GB night)",
+        "price": null,
+        "type": "OTHER",
+        "size": 18944
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 184,
+        "name": "24GB monthly data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 24576
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 206,
+        "name": "24GB Monthly @ N5000",
+        "price": null,
+        "type": "OTHER",
+        "size": 24576
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 81,
+        "name": "35GB Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 212,
+        "name": "35GB Monthly @ N7000",
+        "price": null,
+        "type": "OTHER",
+        "size": 35840
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 188,
+        "name": "50GB Monthly Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 216,
+        "name": "50GB Monthly @ N10000",
+        "price": null,
+        "type": "OTHER",
+        "size": 51200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 220,
+        "name": "75GB Quarterly @ N25000",
+        "price": null,
+        "type": "OTHER",
+        "size": 76800
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 189,
+        "name": "80GB monthly data plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 81920
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 223,
+        "name": "80GB Monthly @ N15000",
+        "price": null,
+        "type": "OTHER",
+        "size": 81920
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 191,
+        "name": "125GB Monthly Data Plan",
+        "price": null,
+        "type": "OTHER",
+        "size": 128000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 197,
+        "name": "125GB Monthly @ N20000",
+        "price": null,
+        "type": "OTHER",
+        "size": 128000
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 200,
+        "name": "165GB Bi-Annual @ N50000",
+        "price": null,
+        "type": "OTHER",
+        "size": 168960
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 205,
+        "name": "225GB 2Months @ N30000",
+        "price": null,
+        "type": "OTHER",
+        "size": 230400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 213,
+        "name": "425GB Quarterly @ N50000",
+        "price": null,
+        "type": "OTHER",
+        "size": 435200
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 218,
+        "name": "600GB Bi-Annual @ N70000",
+        "price": null,
+        "type": "OTHER",
+        "size": 614400
+      },
+      {
+        "provider": "SMEPLUG",
+        "id": 203,
+        "name": "1TB Annual @ N100000",
+        "price": null,
+        "type": "OTHER",
+        "size": 1048576
+      }
+    ]
+  }
+}

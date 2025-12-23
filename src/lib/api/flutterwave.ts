@@ -306,3 +306,32 @@ export function calculateWithdrawalFee(amount: number): number {
   const platformFee = 25; // ₦25 platform fee
   return Math.ceil(flwFee + platformFee);
 }
+
+// ============ BANK TRANSFER DEPOSIT FEE ============
+// TADA platform fee for bank transfer deposits
+// Flat ₦30 fee - user transfers (amount + 30) to get (amount) in wallet
+export const BANK_TRANSFER_FEE = 30;
+
+// Calculate what user should transfer to get desired wallet amount
+export function calculateBankTransferTotal(walletAmount: number): {
+  walletCredit: number;
+  platformFee: number;
+  totalToTransfer: number;
+} {
+  return {
+    walletCredit: walletAmount,
+    platformFee: BANK_TRANSFER_FEE,
+    totalToTransfer: walletAmount + BANK_TRANSFER_FEE,
+  };
+}
+
+// Calculate wallet credit from transfer amount (reverse calculation)
+export function calculateWalletCreditFromTransfer(transferAmount: number): {
+  walletCredit: number;
+  platformFee: number;
+} {
+  return {
+    walletCredit: transferAmount - BANK_TRANSFER_FEE,
+    platformFee: BANK_TRANSFER_FEE,
+  };
+}

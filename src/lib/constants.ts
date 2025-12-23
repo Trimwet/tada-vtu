@@ -46,9 +46,9 @@ export const GREETING_MESSAGES: string[] = [
 
 export const NETWORKS: Array<{ value: string; label: string; color: string }> = [
   { value: "MTN", label: "MTN", color: "#FFCC00" },
-  { value: "Airtel", label: "Airtel", color: "#ED1C24" },
-  { value: "Glo", label: "Glo", color: "#00A95C" },
-  { value: "9mobile", label: "9mobile", color: "#00A650" },
+  { value: "AIRTEL", label: "Airtel", color: "#ED1C24" },
+  { value: "GLO", label: "Glo", color: "#00A95C" },
+  { value: "9MOBILE", label: "9Mobile", color: "#006C35" },
 ];
 
 export const SERVICE_TYPES = [
@@ -63,7 +63,6 @@ export const AIRTIME_DISCOUNTS: Record<string, { serviceId: string; discount: nu
   MTN: { serviceId: "1", discount: 2.5 },
   Airtel: { serviceId: "2", discount: 2.5 },
   Glo: { serviceId: "3", discount: 4 },
-  "9mobile": { serviceId: "4", discount: 4 },
 };
 
 export const DATA_TYPES = [
@@ -100,7 +99,6 @@ export const DATA_PLANS: Record<string, DataPlan[]> = {
     { id: "35", name: "500MB", size: "500MB", validity: "30 days", price: 230, type: "corporate" },
     { id: "36", name: "1GB", size: "1GB", validity: "30 days", price: 450, type: "corporate" },
   ],
-  "9mobile": [],
 };
 
 export const CABLE_PROVIDERS = [
