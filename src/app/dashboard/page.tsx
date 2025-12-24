@@ -153,6 +153,7 @@ export default function DashboardPage() {
     { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
     { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
     { name: "Send Gift", icon: "gift-outline", href: "/dashboard/send-gift", badge: "NEW" },
+    { name: "Gift Rooms", icon: "albums-outline", href: "/dashboard/gift-rooms" },
   ], []);
 
   const timeGreeting = user

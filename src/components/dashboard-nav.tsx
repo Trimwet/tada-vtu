@@ -15,6 +15,7 @@ const navItems = [
   { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
   { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
   { name: "Send Gift", href: "/dashboard/send-gift", icon: "gift" },
+  { name: "Gift Rooms", href: "/dashboard/gift-rooms", icon: "albums" },
   { name: "Transactions", href: "/dashboard/transactions", icon: "time" },
   { name: "Rewards", href: "/dashboard/rewards", icon: "trophy" },
   { name: "Profile", href: "/dashboard/profile", icon: "person" },
