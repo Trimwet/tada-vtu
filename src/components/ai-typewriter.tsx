@@ -59,10 +59,10 @@ export function AITypewriter({
   const [isTyping, setIsTyping] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
   const [useAI, setUseAI] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
   const { generateGreeting, generateTip, generateQuote, loading } = useBytezAI();
   const reshuffleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const typewriterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasStartedReshuffling = useRef(false);
 
   // Get a random fallback message
   const getFallbackMessage = useCallback(() => {
@@ -131,42 +131,41 @@ export function AITypewriter({
     }
   }, [type, userName, balance, generateGreeting, generateTip, generateQuote, messageIndex, useAI, getFallbackMessage]);
 
-  // Initial fetch - only run once on mount
+  // Initial fetch
   useEffect(() => {
-    if (!isInitialized) {
-      fetchText();
-      setIsInitialized(true);
-    }
-  }, [isInitialized, fetchText]);
+    fetchText();
+  }, []);
 
-  // Handle message index changes for reshuffling
+  // Handle message index changes (reshuffling)
   useEffect(() => {
     if (messageIndex > 0) {
       fetchText();
     }
-  }, [messageIndex, fetchText]);
+  }, [messageIndex]);
 
-  // Reshuffling mechanism - simplified
+  // Start reshuffling after first message completes
   useEffect(() => {
-    if (reshuffleInterval <= 0 || isTyping || !isInitialized) return;
-
-    // Clear any existing timeout
-    if (reshuffleTimeoutRef.current) {
-      clearTimeout(reshuffleTimeoutRef.current);
+    if (!isTyping && fullText && !hasStartedReshuffling.current && reshuffleInterval > 0) {
+      console.log('Starting reshuffle cycle...');
+      hasStartedReshuffling.current = true;
+      
+      const startReshuffling = () => {
+        reshuffleTimeoutRef.current = setTimeout(() => {
+          console.log('Reshuffling message...');
+          setMessageIndex(prev => prev + 1);
+          startReshuffling(); // Continue the cycle
+        }, reshuffleInterval);
+      };
+      
+      startReshuffling();
     }
-
-    // Set up next reshuffle
-    reshuffleTimeoutRef.current = setTimeout(() => {
-      console.log('Reshuffling message...');
-      setMessageIndex(prev => prev + 1);
-    }, reshuffleInterval);
 
     return () => {
       if (reshuffleTimeoutRef.current) {
         clearTimeout(reshuffleTimeoutRef.current);
       }
     };
-  }, [isTyping, reshuffleInterval, isInitialized]);
+  }, [isTyping, fullText, reshuffleInterval]);
 
   // Typewriter effect
   useEffect(() => {
