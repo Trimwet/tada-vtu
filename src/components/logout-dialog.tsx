@@ -70,33 +70,33 @@ export function LogoutDialog({
       {trigger && <div onClick={() => setIsOpen(true)}>{trigger}</div>}
 
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dialog */}
-          <div className="relative bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
-            <h2 className="text-lg font-semibold text-foreground mb-2">
+          <div className="relative bg-zinc-950 border border-zinc-800 rounded-xl p-6 w-full max-w-sm shadow-2xl animate-scale-in">
+            <h2 className="text-lg font-semibold text-white mb-2">
               Logout
             </h2>
-            <p className="text-muted-foreground text-sm mb-6">
+            <p className="text-zinc-400 text-sm mb-6">
               Are you sure you want to logout?
             </p>
 
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                 onClick={() => setIsOpen(false)}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0"
                 onClick={handleLogout}
                 disabled={isLoading}
               >

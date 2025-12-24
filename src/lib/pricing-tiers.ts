@@ -48,7 +48,7 @@ export interface TierDisplay {
 
 // Icons use Ionicons names
 export const TIER_DISPLAY: Record<PricingTier, TierDisplay> = {
-  bronze: { name: 'Bronze', icon: 'shield-outline', color: '#CD7F32' },
+  bronze: { name: 'Bronze', icon: 'ribbon-outline', color: '#CD7F32' },
   silver: { name: 'Silver', icon: 'shield-half-outline', color: '#C0C0C0' },
   gold: { name: 'Gold', icon: 'shield', color: '#FFD700' },
   platinum: { name: 'Platinum', icon: 'diamond', color: '#E5E4E2' },
