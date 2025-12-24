@@ -96,14 +96,14 @@ export async function POST(request: NextRequest) {
     // We use the database RPC to check balance and deduct atomically.
     // This prevents race conditions where two withdrawals could happen at once.
     const { data: debitResult, error: debitError } = await supabase
-      .rpc('atomic_wallet_update', {
+      .rpc('atomic_wallet_update' as never, {
         p_user_id: user.id,
         p_amount: -transferAmount, // Negative for debit
         p_description: `Bank Transfer to ${accountName} (${accountNumber})`,
         p_reference: `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         p_type: 'withdrawal',
         p_metadata: { bankCode, accountNumber, accountName }
-      });
+      } as never);
 
     if (debitError) {
       console.error('Debit error:', debitError);
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Debit successful
-    const { new_balance, transaction_id } = debitResult as any;
+    const { new_balance, transaction_id } = debitResult as { new_balance: number; transaction_id: string };
     // ----------------------------------------------------------------------
 
 
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         .from('transactions')
         .update({
           status: result.success ? 'success' : 'failed',
-          reference: result.reference || debitResult.transaction_id, // Use API ref if available, else generic
+          reference: result.reference || transaction_id, // Use API ref if available, else our tx id
           external_reference: result.reference
         } as never)
         .eq('id', transaction_id);
@@ -145,13 +145,13 @@ export async function POST(request: NextRequest) {
         console.error('Transfer API failed, refunding user:', result.message);
 
         // Refund the user atomically
-        await supabase.rpc('atomic_wallet_update', {
+        await supabase.rpc('atomic_wallet_update' as never, {
           p_user_id: user.id,
           p_amount: transferAmount, // Positive to add back
           p_description: `Refund: Failed transfer to ${accountNumber}`,
           p_reference: `REFUND-${transaction_id}`,
           p_type: 'deposit' // Or 'refund' if supported
-        });
+        } as never);
 
         return NextResponse.json(
           { status: 'error', message: result.message || 'Transfer failed. Your wallet has been refunded.' },
@@ -177,13 +177,13 @@ export async function POST(request: NextRequest) {
       // ----------------------------------------------------------------------
       console.error('Transfer Logic Error, refunding:', transferError);
 
-      await supabase.rpc('atomic_wallet_update', {
+      await supabase.rpc('atomic_wallet_update' as never, {
         p_user_id: user.id,
         p_amount: transferAmount,
         p_description: `Refund: System error during transfer to ${accountNumber}`,
         p_reference: `REFUND-ERR-${transaction_id}`,
         p_type: 'deposit'
-      });
+      } as never);
 
       // Update tx status
       await supabase
