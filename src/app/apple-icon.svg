@@ -1,0 +1,11 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded square background -->
+  <rect x="10" y="10" width="160" height="160" rx="40" fill="#22c55e"/>
+  
+  <!-- Letter T -->
+  <path d="M50 50H130V80H102V130H78V80H50V50Z" fill="white"/>
+  
+  <!-- Signal waves (top right) -->
+  <path d="M124 62C136 62 146 72 146 84" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M124 40C148 40 166 62 166 84" stroke="white" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
+</svg>

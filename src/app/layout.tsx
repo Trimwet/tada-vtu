@@ -29,9 +29,19 @@ export const metadata: Metadata = {
   robots: "index, follow",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo-icon.svg",
-    shortcut: "/logo-icon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/logo-icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
     apple: "/logo-icon.svg",
+    other: [
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        url: "/favicon.svg",
+      },
+    ],
   },
   openGraph: {
     type: "website",
