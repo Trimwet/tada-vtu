@@ -18,12 +18,30 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       }, { status: 400 });
     }
 
+    // Check authentication to prevent sender from joining their own room
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Get gift room details
     const { data: room, error: roomError } = await supabase
       .from('gift_rooms')
       .select('*')
       .eq('token', room_token)
       .single();
+
+    if (roomError || !room) {
+      return NextResponse.json({
+        success: false,
+        error: 'Gift room not found'
+      }, { status: 404 });
+    }
+
+    // Prevent sender from joining their own room
+    if (user && user.id === (room as any).sender_id) {
+      return NextResponse.json({
+        success: false,
+        error: 'You cannot join your own gift room'
+      }, { status: 400 });
+    }
 
     if (roomError || !room) {
       return NextResponse.json({

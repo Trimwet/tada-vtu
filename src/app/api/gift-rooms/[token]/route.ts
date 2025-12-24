@@ -63,11 +63,16 @@ export async function GET(
       userReservation = reservation;
     }
 
+    // Check authentication to see if user is the sender
+    const { data: { user } } = await supabase.auth.getUser();
+    const isRoomSender = user && user.id === (roomData as any).sender_id;
+
     // Determine if user can join
     const canJoin = !isExpired && 
                    (roomData as any).status === 'active' && 
                    (roomData as any).joined_count < (roomData as any).capacity &&
-                   !userReservation;
+                   !userReservation &&
+                   !isRoomSender; // Prevent sender from joining their own room
 
     // Calculate spots remaining
     const spotsRemaining = Math.max(0, (roomData as any).capacity - (roomData as any).joined_count);

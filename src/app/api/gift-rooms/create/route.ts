@@ -71,14 +71,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<CreateGif
     }
 
     // Rate limiting check (simple implementation)
-    const { data: recentRooms } = await supabase
+    // Rate limiting check (optimized count)
+    const { count } = await supabase
       .from('gift_rooms')
-      .select('id')
+      .select('*', { count: 'exact', head: true })
       .eq('sender_id', user.id)
-      .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()) // Last hour
-      .limit(10);
+      .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString()); // Last hour
 
-    if (recentRooms && recentRooms.length >= 10) {
+    if (count !== null && count >= 10) {
       return NextResponse.json({
         success: false,
         error: 'Rate limit exceeded. Please wait before creating more gift rooms.'

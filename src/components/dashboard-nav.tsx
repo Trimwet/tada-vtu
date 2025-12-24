@@ -14,10 +14,9 @@ const navItems = [
   { name: "Home", href: "/dashboard", icon: "home", exact: true },
   { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
   { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
-  { name: "Send Gift", href: "/dashboard/send-gift", icon: "gift" },
-  { name: "Gift Rooms", href: "/dashboard/gift-rooms", icon: "albums" },
+  { name: "Send Gift", href: "/dashboard/send-gift", icon: "send" },
+  { name: "Gift Rooms", href: "/dashboard/gift-rooms", icon: "gift" },
   { name: "Transactions", href: "/dashboard/transactions", icon: "time" },
-  { name: "Rewards", href: "/dashboard/rewards", icon: "trophy" },
   { name: "Profile", href: "/dashboard/profile", icon: "person" },
 ];
 
@@ -148,7 +147,7 @@ export function DashboardSidebar() {
             </div>
             <span>Settings</span>
           </Link>
-          
+
           {/* Logout Button */}
           <LogoutDialog
             trigger={

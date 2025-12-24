@@ -35,18 +35,18 @@ export async function GET(request: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const meta = (result.data as any).meta || {};
       const userId = meta.user_id;
-      
+
       // Use the original amount (wallet_credit) from meta, not the total charged amount
       // This ensures we only credit what the user intended to fund, not including service charge
       const walletCredit = meta.wallet_credit || meta.original_amount || result.data.amount;
       const serviceCharge = meta.service_charge || 0;
 
-      console.log('Payment verification:', { 
-        txRef, 
-        totalPaid: result.data.amount, 
-        walletCredit, 
+      console.log('Payment verification:', {
+        txRef,
+        totalPaid: result.data.amount,
+        walletCredit,
         serviceCharge,
-        userId 
+        userId
       });
 
       // Check if transaction already processed
@@ -69,24 +69,29 @@ export async function GET(request: NextRequest) {
 
         if (!profileError && profile) {
           // Credit wallet with original amount (excluding service charge)
-          const newBalance = (profile.balance || 0) + walletCredit;
-          await supabase
-            .from('profiles')
-            .update({ balance: newBalance })
-            .eq('id', userId);
+          // ATOMIC UPDATE: Use RPC to safely add balance
+          const { data: creditResult, error: creditError } = await supabase
+            .rpc('atomic_wallet_update', {
+              p_user_id: userId,
+              p_amount: walletCredit, // Positive for credit
+              p_description: `Wallet funding via Flutterwave (₦${serviceCharge} service fee paid)`,
+              p_reference: txRef,
+              p_type: 'deposit',
+              p_metadata: {
+                flutterwave_ref: result.data.flw_ref,
+                service_charge: serviceCharge,
+                total_paid: result.data.amount
+              }
+            });
 
-          // Create transaction record
-          await supabase.from('transactions').insert({
-            user_id: userId,
-            type: 'deposit',
-            amount: walletCredit,
-            status: 'success',
-            description: `Wallet funding via Flutterwave (₦${serviceCharge} service fee paid)`,
-            reference: txRef,
-            external_reference: result.data.flw_ref,
-          });
+          if (creditError) {
+            console.error('Failed to credit wallet atomically:', creditError);
+            throw new Error('Database error during wallet credit');
+          }
 
-          console.log('Wallet credited successfully:', { userId, walletCredit, newBalance, serviceCharge });
+          const { new_balance } = creditResult as any;
+
+          console.log('Wallet credited successfully:', { userId, walletCredit, new_balance, serviceCharge });
 
           // Check if this is user's first deposit and they have a referrer
           if (profile.referred_by) {

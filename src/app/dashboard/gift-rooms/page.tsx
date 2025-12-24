@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,8 +27,8 @@ const STATUS_FILTERS: { value: GiftRoomStatus | 'all'; label: string; icon: stri
 
 export default function GiftRoomsPage() {
   const { user } = useSupabaseUser();
-  const { loading, getUserGiftRooms, shareGiftRoom } = useGiftRoom();
-  
+  const { loading, getUserGiftRooms, shareGiftRoom, subscribeToRoom } = useGiftRoom();
+
   const [giftRooms, setGiftRooms] = useState<GiftRoom[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<GiftRoom[]>([]);
   const [statusFilter, setStatusFilter] = useState<GiftRoomStatus | 'all'>('all');
@@ -57,6 +57,27 @@ export default function GiftRoomsPage() {
     }
   }, [giftRooms, statusFilter]);
 
+  // Subscribe to realtime updates for the selected room
+  useEffect(() => {
+    if (!selectedRoom) return;
+
+    const unsubscribe = subscribeToRoom(selectedRoom.id, () => {
+      // Refresh all rooms to keep list and stats in sync
+      getUserGiftRooms().then(rooms => {
+        if (rooms) {
+          setGiftRooms(rooms);
+          // Also update the selected room object to reflect changes (e.g. claimed_count)
+          const updated = rooms.find(r => r.id === selectedRoom.id);
+          if (updated) setSelectedRoom(updated);
+        }
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedRoom, subscribeToRoom, getUserGiftRooms]);
+
   const handleShare = async (shareUrl: string) => {
     const token = shareUrl.split('/').pop();
     if (token) {
@@ -68,12 +89,12 @@ export default function GiftRoomsPage() {
     window.open(`/gift/${token}`, '_blank');
   };
 
-  const totalStats = {
+  const totalStats = useMemo(() => ({
     totalRooms: giftRooms.length,
     activeRooms: giftRooms.filter(r => r.status === 'active').length,
     totalSent: giftRooms.reduce((sum, room) => sum + room.total_amount, 0),
     totalClaimed: giftRooms.reduce((sum, room) => sum + (room.claimed_count * room.amount), 0),
-  };
+  }), [giftRooms]);
 
   if (loading && giftRooms.length === 0) {
     return (
@@ -204,17 +225,16 @@ export default function GiftRoomsPage() {
                     <button
                       key={filter.value}
                       onClick={() => setStatusFilter(filter.value)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all whitespace-nowrap ${
-                        statusFilter === filter.value
-                          ? 'border-green-500 bg-green-500/10 text-green-500'
-                          : 'border-border hover:border-green-500/50 text-muted-foreground hover:text-foreground'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all whitespace-nowrap ${statusFilter === filter.value
+                        ? 'border-green-500 bg-green-500/10 text-green-500'
+                        : 'border-border hover:border-green-500/50 text-muted-foreground hover:text-foreground'
+                        }`}
                     >
                       <IonIcon name={filter.icon} size="16px" />
                       <span className="text-sm font-medium">{filter.label}</span>
                       <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                        {filter.value === 'all' 
-                          ? giftRooms.length 
+                        {filter.value === 'all'
+                          ? giftRooms.length
                           : giftRooms.filter(r => r.status === filter.value).length
                         }
                       </span>
@@ -238,7 +258,7 @@ export default function GiftRoomsPage() {
                         No {statusFilter !== 'all' ? statusFilter : ''} gift rooms
                       </h3>
                       <p className="text-muted-foreground">
-                        {statusFilter !== 'all' 
+                        {statusFilter !== 'all'
                           ? `You don't have any ${statusFilter} gift rooms.`
                           : 'Create your first gift room to get started.'
                         }

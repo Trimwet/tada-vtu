@@ -192,6 +192,7 @@ class GiftRoomService {
    */
   async getUserGiftRooms(): Promise<{ success: boolean; data?: GiftRoom[]; error?: string }> {
     try {
+      console.log('Making request to /api/gift-rooms/my-rooms');
       const response = await fetch(`${this.baseUrl}/my-rooms`, {
         method: 'GET',
         headers: {
@@ -199,7 +200,9 @@ class GiftRoomService {
         },
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (!response.ok) {
         return {

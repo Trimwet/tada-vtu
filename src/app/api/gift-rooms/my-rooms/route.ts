@@ -7,7 +7,10 @@ export async function GET(request: NextRequest) {
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('API: Auth user:', user?.id, 'Auth error:', authError);
+    
     if (authError || !user) {
+      console.log('API: Authentication failed');
       return NextResponse.json({
         success: false,
         error: 'Authentication required'
@@ -19,6 +22,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status'); // Filter by status
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
+
+    console.log('API: Querying gift_rooms for user:', user.id);
 
     // Build query
     let query = supabase
@@ -34,6 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: rooms, error: roomsError } = await query;
+    console.log('API: Query result:', rooms, 'Error:', roomsError);
 
     if (roomsError) {
       console.error('Error fetching user gift rooms:', roomsError);
@@ -43,6 +49,7 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
+    console.log('API: Returning rooms:', rooms?.length || 0, 'rooms');
     return NextResponse.json({
       success: true,
       data: rooms || []

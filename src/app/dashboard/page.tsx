@@ -101,7 +101,7 @@ export default function DashboardPage() {
     allTransactions.forEach((txn) => {
       // Only count successful transactions
       if (txn.status !== "success") return;
-      
+
       if (txn.amount < 0) {
         const amount = Math.abs(txn.amount);
         stats.totalSpent += amount;
@@ -152,8 +152,8 @@ export default function DashboardPage() {
     { name: "Cable TV", icon: "tv-outline", href: "/dashboard/cable-tv" },
     { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
     { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
-    { name: "Send Gift", icon: "gift-outline", href: "/dashboard/send-gift", badge: "NEW" },
-    { name: "Gift Rooms", icon: "albums-outline", href: "/dashboard/gift-rooms" },
+    { name: "Send Gift", icon: "send-outline", href: "/dashboard/send-gift", badge: "NEW" },
+    { name: "Gift Rooms", icon: "gift-outline", href: "/dashboard/gift-rooms" },
   ], []);
 
   const timeGreeting = user
@@ -208,10 +208,10 @@ export default function DashboardPage() {
             <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
           </div>
           <p className="text-muted-foreground h-6">
-            <AITypewriter 
-              userName={(user.full_name || "User").split(" ")[0]} 
-              balance={user.balance || 0} 
-              type="greeting" 
+            <AITypewriter
+              userName={(user.full_name || "User").split(" ")[0]}
+              balance={user.balance || 0}
+              type="greeting"
               speed={40}
             />
           </p>
@@ -303,11 +303,10 @@ export default function DashboardPage() {
                   )}
                   <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
                     <div
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${
-                        "badge" in service
-                          ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
-                          : "bg-green-500/10 group-hover:bg-green-500"
-                      }`}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${"badge" in service
+                        ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
+                        : "bg-green-500/10 group-hover:bg-green-500"
+                        }`}
                     >
                       <IonIcon
                         name={service.icon}
@@ -388,19 +387,17 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={transaction.id}
-                        className={`flex items-center justify-between py-3 px-2 rounded-xl hover:bg-muted/50 transition-smooth overflow-hidden ${
-                          index !== recentTransactions.length - 1
-                            ? "border-b border-border/50"
-                            : ""
-                        }`}
+                        className={`flex items-center justify-between py-3 px-2 rounded-xl hover:bg-muted/50 transition-smooth overflow-hidden ${index !== recentTransactions.length - 1
+                          ? "border-b border-border/50"
+                          : ""
+                          }`}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                              transaction.amount > 0
-                                ? "bg-green-500/10"
-                                : "bg-muted"
-                            }`}
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${transaction.amount > 0
+                              ? "bg-green-500/10"
+                              : "bg-muted"
+                              }`}
                           >
                             {transaction.amount > 0 ? (
                               <IonIcon
@@ -427,13 +424,12 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right shrink-0 ml-2">
                           <p
-                            className={`font-semibold text-sm ${
-                              transaction.status === "failed"
-                                ? "text-foreground"
-                                : transaction.amount > 0
-                                  ? "text-green-500"
-                                  : "text-foreground"
-                            }`}
+                            className={`font-semibold text-sm ${transaction.status === "failed"
+                              ? "text-foreground"
+                              : transaction.amount > 0
+                                ? "text-green-500"
+                                : "text-foreground"
+                              }`}
                           >
                             {transaction.amount > 0 ? "+" : ""}₦
                             {Math.abs(transaction.amount).toLocaleString()}

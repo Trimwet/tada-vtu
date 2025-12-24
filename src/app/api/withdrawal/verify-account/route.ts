@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyBankAccount } from '@/lib/api/flutterwave';
 
 export async function POST(request: NextRequest) {
+  let body;
   try {
-    const { accountNumber, bankCode } = await request.json();
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json(
+      { error: 'Invalid JSON request body' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { accountNumber, bankCode } = body;
 
     if (!accountNumber || !bankCode) {
       return NextResponse.json(
@@ -12,8 +22,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // BYPASS: If Flutterwave secret key is missing, allow dev testing
+    if (!process.env.FLUTTERWAVE_SECRET_KEY) {
+      console.warn('FLUTTERWAVE_SECRET_KEY not set. Bypassing verification.');
+      return NextResponse.json({
+        accountName: "Verification Bypassed (Dev)",
+        accountNumber: accountNumber,
+      });
+    }
+
     const response = await verifyBankAccount(accountNumber, bankCode);
-    
+
     if (response.status !== 'success' || !response.data) {
       return NextResponse.json(
         { error: 'Could not verify account. Please check the details.' },
@@ -28,7 +47,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Verify account error:', error);
     return NextResponse.json(
-      { error: 'Failed to verify account' },
+      { error: error instanceof Error ? error.message : 'Failed to verify account' },
       { status: 500 }
     );
   }

@@ -11,6 +11,7 @@ interface BytezContext {
   message?: string;
   occasion?: string;
   recipientName?: string;
+  variation?: number; // Add variation for different prompts
 }
 
 export function useBytezAI() {
@@ -19,12 +20,22 @@ export function useBytezAI() {
   const generate = useCallback(async (type: string, context: BytezContext): Promise<string> => {
     setLoading(true);
     try {
+      console.log(`Calling /api/bytez with type: ${type}, context:`, context);
       const response = await fetch("/api/bytez", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, context }),
       });
+      
+      if (!response.ok) {
+        console.error(`API response not ok: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        return "";
+      }
+      
       const data = await response.json();
+      console.log("API response data:", data);
       return data.output || "";
     } catch (error) {
       console.error("Bytez error:", error);
@@ -35,16 +46,16 @@ export function useBytezAI() {
   }, []);
 
   const generateGreeting = useCallback(
-    (userName: string, balance: number) => {
+    (userName: string, balance: number, variation?: number) => {
       const hour = new Date().getHours();
       const timeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
-      return generate("greeting", { userName, timeOfDay, balance });
+      return generate("greeting", { userName, timeOfDay, balance, variation: variation || 0 });
     },
     [generate]
   );
 
   const generateTip = useCallback(
-    (transactionType: string) => generate("tip", { transactionType }),
+    (transactionType: string, variation?: number) => generate("tip", { transactionType, variation: variation || 0 }),
     [generate]
   );
 
@@ -58,7 +69,7 @@ export function useBytezAI() {
     [generate]
   );
 
-  const generateQuote = useCallback(() => generate("quote", {}), [generate]);
+  const generateQuote = useCallback((variation?: number) => generate("quote", { variation: variation || 0 }), [generate]);
 
   return {
     loading,

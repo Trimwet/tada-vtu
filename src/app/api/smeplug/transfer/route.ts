@@ -18,7 +18,7 @@ function verifyPin(pin: string, hash: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -90,59 +90,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const currentBalance = profile.balance || 0;
-    
-    // Check if user has enough balance (no fees for SMEPlug transfers!)
-    if (currentBalance < transferAmount) {
+    // ----------------------------------------------------------------------
+    // ATOMIC TRANSACTION START
+    // ----------------------------------------------------------------------
+    // We use the database RPC to check balance and deduct atomically.
+    // This prevents race conditions where two withdrawals could happen at once.
+    const { data: debitResult, error: debitError } = await supabase
+      .rpc('atomic_wallet_update', {
+        p_user_id: user.id,
+        p_amount: -transferAmount, // Negative for debit
+        p_description: `Bank Transfer to ${accountName} (${accountNumber})`,
+        p_reference: `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        p_type: 'withdrawal',
+        p_metadata: { bankCode, accountNumber, accountName }
+      });
+
+    if (debitError) {
+      console.error('Debit error:', debitError);
       return NextResponse.json(
-        { 
-          status: 'error', 
-          message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` 
-        },
+        { status: 'error', message: debitError.message || 'Insufficient balance or transaction failed' },
         { status: 400 }
       );
     }
 
-    // Deduct from user's balance first (SMEPlug has ZERO fees!)
-    const { error: deductError } = await supabase
-      .from('profiles')
-      .update({ balance: currentBalance - transferAmount } as never)
-      .eq('id', user.id);
+    // Debit successful
+    const { new_balance, transaction_id } = debitResult as any;
+    // ----------------------------------------------------------------------
 
-    if (deductError) {
-      return NextResponse.json(
-        { status: 'error', message: 'Failed to process withdrawal' },
-        { status: 500 }
-      );
-    }
-
-    // Create pending transaction record
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'withdrawal',
-        amount: -transferAmount,
-        status: 'pending',
-        description: `Bank Transfer to ${accountName} (${accountNumber})`,
-      } as never)
-      .select()
-      .single();
-
-    if (txnError || !transaction) {
-      // Refund the balance
-      await supabase
-        .from('profiles')
-        .update({ balance: currentBalance } as never)
-        .eq('id', user.id);
-      
-      return NextResponse.json(
-        { status: 'error', message: 'Failed to create transaction' },
-        { status: 500 }
-      );
-    }
-
-    const txnId = (transaction as { id: string }).id;
 
     try {
       // Execute the bank transfer via SMEPlug
@@ -159,19 +133,28 @@ export async function POST(request: NextRequest) {
         .from('transactions')
         .update({
           status: result.success ? 'success' : 'failed',
-          reference: result.reference,
+          reference: result.reference || debitResult.transaction_id, // Use API ref if available, else generic
+          external_reference: result.reference
         } as never)
-        .eq('id', txnId);
+        .eq('id', transaction_id);
 
       if (!result.success) {
-        // Refund on failure
-        await supabase
-          .from('profiles')
-          .update({ balance: currentBalance } as never)
-          .eq('id', user.id);
+        // ----------------------------------------------------------------------
+        // ROLLBACK / REFUND
+        // ----------------------------------------------------------------------
+        console.error('Transfer API failed, refunding user:', result.message);
+
+        // Refund the user atomically
+        await supabase.rpc('atomic_wallet_update', {
+          p_user_id: user.id,
+          p_amount: transferAmount, // Positive to add back
+          p_description: `Refund: Failed transfer to ${accountNumber}`,
+          p_reference: `REFUND-${transaction_id}`,
+          p_type: 'deposit' // Or 'refund' if supported
+        });
 
         return NextResponse.json(
-          { status: 'error', message: result.message || 'Transfer failed' },
+          { status: 'error', message: result.message || 'Transfer failed. Your wallet has been refunded.' },
           { status: 400 }
         );
       }
@@ -184,21 +167,29 @@ export async function POST(request: NextRequest) {
           amount: transferAmount,
           accountName,
           accountNumber,
-          newBalance: currentBalance - transferAmount,
+          newBalance: new_balance, // From the atomic update
         },
       });
-    } catch (transferError) {
-      // Refund on error
-      await supabase
-        .from('profiles')
-        .update({ balance: currentBalance } as never)
-        .eq('id', user.id);
 
-      // Update transaction as failed
+    } catch (transferError) {
+      // ----------------------------------------------------------------------
+      // ROLLBACK / REFUND ON EXCEPTION
+      // ----------------------------------------------------------------------
+      console.error('Transfer Logic Error, refunding:', transferError);
+
+      await supabase.rpc('atomic_wallet_update', {
+        p_user_id: user.id,
+        p_amount: transferAmount,
+        p_description: `Refund: System error during transfer to ${accountNumber}`,
+        p_reference: `REFUND-ERR-${transaction_id}`,
+        p_type: 'deposit'
+      });
+
+      // Update tx status
       await supabase
         .from('transactions')
         .update({ status: 'failed' } as never)
-        .eq('id', txnId);
+        .eq('id', transaction_id);
 
       throw transferError;
     }

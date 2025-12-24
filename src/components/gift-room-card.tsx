@@ -6,9 +6,9 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
-import { 
-  GiftRoom, 
-  getGiftRoomTypeLabel, 
+import {
+  GiftRoom,
+  getGiftRoomTypeLabel,
   getGiftRoomStatusLabel,
   getTimeUntilExpiration,
   isGiftRoomExpired,
@@ -27,13 +27,13 @@ interface GiftRoomCardProps {
   showActions?: boolean;
 }
 
-export function GiftRoomCard({ 
-  room, 
-  sender, 
-  onShare, 
-  onView, 
+export function GiftRoomCard({
+  room,
+  sender,
+  onShare,
+  onView,
   className = "",
-  showActions = true 
+  showActions = true
 }: GiftRoomCardProps) {
   const isExpired = isGiftRoomExpired(room.expires_at);
   const timeLeft = getTimeUntilExpiration(room.expires_at);

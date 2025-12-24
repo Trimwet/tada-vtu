@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { giftRoomService } from '@/lib/gift-room-service';
-import { 
-  CreateGiftRoomRequest, 
-  GiftRoom, 
+import { createClient } from '@/lib/supabase/client';
+import {
+  CreateGiftRoomRequest,
+  GiftRoom,
   GiftClaim,
-  GiftRoomDetailsResponse 
+  GiftRoomDetailsResponse
 } from '@/types/gift-room';
 import { toast } from '@/lib/toast';
 
@@ -18,7 +19,7 @@ export function useGiftRoom() {
     setCreating(true);
     try {
       const response = await giftRoomService.createGiftRoom(params);
-      
+
       if (response.success && response.data) {
         toast.success("Gift room created!", {
           description: `Share the link to send your gift`
@@ -41,7 +42,7 @@ export function useGiftRoom() {
     setLoading(true);
     try {
       const response = await giftRoomService.getGiftRoomDetails(token);
-      
+
       if (response.success && response.data) {
         return response.data;
       } else {
@@ -58,13 +59,13 @@ export function useGiftRoom() {
   }, []);
 
   const joinGiftRoom = useCallback(async (
-    roomToken: string, 
+    roomToken: string,
     contactInfo?: { email?: string; phone?: string; name?: string }
   ) => {
     setJoining(true);
     try {
       const response = await giftRoomService.joinGiftRoom(roomToken, contactInfo);
-      
+
       if (response.success && response.data) {
         toast.success("Spot secured!", {
           description: "Complete signup to claim your gift"
@@ -87,7 +88,7 @@ export function useGiftRoom() {
     setClaiming(true);
     try {
       const response = await giftRoomService.claimGift(reservationId);
-      
+
       if (response.success && response.data) {
         toast.payment(
           "Gift claimed successfully!",
@@ -117,7 +118,7 @@ export function useGiftRoom() {
   const shareGiftRoom = useCallback(async (token: string, message?: string) => {
     try {
       const success = await giftRoomService.shareGiftRoom(token, message);
-      
+
       if (success) {
         toast.success("Shared!", { description: "Gift link copied to clipboard" });
         return true;
@@ -136,7 +137,7 @@ export function useGiftRoom() {
     setLoading(true);
     try {
       const response = await giftRoomService.getGiftRoomHistory();
-      
+
       if (response.success && response.data) {
         return response.data;
       } else {
@@ -156,7 +157,7 @@ export function useGiftRoom() {
     setLoading(true);
     try {
       const response = await giftRoomService.getUserGiftRooms();
-      
+
       if (response.success && response.data) {
         return response.data;
       } else {
@@ -184,6 +185,34 @@ export function useGiftRoom() {
     shareGiftRoom,
     getGiftRoomHistory,
     getUserGiftRooms,
+    subscribeToRoom: useCallback((roomId: string, onUpdate: () => void) => {
+      const supabase = createClient();
+      console.log(`Subscribing to room ${roomId}`);
+
+      const channel = supabase
+        .channel(`room-${roomId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'gift_rooms',
+            filter: `id=eq.${roomId}`,
+          },
+          (payload) => {
+            console.log('Realtime update received:', payload);
+            onUpdate();
+          }
+        )
+        .subscribe((status) => {
+          console.log(`Subscription status for room ${roomId}:`, status);
+        });
+
+      return () => {
+        console.log(`Unsubscribing from room ${roomId}`);
+        supabase.removeChannel(channel);
+      };
+    }, []),
   };
 }
 
