@@ -62,12 +62,12 @@ export function AITypewriter({
   const { generateGreeting, generateTip, generateQuote, loading } = useBytezAI();
   const reshuffleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const typewriterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasStartedReshuffling = useRef(false);
 
   // Get a random fallback message
   const getFallbackMessage = useCallback(() => {
     const messages = FALLBACK_MESSAGES[type];
-    // Use messageIndex to ensure we cycle through different messages
-    const randomIndex = (messageIndex + Math.floor(Math.random() * messages.length)) % messages.length;
+    const randomIndex = Math.floor(Math.random() * messages.length);
     let message = messages[randomIndex];
     
     // Personalize greeting messages
@@ -78,8 +78,7 @@ export function AITypewriter({
         `Welcome back, ${userName}! ${message}`,
         `Hi ${userName}! ${message}`,
       ];
-      const personalIndex = messageIndex % personalizedGreetings.length;
-      message = personalizedGreetings[personalIndex];
+      message = personalizedGreetings[Math.floor(Math.random() * personalizedGreetings.length)];
     }
     
     return message;
@@ -146,17 +145,19 @@ export function AITypewriter({
 
   // Start reshuffling after first message completes
   useEffect(() => {
-    if (!isTyping && fullText && reshuffleInterval > 0) {
-      console.log('Setting up reshuffle timer...');
+    if (!isTyping && fullText && !hasStartedReshuffling.current && reshuffleInterval > 0) {
+      console.log('Starting reshuffle cycle...');
+      hasStartedReshuffling.current = true;
       
-      reshuffleTimeoutRef.current = setTimeout(() => {
-        console.log('Reshuffling message, current index:', messageIndex);
-        setMessageIndex(prev => {
-          const newIndex = prev + 1;
-          console.log('New message index:', newIndex);
-          return newIndex;
-        });
-      }, reshuffleInterval);
+      const startReshuffling = () => {
+        reshuffleTimeoutRef.current = setTimeout(() => {
+          console.log('Reshuffling message...');
+          setMessageIndex(prev => prev + 1);
+          startReshuffling(); // Continue the cycle
+        }, reshuffleInterval);
+      };
+      
+      startReshuffling();
     }
 
     return () => {
@@ -164,7 +165,7 @@ export function AITypewriter({
         clearTimeout(reshuffleTimeoutRef.current);
       }
     };
-  }, [isTyping, fullText, reshuffleInterval, messageIndex]);
+  }, [isTyping, fullText, reshuffleInterval]);
 
   // Typewriter effect
   useEffect(() => {

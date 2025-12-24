@@ -113,13 +113,13 @@ export function getTimeBasedGreeting(name?: string) {
   let timeGreeting = 'Good evening';
   let emoji = '🌙';
   
-  if (hour >= 5 && hour < 12) {
+  if (hour >= 6 && hour < 12) {
     timeGreeting = 'Good morning';
     emoji = '☀️';
   } else if (hour >= 12 && hour < 17) {
     timeGreeting = 'Good afternoon';
     emoji = '🌤️';
-  } else if (hour >= 17 && hour < 21) {
+  } else if (hour >= 17 && hour < 22) {
     timeGreeting = 'Good evening';
     emoji = '🌅';
   } else {
