@@ -213,6 +213,7 @@ export default function DashboardPage() {
               balance={user.balance || 0}
               type="greeting"
               speed={40}
+              reshuffleInterval={8000}
             />
           </p>
         </div>
