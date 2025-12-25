@@ -208,12 +208,7 @@ export default function DashboardPage() {
             <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
           </div>
           <p className="text-muted-foreground h-6">
-            <AITypewriter
-              userName={(user.full_name || "User").split(" ")[0]}
-              balance={user.balance || 0}
-              type="greeting"
-              speed={40}
-            />
+            {greeting}
           </p>
         </div>
 

@@ -140,7 +140,7 @@ const getMessagePool = (hour: number): string[] => {
   try {
     let timeBasedPool: string[] = [];
     
-    // Select time-based pool
+    // Select time-based pool - SYNCHRONIZED with getTimeBasedGreeting
     if (hour >= 6 && hour < 12) {
       timeBasedPool = MORNING_GREETINGS;
     } else if (hour >= 12 && hour < 17) {
@@ -148,6 +148,7 @@ const getMessagePool = (hour: number): string[] => {
     } else if (hour >= 17 && hour < 22) {
       timeBasedPool = EVENING_GREETINGS;
     } else {
+      // Night time: 22:00 - 05:59 (10 PM to 6 AM)
       timeBasedPool = NIGHT_GREETINGS;
     }
     
@@ -222,6 +223,7 @@ export function getTimeBasedGreeting(name?: string) {
     let timeGreeting = 'Good evening';
     let emoji = '🌙';
     
+    // Synchronized with useGreeting time ranges
     if (hour >= 6 && hour < 12) {
       timeGreeting = 'Good morning';
       emoji = '☀️';
@@ -232,6 +234,7 @@ export function getTimeBasedGreeting(name?: string) {
       timeGreeting = 'Good evening';
       emoji = '🌅';
     } else {
+      // Night time: 22:00 - 05:59 (10 PM to 6 AM)
       timeGreeting = 'Hey night owl';
       emoji = '🦉';
     }
