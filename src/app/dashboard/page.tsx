@@ -12,12 +12,11 @@ import {
 import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
 import Link from "next/link";
-import { getTimeBasedGreeting } from "@/hooks/useGreeting";
+import { getTimeBasedGreeting, useGreeting } from "@/hooks/useGreeting";
 import {
   useSupabaseUser,
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
-import { AITypewriter } from "@/components/ai-typewriter";
 import { LoadingScreen } from "@/components/loading-screen";
 import { getSupabase } from "@/lib/supabase/client";
 import { TierBadge } from "@/components/tier-badge";
@@ -39,6 +38,7 @@ export default function DashboardPage() {
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
   const { hasUnread } = useNotifications(user?.id);
+  const greeting = useGreeting();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("hideBalance") === "true";
