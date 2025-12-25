@@ -12,12 +12,13 @@ import {
 import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
 import Link from "next/link";
-import { getTimeBasedGreeting, useGreeting } from "@/hooks/useGreeting";
+import { getTimeBasedGreeting } from "@/hooks/useGreeting";
 import {
   useSupabaseUser,
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
 import { LoadingScreen } from "@/components/loading-screen";
+import { GreetingTypewriter } from "@/components/greeting-typewriter";
 import { getSupabase } from "@/lib/supabase/client";
 import { TierBadge } from "@/components/tier-badge";
 
@@ -38,7 +39,6 @@ export default function DashboardPage() {
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
   const { hasUnread } = useNotifications(user?.id);
-  const greeting = useGreeting();
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("hideBalance") === "true";
@@ -208,7 +208,7 @@ export default function DashboardPage() {
             <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
           </div>
           <p className="text-muted-foreground h-6">
-            {greeting}
+            <GreetingTypewriter speed={40} />
           </p>
         </div>
 
