@@ -15,8 +15,8 @@ function getSupabaseAdmin() {
 
 // GET endpoint for testing webhook URL accessibility
 export async function GET() {
-  return NextResponse.json({ 
-    status: 'ok', 
+  return NextResponse.json({
+    status: 'ok',
     message: 'Flutterwave webhook endpoint is active',
     timestamp: new Date().toISOString()
   });
@@ -90,11 +90,43 @@ export async function POST(request: NextRequest) {
             .select('id')
             .ilike('id', `${userIdPrefix}%`)
             .limit(1);
-          
+
           if (profiles && profiles.length > 0) {
             userId = profiles[0].id;
-            console.log('Found user by tx_ref pattern:', userId);
+            console.log('Found user by TADA-VA tx_ref pattern:', userId);
           }
+        }
+      }
+
+      // Method 4: Extract from TEMP tx_ref pattern (TADA-TEMP-{user_id_prefix}-{timestamp})
+      if (!userId && txRef?.startsWith('TADA-TEMP-')) {
+        const parts = txRef.split('-');
+        if (parts.length >= 3) {
+          const userIdPrefix = parts[2];
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('id', `${userIdPrefix}%`)
+            .limit(1);
+
+          if (profiles && profiles.length > 0) {
+            userId = profiles[0].id;
+            console.log('Found user by TADA-TEMP tx_ref pattern:', userId);
+          }
+        }
+      }
+
+      // Method 5: Find by flw_ref in virtual_accounts table
+      if (!userId && flwRef) {
+        const { data: vaRecord } = await supabase
+          .from('virtual_accounts')
+          .select('user_id')
+          .eq('flw_ref', flwRef)
+          .single();
+
+        if (vaRecord) {
+          userId = vaRecord.user_id;
+          console.log('Found user by flw_ref:', userId);
         }
       }
 
@@ -129,14 +161,14 @@ export async function POST(request: NextRequest) {
       // User transfers (amount), gets (amount - 30) in wallet
       // Example: User transfers ₦1,030 → gets ₦1,000 in wallet
       const walletCredit = amount - BANK_TRANSFER_FEE;
-      
+
       // Ensure minimum credit (don't allow negative or zero credits)
       if (walletCredit < 50) {
         console.error('Transfer amount too low after fee:', { amount, walletCredit });
         // Still credit the full amount for very small transfers (edge case)
         // This prevents user frustration for transfers under ₦80
       }
-      
+
       const finalCredit = walletCredit > 0 ? walletCredit : amount;
       const newBalance = (profile.balance || 0) + finalCredit;
 
@@ -236,7 +268,7 @@ export async function POST(request: NextRequest) {
       const supabase = getSupabaseAdmin();
       const userId = data.meta?.user_id;
       const txRef = data.tx_ref;
-      
+
       // Use wallet_credit from meta (original amount without service charge)
       const walletCredit = data.meta?.wallet_credit || data.meta?.original_amount || data.amount;
       const serviceCharge = data.meta?.service_charge || 0;
@@ -399,7 +431,7 @@ export async function POST(request: NextRequest) {
         // Update withdrawal status
         await supabase
           .from('withdrawals')
-          .update({ 
+          .update({
             status: 'success',
             completed_at: new Date().toISOString()
           })
@@ -435,7 +467,7 @@ export async function POST(request: NextRequest) {
         // Update withdrawal status
         await supabase
           .from('withdrawals')
-          .update({ 
+          .update({
             status: 'failed',
             failure_reason: data.complete_message || 'Transfer failed'
           })

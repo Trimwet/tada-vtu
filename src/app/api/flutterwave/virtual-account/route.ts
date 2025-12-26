@@ -37,7 +37,7 @@ async function flutterwaveRequest<T>(
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id');
-    
+
     if (!userId) {
       return NextResponse.json(
         { status: 'error', message: 'User ID required' },
@@ -95,9 +95,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { user_id, email, phone, firstname, lastname, bvn, amount, account_type = 'permanent' } = body;
 
-    console.log('Virtual account creation request:', { 
-      user_id, email, phone, firstname, lastname, 
-      hasBvn: !!bvn, amount, account_type 
+    console.log('Virtual account creation request:', {
+      user_id, email, phone, firstname, lastname,
+      hasBvn: !!bvn, amount, account_type
     });
 
     if (!user_id || !email) {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       }
 
       const txRef = `TADA-TEMP-${user_id.slice(0, 8)}-${Date.now()}`;
-      
+
       const flwPayload = {
         email,
         is_permanent: false,
@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
       if (flwResponse.status !== 'success' || !flwResponse.data?.account_number) {
         console.error('Failed to create temp virtual account:', flwResponse);
         return NextResponse.json(
-          { 
-            status: 'error', 
+          {
+            status: 'error',
             message: flwResponse.message || 'Failed to create temporary account',
             details: flwResponse
           },
@@ -163,6 +163,30 @@ export async function POST(request: NextRequest) {
       }
 
       const vaData = flwResponse.data;
+
+      // CRITICAL: Save temporary account to database so webhook can find the user
+      const expiryDate = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+      const { error: insertError } = await supabase
+        .from('virtual_accounts')
+        .insert({
+          user_id,
+          account_number: vaData.account_number,
+          bank_name: vaData.bank_name,
+          account_name: `TADA VTU - ${accountName}`,
+          order_ref: vaData.order_ref || txRef,
+          flw_ref: vaData.flw_ref,
+          is_active: true,
+          is_temporary: true,
+          expected_amount: amount,
+          expires_at: expiryDate.toISOString(),
+        });
+
+      if (insertError) {
+        console.error('Failed to save temp virtual account to DB:', insertError);
+        // Still continue - account was created with Flutterwave
+      } else {
+        console.log('Temp virtual account saved to DB for user:', user_id);
+      }
 
       return NextResponse.json({
         status: 'success',
@@ -213,7 +237,7 @@ export async function POST(request: NextRequest) {
 
     // Create permanent virtual account with Flutterwave
     const txRef = `TADA-VA-${user_id.slice(0, 8)}-${Date.now()}`;
-    
+
     const flwPayload = {
       email,
       is_permanent: true,
@@ -244,8 +268,8 @@ export async function POST(request: NextRequest) {
     if (flwResponse.status !== 'success' || !flwResponse.data?.account_number) {
       console.error('Failed to create virtual account:', flwResponse);
       return NextResponse.json(
-        { 
-          status: 'error', 
+        {
+          status: 'error',
           message: flwResponse.message || 'Failed to create virtual account',
           details: flwResponse
         },
