@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🇳🇬 TADA VTU - Nigerian Virtual Top-Up Platform
 
-## Getting Started
+> Fast, reliable mobile recharge and bill payment services for Nigeria
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+# Clone and setup
+git clone <your-repo>
+cd tada-vtu
+npm install
+
+# Environment setup
+cp .env.example .env.local
+# Add your API keys (Supabase, Flutterwave, etc.)
+
+# Development
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📚 Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- [🏗️ Architecture Overview](./docs/architecture-diagram.md)
+- [🎯 System Design](./docs/system-design.md) 
+- [🔧 Technical Specifications](./docs/technical-specifications.md)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Tech Stack
 
-## Learn More
+- **Framework**: Next.js 15 with App Router
+- **Database**: Supabase (PostgreSQL)
+- **Payments**: Flutterwave
+- **VTU Provider**: Inlomax
+- **Styling**: Tailwind CSS
+- **Deployment**: Vercel
 
-To learn more about Next.js, take a look at the following resources:
+## 🔑 Core Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ✅ Airtime & Data Top-up (MTN, Airtel, Glo, 9mobile)
+- ✅ Bill Payments (Electricity, Cable TV)
+- ✅ Gift Rooms (Send airtime to multiple people)
+- ✅ Wallet System with Bank Transfer
+- ✅ Referral Program (₦100 per referral)
+- ✅ Real-time Notifications
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🏃‍♂️ Development Commands
 
-## Deploy on Vercel
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run type-check   # Check TypeScript errors
+npm run lint         # Run ESLint
+npm run errors       # Show all errors at once
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔐 Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Flutterwave
+FLUTTERWAVE_SECRET_KEY=
+FLUTTERWAVE_PUBLIC_KEY=
+
+# VTU Provider
+INLOMAX_API_KEY=
+
+# AI Features
+GROQ_API_KEY=
+```
+
+## 📊 System Status
+
+- **Uptime**: 99.9%+ (Vercel)
+- **Database**: Supabase (99.95% SLA)
+- **Payments**: Flutterwave (Enterprise)
+- **VTU**: Inlomax (Primary) + SMEPlug (Backup)
+
+## 🚨 Support
+
+- **Issues**: Create GitHub issue
+- **Email**: support@tadavtu.com
+- **WhatsApp**: +234-XXX-XXXX-XXX
+
+---
+
+Built with ❤️ for Nigeria 🇳🇬
