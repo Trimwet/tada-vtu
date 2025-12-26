@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import { calculateBankTransferTotal } from '@/lib/api/flutterwave';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,22 +37,21 @@ async function flutterwaveRequest<T>(
 // GET - Fetch user's virtual account
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!userId) {
+    if (authError || !user) {
       return NextResponse.json(
-        { status: 'error', message: 'User ID required' },
-        { status: 400 }
+        { status: 'error', message: 'Unauthorized' },
+        { status: 401 }
       );
     }
-
-    const supabase = getSupabaseAdmin();
 
     // Check if user already has a virtual account
     const { data: existingAccount, error } = await supabase
       .from('virtual_accounts')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .single();
 
@@ -122,11 +122,13 @@ export async function POST(request: NextRequest) {
 
       const txRef = `TADA-TEMP-${user_id.slice(0, 8)}-${Date.now()}`;
 
+      const { totalToTransfer } = calculateBankTransferTotal(amount);
+
       const flwPayload = {
         email,
         is_permanent: false,
         tx_ref: txRef,
-        amount: amount + 30, // Add ₦30 service fee
+        amount: totalToTransfer,
         firstname: firstname || 'TADA',
         lastname: lastname || 'User',
         narration: 'TADA VTU Wallet Funding',

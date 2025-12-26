@@ -32,17 +32,23 @@ export function useVirtualAccount() {
   // Fetch existing virtual account
   const fetchVirtualAccount = useCallback(async () => {
     if (!user?.id) {
+      setVirtualAccount(null);
+      setTempAccount(null);
+      setError(null);
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
+      setVirtualAccount(null); // Clear previous to avoid showing stale data while loading
       setError(null);
 
-      const response = await fetch('/api/flutterwave/virtual-account', {
+      const timestamp = Date.now();
+      const response = await fetch(`/api/flutterwave/virtual-account?t=${timestamp}`, {
+        cache: 'no-store',
         headers: {
-          'x-user-id': user.id,
+          'x-user-id': user.id, // Kept for backward compatibility but server now uses session
         },
       });
 
@@ -183,7 +189,7 @@ export function useVirtualAccount() {
   // Copy account number to clipboard
   const copyAccountNumber = useCallback(async () => {
     if (!virtualAccount?.account_number) return false;
-    
+
     try {
       await navigator.clipboard.writeText(virtualAccount.account_number);
       return true;

@@ -17,7 +17,7 @@ function verifyPin(pin: string, hash: string): boolean {
 // POST /api/smeplug/transfer - Initiate bank transfer withdrawal via SMEPlug (ZERO FEES!)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = await createClient() as any;
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -90,36 +90,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ----------------------------------------------------------------------
-    // ATOMIC TRANSACTION START
-    // ----------------------------------------------------------------------
-    // We use the database RPC to check balance and deduct atomically.
-    // This prevents race conditions where two withdrawals could happen at once.
-    const { data: debitResult, error: debitError } = await supabase
-      .rpc('atomic_wallet_update' as never, {
-        p_user_id: user.id,
-        p_amount: -transferAmount, // Negative for debit
-        p_description: `Bank Transfer to ${accountName} (${accountNumber})`,
-        p_reference: `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        p_type: 'withdrawal',
-        p_metadata: { bankCode, accountNumber, accountName }
-      } as never);
-
-    if (debitError) {
-      console.error('Debit error:', debitError);
+    // Check if user has sufficient balance
+    if (profile.balance < transferAmount) {
       return NextResponse.json(
-        { status: 'error', message: debitError.message || 'Insufficient balance or transaction failed' },
+        { status: 'error', message: 'Insufficient balance' },
         { status: 400 }
       );
     }
 
-    // Debit successful
-    const { new_balance, transaction_id } = debitResult as { new_balance: number; transaction_id: string };
+    // Generate unique reference and description for this transaction
+    const reference = `WD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const description = `Bank Transfer to ${accountName} (${accountNumber})`;
+
+    // Use NEW atomic initiate_withdrawal RPC
+    // This handles debiting the user AND creating the pending transaction record in one atomic step
+    const { data: initData, error: initError } = await supabase.rpc('initiate_withdrawal', {
+      p_user_id: user.id,
+      p_amount: transferAmount,
+      p_bank_code: bankCode,
+      p_account_number: accountNumber,
+      p_account_name: accountName,
+      p_reference: reference,
+      p_description: description
+    });
+
+    if (initError || !initData?.success) {
+      console.error('Withdrawal initiation error:', initError || initData?.message);
+      return NextResponse.json(
+        { status: 'error', message: initData?.message || 'Failed to initiate withdrawal' },
+        { status: 400 }
+      );
+    }
+
+    const { transaction_id } = initData;
     // ----------------------------------------------------------------------
 
 
     try {
       // Execute the bank transfer via SMEPlug
+      console.log('[TRANSFER] Initiating SMEPlug transfer:', {
+        bankCode,
+        accountNumber,
+        accountName,
+        amount: transferAmount,
+        reference
+      });
+
       const result = await bankTransfer({
         bankCode,
         accountNumber,
@@ -128,6 +144,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
       });
 
+      console.log('[TRANSFER] SMEPlug transfer result:', result);
+
       // Update transaction with result
       await supabase
         .from('transactions')
@@ -135,7 +153,7 @@ export async function POST(request: NextRequest) {
           status: result.success ? 'success' : 'failed',
           reference: result.reference || transaction_id, // Use API ref if available, else our tx id
           external_reference: result.reference
-        } as never)
+        })
         .eq('id', transaction_id);
 
       if (!result.success) {
@@ -144,13 +162,13 @@ export async function POST(request: NextRequest) {
         // ----------------------------------------------------------------------
         console.error('Transfer API failed, refunding user:', result.message);
 
-        // Refund the user atomically
-        await supabase.rpc('atomic_wallet_update' as never, {
+        // Refund the user using existing function
+        await supabase.rpc('update_user_balance', {
           p_user_id: user.id,
-          p_amount: transferAmount, // Positive to add back
+          p_amount: transferAmount,
+          p_type: 'credit',
           p_description: `Refund: Failed transfer to ${accountNumber}`,
-          p_reference: `REFUND-${transaction_id}`,
-          p_type: 'deposit' // Or 'refund' if supported
+          p_reference: `REFUND-${reference}`
         } as never);
 
         return NextResponse.json(
@@ -158,6 +176,13 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Get updated balance for response
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', user.id)
+        .single();
 
       return NextResponse.json({
         status: 'success',
@@ -167,7 +192,7 @@ export async function POST(request: NextRequest) {
           amount: transferAmount,
           accountName,
           accountNumber,
-          newBalance: new_balance, // From the atomic update
+          newBalance: updatedProfile?.balance || 0,
         },
       });
 
@@ -177,18 +202,18 @@ export async function POST(request: NextRequest) {
       // ----------------------------------------------------------------------
       console.error('Transfer Logic Error, refunding:', transferError);
 
-      await supabase.rpc('atomic_wallet_update' as never, {
+      await supabase.rpc('update_user_balance', {
         p_user_id: user.id,
         p_amount: transferAmount,
+        p_type: 'credit',
         p_description: `Refund: System error during transfer to ${accountNumber}`,
-        p_reference: `REFUND-ERR-${transaction_id}`,
-        p_type: 'deposit'
+        p_reference: `REFUND-ERR-${reference}`
       } as never);
 
       // Update tx status
       await supabase
         .from('transactions')
-        .update({ status: 'failed' } as never)
+        .update({ status: 'failed' })
         .eq('id', transaction_id);
 
       throw transferError;

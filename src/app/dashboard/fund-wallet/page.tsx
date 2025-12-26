@@ -21,6 +21,7 @@ import {
 } from "@/hooks/useSupabaseUser";
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
+import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
@@ -51,17 +52,17 @@ export default function FundWalletPage() {
   const [accountOption, setAccountOption] = useState<'permanent' | 'temporary' | null>(null);
 
   // Virtual account hook
-  const { 
-    virtualAccount, 
+  const {
+    virtualAccount,
     tempAccount,
-    loading: vaLoading, 
+    loading: vaLoading,
     creating: vaCreating,
     creatingTemp,
     error: vaError,
     createVirtualAccount,
     createTempAccount,
     clearTempAccount,
-    copyAccountNumber 
+    copyAccountNumber
   } = useVirtualAccount();
 
   // Fetch fee info when amount changes
@@ -103,7 +104,7 @@ export default function FundWalletPage() {
         try {
           const response = await fetch(`/api/flutterwave/verify?tx_ref=${tx_ref}`);
           const result = await response.json();
-          
+
           if (result.status === "success") {
             toast.payment(`Payment successful!`, `₦${result.data?.amount?.toLocaleString() || ''} added to your wallet`);
             setTimeout(() => {
@@ -275,16 +276,14 @@ export default function FundWalletPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setPaymentMethod("bank")}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              paymentMethod === "bank"
+            className={`p-4 rounded-xl border-2 transition-all ${paymentMethod === "bank"
                 ? "border-green-500 bg-green-500/10"
                 : "border-border hover:border-green-500/50"
-            }`}
+              }`}
           >
             <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                paymentMethod === "bank" ? "bg-green-500/20" : "bg-muted"
-              }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "bank" ? "bg-green-500/20" : "bg-muted"
+                }`}>
                 <IonIcon name="business" size="20px" color={paymentMethod === "bank" ? "#22c55e" : "#888"} />
               </div>
               <div className="text-center">
@@ -298,16 +297,14 @@ export default function FundWalletPage() {
 
           <button
             onClick={() => setPaymentMethod("card")}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              paymentMethod === "card"
+            className={`p-4 rounded-xl border-2 transition-all ${paymentMethod === "card"
                 ? "border-green-500 bg-green-500/10"
                 : "border-border hover:border-green-500/50"
-            }`}
+              }`}
           >
             <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                paymentMethod === "card" ? "bg-green-500/20" : "bg-muted"
-              }`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${paymentMethod === "card" ? "bg-green-500/20" : "bg-muted"
+                }`}>
                 <IonIcon name="card" size="20px" color={paymentMethod === "card" ? "#22c55e" : "#888"} />
               </div>
               <div className="text-center">
@@ -356,10 +353,10 @@ export default function FundWalletPage() {
                           onClick={handleCopyAccount}
                           className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                         >
-                          <IonIcon 
-                            name={copied ? "checkmark" : "copy-outline"} 
-                            size="18px" 
-                            color={copied ? "#22c55e" : "#888"} 
+                          <IonIcon
+                            name={copied ? "checkmark" : "copy-outline"}
+                            size="18px"
+                            color={copied ? "#22c55e" : "#888"}
                           />
                         </button>
                       </div>
@@ -402,7 +399,7 @@ export default function FundWalletPage() {
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-                    
+
                     <div className="relative">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
@@ -440,17 +437,28 @@ export default function FundWalletPage() {
                                 }}
                                 className="p-2 hover:bg-muted rounded-lg transition-colors"
                               >
-                                <IonIcon 
-                                  name={copied ? "checkmark" : "copy-outline"} 
-                                  size="18px" 
-                                  color={copied ? "#22c55e" : "#888"} 
+                                <IonIcon
+                                  name={copied ? "checkmark" : "copy-outline"}
+                                  size="18px"
+                                  color={copied ? "#22c55e" : "#888"}
                                 />
                               </button>
                             </div>
                           </div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-muted-foreground">Amount to Transfer</span>
-                            <span className="font-bold text-xl text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xl text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
+                              <button
+                                onClick={async () => {
+                                  await navigator.clipboard.writeText(parseFloat(tempAccount.amount).toString());
+                                  toast.success("Amount copied!");
+                                }}
+                                className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                              >
+                                <IonIcon name="copy-outline" size="16px" color="#3b82f6" />
+                              </button>
+                            </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Account Name</span>
@@ -471,7 +479,7 @@ export default function FundWalletPage() {
                         <ul className="space-y-1 text-muted-foreground">
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
-                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span> before the account expires</span>
+                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>. This includes the ₦30 service fee + bank processing charges.</span>
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
@@ -601,11 +609,10 @@ export default function FundWalletPage() {
                           <button
                             key={amt}
                             onClick={() => setTempAmount(amt.toString())}
-                            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
-                              tempAmount === amt.toString()
+                            className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${tempAmount === amt.toString()
                                 ? "border-green-500 bg-green-500/10 text-green-500"
                                 : "border-border hover:border-green-500/50"
-                            }`}
+                              }`}
                           >
                             ₦{amt.toLocaleString()}
                           </button>
@@ -617,10 +624,16 @@ export default function FundWalletPage() {
                           <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5" />
                           <div className="text-sm">
                             <p className="text-muted-foreground">
-                              A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{tempAmount ? (parseInt(tempAmount) + 30).toLocaleString() : '---'}</span> to get <span className="text-green-500 font-semibold">₦{tempAmount ? parseInt(tempAmount).toLocaleString() : '---'}</span> in your wallet.
+                              {tempAmount && parseInt(tempAmount) >= 100 ? (
+                                <>
+                                  A temporary account will be created. Transfer <span className="text-green-500 font-semibold">₦{calculateBankTransferTotal(parseInt(tempAmount)).totalToTransfer.toLocaleString()}</span> to get <span className="text-green-500 font-semibold">₦{parseInt(tempAmount).toLocaleString()}</span> in your wallet.
+                                </>
+                              ) : (
+                                "Enter an amount to see the total including fees."
+                              )}
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              You have <span className="text-blue-500 font-medium">1 hour</span> to complete the transfer. ₦30 service fee applies.
+                              Fee includes: <span className="text-blue-500 font-medium">₦30 TADA fee</span> + <span className="text-blue-500 font-medium">2% bank charge</span>.
                             </p>
                           </div>
                         </div>
@@ -683,7 +696,7 @@ export default function FundWalletPage() {
                           Your BVN is required by Flutterwave for account verification.
                         </p>
                       </div>
-                      
+
                       <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
                         <div className="flex items-start gap-2">
                           <IonIcon name="shield-checkmark" size="18px" color="#f59e0b" className="mt-0.5" />
@@ -749,11 +762,10 @@ export default function FundWalletPage() {
                     <button
                       key={value}
                       onClick={() => handleQuickAmount(value)}
-                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${
-                        amount === value.toString()
+                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${amount === value.toString()
                           ? "border-green-500 bg-green-500/10 text-green-500"
                           : "border-border hover:border-green-500/50 text-foreground"
-                      }`}
+                        }`}
                     >
                       ₦{value.toLocaleString()}
                     </button>

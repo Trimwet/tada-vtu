@@ -90,10 +90,10 @@ export async function smeplugRequest<T>(
 
   try {
     console.log(`[SMEPLUG] Request: ${method} ${endpoint}`, data ? JSON.stringify(data) : '');
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
-    
+
     const response = await fetch(`${SMEPLUG_API_URL}${endpoint}`, {
       method,
       headers: {
@@ -103,7 +103,7 @@ export async function smeplugRequest<T>(
       body: method === 'POST' && data ? JSON.stringify(data) : undefined,
       signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
 
     const responseText = await response.text();
@@ -123,13 +123,20 @@ export async function smeplugRequest<T>(
     }
 
     if (!response.ok || result.status === false) {
-      const errorMessage = result.message || `API Error: ${response.statusText}`;
-      
+      // Improved error message fallback
+      const errorMessage = result.message || `SMEPlug Error (Status: ${response.status} ${response.statusText})`;
+
+      console.error('[SMEPLUG] Provider error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        result: result
+      });
+
       if (isInsufficientBalanceError(errorMessage)) {
         console.error('[SMEPLUG] Insufficient balance:', errorMessage);
         throw new SMEPlugServiceUnavailableError();
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -138,12 +145,12 @@ export async function smeplugRequest<T>(
     if (error instanceof SMEPlugServiceUnavailableError) {
       throw error;
     }
-    
+
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('[SMEPLUG] Request timed out');
       throw new Error('SMEPlug request timed out. Please try again.');
     }
-    
+
     console.error('[SMEPLUG] API Error:', error);
     throw error;
   }
@@ -258,7 +265,9 @@ export async function bankTransfer(data: {
 }) {
   const customerReference = data.reference || `TADA-${Date.now()}`;
   const description = data.description || 'TADA VTU Withdrawal';
-  
+
+  console.log(`[SMEPLUG] Initiating bank transfer to ${data.accountNumber} with ref ${customerReference}`);
+
   return smeplugRequest<BankTransferResult>('/transfer/send', 'POST', {
     bank_code: data.bankCode,
     account_number: data.accountNumber,

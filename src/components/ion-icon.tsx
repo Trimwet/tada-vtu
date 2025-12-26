@@ -161,6 +161,7 @@ import {
   IdentificationCard,
   ShoppingCart,
   ShoppingCartSimple,
+  Calculator,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -672,6 +673,10 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
   "7": NumberCircleSeven,
   "8": NumberCircleEight,
   "9": NumberCircleNine,
+
+  // Calculator
+  calculator: Calculator,
+  "calculator-outline": Calculator,
 };
 
 // Fallback icon for unmapped names

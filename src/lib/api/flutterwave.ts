@@ -98,10 +98,10 @@ export function getFeeTier(amount: number): { fee: number; tier: string } {
   return { fee: 149, tier: '₦50,000+' };
 }
 
-// Calculate Flutterwave processing fee (approximately 1.4% for cards, capped at ₦2000)
-// This ensures customers see the EXACT amount they'll pay - no surprises
+// Calculate Flutterwave processing fee
+// Nigeria NGN: 1.4% (cards), but bank transfers via virtual accounts often result in ~2% total cost to customer
 export function calculateFlutterwaveFee(amount: number): number {
-  const fee = Math.ceil(amount * 0.014); // 1.4%
+  const fee = Math.ceil(amount * 0.02); // 2% based on user report
   return Math.min(fee, 2000); // Flutterwave caps at ₦2000
 }
 
@@ -116,7 +116,7 @@ export function calculateTotalPayment(walletAmount: number): {
   const subtotal = walletAmount + serviceFee;
   const processingFee = calculateFlutterwaveFee(subtotal);
   const totalToPay = subtotal + processingFee;
-  
+
   return {
     walletCredit: walletAmount,
     serviceFee,
@@ -313,25 +313,37 @@ export function calculateWithdrawalFee(amount: number): number {
 export const BANK_TRANSFER_FEE = 30;
 
 // Calculate what user should transfer to get desired wallet amount
+// Includes platform fee (₦30) + Flutterwave fee (2%)
 export function calculateBankTransferTotal(walletAmount: number): {
   walletCredit: number;
   platformFee: number;
+  processingFee: number;
   totalToTransfer: number;
 } {
+  const subtotal = walletAmount + BANK_TRANSFER_FEE;
+  const processingFee = calculateFlutterwaveFee(subtotal);
   return {
     walletCredit: walletAmount,
     platformFee: BANK_TRANSFER_FEE,
-    totalToTransfer: walletAmount + BANK_TRANSFER_FEE,
+    processingFee,
+    totalToTransfer: subtotal + processingFee,
   };
 }
 
 // Calculate wallet credit from transfer amount (reverse calculation)
+// transferAmount = 1.02 * (walletCredit + platformFee)
 export function calculateWalletCreditFromTransfer(transferAmount: number): {
   walletCredit: number;
   platformFee: number;
+  processingFee: number;
 } {
+  const subtotal = transferAmount / 1.02;
+  const walletCredit = Math.floor(subtotal - BANK_TRANSFER_FEE);
+  const processingFee = transferAmount - Math.floor(subtotal);
+
   return {
-    walletCredit: transferAmount - BANK_TRANSFER_FEE,
+    walletCredit,
     platformFee: BANK_TRANSFER_FEE,
+    processingFee,
   };
 }
