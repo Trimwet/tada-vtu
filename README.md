@@ -76,7 +76,7 @@ GROQ_API_KEY=
 - **Uptime**: 99.9%+ (Vercel)
 - **Database**: Supabase (99.95% SLA)
 - **Payments**: Flutterwave (Enterprise)
-- **VTU**: Inlomax (Primary) + SMEPlug (Backup)
+- **VTU**: Inlomax (Primary)
 
 ## 🚨 Support
 
