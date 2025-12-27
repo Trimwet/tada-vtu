@@ -48,13 +48,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if user already has a virtual account
+    // Check if user already has a PERMANENT virtual account (only show permanent accounts)
     const { data: existingAccount, error } = await supabase
       .from('virtual_accounts')
       .select('*')
       .eq('user_id', user.id)
       .eq('is_active', true)
+      .eq('is_temporary', false) // CRITICAL: Only return permanent accounts
       .single();
+
+    console.log('Virtual account fetch for user:', user.id, 'Found account:', !!existingAccount, 'Error:', error?.code);
 
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching virtual account:', error);
@@ -65,6 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (existingAccount) {
+      console.log('Returning permanent virtual account for user:', user.id);
       return NextResponse.json({
         status: 'success',
         data: {
@@ -75,6 +79,8 @@ export async function GET(request: NextRequest) {
         },
       });
     }
+
+    console.log('No permanent virtual account found for user:', user.id);
 
     return NextResponse.json({
       status: 'success',
