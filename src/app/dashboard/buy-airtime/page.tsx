@@ -19,7 +19,6 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
-import { EchoTipModal, useEchoTip } from "@/components/echo-tip-modal";
 import { BeneficiariesCard } from "@/components/beneficiaries-card";
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
@@ -36,9 +35,6 @@ export default function BuyAirtimePage() {
     onPinVerified,
     onPinCreated,
   } = useTransactionPin();
-
-  // Echo Tip hook for smart tips after purchase
-  const { tip, isModalOpen, fetchTip, closeModal } = useEchoTip();
 
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -71,15 +67,7 @@ export default function BuyAirtimePage() {
         // Refresh user data to get updated balance
         await refreshUser();
         toast.payment("Airtime purchase successful!", `₦${numAmount} ${selectedNetwork} airtime sent to ${phoneNumber}`);
-        
-        // Fetch smart tip for the user
-        fetchTip({
-          userId: user?.id,
-          network: selectedNetwork,
-          amount: numAmount,
-          type: "airtime",
-        });
-        
+
         setPhoneNumber("");
         setAmount("");
         setSelectedNetwork("");
@@ -193,11 +181,10 @@ export default function BuyAirtimePage() {
                       key={network.value}
                       type="button"
                       onClick={() => setSelectedNetwork(network.value)}
-                      className={`p-3 rounded-xl border-2 transition-smooth ${
-                        selectedNetwork === network.value
-                          ? "border-green-500 bg-green-500/10"
-                          : "border-border hover:border-green-500/50"
-                      }`}
+                      className={`p-3 rounded-xl border-2 transition-smooth ${selectedNetwork === network.value
+                        ? "border-green-500 bg-green-500/10"
+                        : "border-border hover:border-green-500/50"
+                        }`}
                     >
                       <div className="text-center">
                         <div className="font-semibold text-sm text-foreground">
@@ -267,11 +254,10 @@ export default function BuyAirtimePage() {
                       key={value}
                       type="button"
                       onClick={() => handleQuickAmount(value)}
-                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${
-                        amount === value.toString()
-                          ? "border-green-500 bg-green-500/10 text-green-500"
-                          : "border-border hover:border-green-500/50 text-foreground"
-                      }`}
+                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${amount === value.toString()
+                        ? "border-green-500 bg-green-500/10 text-green-500"
+                        : "border-border hover:border-green-500/50 text-foreground"
+                        }`}
                     >
                       ₦{value.toLocaleString()}
                     </button>
@@ -366,7 +352,7 @@ export default function BuyAirtimePage() {
         </Card>
 
         {/* Recent Beneficiaries */}
-        <BeneficiariesCard 
+        <BeneficiariesCard
           serviceType="airtime"
           onSelect={(phone, network) => {
             setPhoneNumber(phone);
@@ -393,20 +379,6 @@ export default function BuyAirtimePage() {
         title="Authorize Purchase"
         description={`Enter PIN to buy ₦${amount} ${selectedNetwork} airtime`}
       />
-
-      {/* Echo Tip Modal - Shows smart tip after successful purchase */}
-      {tip && (
-        <EchoTipModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          tip={tip.tip}
-          savingsEstimate={tip.savingsEstimate}
-          actionType={tip.actionType}
-          transactionType="airtime"
-          network={selectedNetwork || ""}
-          amount={parseInt(amount) || 0}
-        />
-      )}
     </div>
   );
 }

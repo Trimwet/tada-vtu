@@ -115,8 +115,8 @@ export default function RootLayout({
           <NetworkStatusBar />
           {children}
         </AuthProvider>
-        <Toaster 
-          position="top-center" 
+        <Toaster
+          position="top-center"
           theme="dark"
           toastOptions={{
             style: {

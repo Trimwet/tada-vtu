@@ -19,7 +19,7 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import { CreatePinModal } from "@/components/create-pin-modal";
 import { VerifyPinModal } from "@/components/verify-pin-modal";
-import { EchoTipModal, useEchoTip } from "@/components/echo-tip-modal";
+
 
 interface DataPlan {
   id: string;
@@ -54,9 +54,6 @@ export default function BuyDataPage() {
     onPinVerified,
   } = useTransactionPin();
 
-  // Echo Tip hook for smart tips after purchase
-  const { tip, isModalOpen, fetchTip, closeModal } = useEchoTip();
-
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -89,14 +86,14 @@ export default function BuyDataPage() {
       setLoadingPlans(true);
       setSelectedType("");
       setSelectedPlan("");
-      
+
       try {
         const response = await fetch(`/api/inlomax/data-plans?network=${selectedNetwork}`);
         const result = await response.json();
-        
+
         if (result.status === 'success' && result.data) {
           setDataPlans(result.data);
-          
+
           // Auto-select first available type
           const types = [...new Set(result.data.map((p: DataPlan) => p.type))];
           if (types.length > 0) {
@@ -135,7 +132,7 @@ export default function BuyDataPage() {
     try {
       // Use serviceID if available (from Inlomax), otherwise use id
       const planIdForPurchase = selectedPlanDetails.serviceID || selectedPlanDetails.id.split('-')[0];
-      
+
       const response = await fetch("/api/inlomax/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,16 +151,7 @@ export default function BuyDataPage() {
       if (result.status) {
         await refreshUser();
         toast.payment("Data purchase successful!", `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`);
-        
-        // Fetch smart tip for the user
-        fetchTip({
-          userId: user?.id,
-          network: selectedNetwork,
-          amount: selectedPlanDetails.price,
-          type: "data",
-          planName: selectedPlanDetails.size,
-        });
-        
+
         setPhoneNumber("");
         setSelectedPlan("");
         setSelectedNetwork("");
@@ -249,7 +237,7 @@ export default function BuyDataPage() {
                 <div className="text-sm">
                   <p className="font-semibold text-amber-500 mb-1">Important Notice</p>
                   <p className="text-amber-200/80">
-                    Please, don&apos;t send Airtel Awoof and Gifting to any number owing Airtel. 
+                    Please, don&apos;t send Airtel Awoof and Gifting to any number owing Airtel.
                     It will not deliver and you will not be refunded. Thank you for choosing TADA VTU.
                   </p>
                 </div>
@@ -287,11 +275,10 @@ export default function BuyDataPage() {
                         setSelectedNetwork(network.value);
                         setSelectedPlan("");
                       }}
-                      className={`p-3 rounded-xl border-2 transition-smooth ${
-                        selectedNetwork === network.value
-                          ? "border-green-500 bg-green-500/10"
-                          : "border-border hover:border-green-500/50"
-                      }`}
+                      className={`p-3 rounded-xl border-2 transition-smooth ${selectedNetwork === network.value
+                        ? "border-green-500 bg-green-500/10"
+                        : "border-border hover:border-green-500/50"
+                        }`}
                     >
                       <div className="text-center">
                         <div className="font-semibold text-sm text-foreground">
@@ -317,11 +304,10 @@ export default function BuyDataPage() {
                           setSelectedType(type.value);
                           setSelectedPlan("");
                         }}
-                        className={`p-3 rounded-xl border-2 transition-smooth ${
-                          selectedType === type.value
-                            ? "border-green-500 bg-green-500/10"
-                            : "border-border hover:border-green-500/50"
-                        }`}
+                        className={`p-3 rounded-xl border-2 transition-smooth ${selectedType === type.value
+                          ? "border-green-500 bg-green-500/10"
+                          : "border-border hover:border-green-500/50"
+                          }`}
                       >
                         <div className="text-center">
                           <div className="font-semibold text-sm text-foreground">
@@ -384,7 +370,7 @@ export default function BuyDataPage() {
                         className="mx-auto mb-2"
                       />
                       <p>
-                        {dataPlans.length === 0 
+                        {dataPlans.length === 0
                           ? `No plans available for ${selectedNetwork}`
                           : `No ${selectedType} plans for ${selectedNetwork}`
                         }
@@ -397,11 +383,10 @@ export default function BuyDataPage() {
                           key={`plan-${idx}-${plan.id}`}
                           type="button"
                           onClick={() => setSelectedPlan(plan.id)}
-                          className={`p-3 rounded-xl border-2 transition-smooth text-left relative ${
-                            selectedPlan === plan.id
-                              ? "border-green-500 bg-green-500/10"
-                              : "border-border hover:border-green-500/50"
-                          }`}
+                          className={`p-3 rounded-xl border-2 transition-smooth text-left relative ${selectedPlan === plan.id
+                            ? "border-green-500 bg-green-500/10"
+                            : "border-border hover:border-green-500/50"
+                            }`}
                         >
                           {selectedPlan === plan.id && (
                             <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
@@ -538,20 +523,6 @@ export default function BuyDataPage() {
         title="Authorize Purchase"
         description={`Enter PIN to buy ${selectedPlanDetails?.size || ""} ${selectedNetwork} data`}
       />
-
-      {/* Echo Tip Modal - Shows smart tip after successful purchase */}
-      {tip && (
-        <EchoTipModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          tip={tip.tip}
-          savingsEstimate={tip.savingsEstimate}
-          actionType={tip.actionType}
-          transactionType="data"
-          network={selectedNetwork || ""}
-          amount={selectedPlanDetails?.price || 0}
-        />
-      )}
     </div>
   );
 }

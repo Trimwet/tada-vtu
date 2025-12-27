@@ -1,25 +1,47 @@
 import { NextResponse } from 'next/server';
-import { getBanks } from '@/lib/api/flutterwave';
+import { getBanks } from '@/lib/api/flutterwave-transfer';
 
+// Cache banks list for 24 hours
+let cachedBanks: { id: number; code: string; name: string }[] | null = null;
+let cacheTime = 0;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// GET /api/withdrawal/banks - Get list of Nigerian banks
 export async function GET() {
   try {
-    const response = await getBanks('NG');
-    
-    if (response.status !== 'success' || !response.data) {
-      return NextResponse.json(
-        { error: 'Failed to fetch banks' },
-        { status: 500 }
-      );
+    // Return cached banks if available and not expired
+    if (cachedBanks && Date.now() - cacheTime < CACHE_DURATION) {
+      return NextResponse.json({
+        status: 'success',
+        data: cachedBanks,
+      });
     }
 
-    // Return sorted banks
-    const banks = response.data.sort((a, b) => a.name.localeCompare(b.name));
+    const banks = await getBanks();
     
-    return NextResponse.json({ banks });
+    // Cache the result
+    cachedBanks = banks;
+    cacheTime = Date.now();
+
+    return NextResponse.json({
+      status: 'success',
+      data: banks,
+    });
+
   } catch (error) {
     console.error('Get banks error:', error);
+    
+    // Return cached banks even if expired, as fallback
+    if (cachedBanks) {
+      return NextResponse.json({
+        status: 'success',
+        data: cachedBanks,
+        cached: true,
+      });
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch banks' },
+      { status: 'error', message: 'Failed to fetch banks' },
       { status: 500 }
     );
   }

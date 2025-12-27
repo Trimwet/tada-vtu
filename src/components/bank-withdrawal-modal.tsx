@@ -47,9 +47,10 @@ export function BankWithdrawalModal({
   const [pin, setPin] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  // SMEPlug has ZERO fees!
-  const fee = 0;
-  const totalDebit = parseFloat(amount || "0");
+  // Flutterwave fees (calculated dynamically)
+  const [fee, setFee] = useState(0);
+  const [loadingFee, setLoadingFee] = useState(false);
+  const totalDebit = parseFloat(amount || "0") + fee;
 
   const filteredBanks = useMemo(() => {
     if (!bankSearch.trim()) return banks;
@@ -85,22 +86,14 @@ export function BankWithdrawalModal({
     }
   }, [isOpen]);
 
-  // Fetch banks from SMEPlug (437 banks, more comprehensive)
+  // Fetch banks from Flutterwave (Nigerian banks)
   const fetchBanks = async () => {
     setLoadingBanks(true);
     try {
-      const res = await fetch("/api/smeplug/banks");
+      const res = await fetch("/api/withdrawal/banks");
       const data = await res.json();
       if (data.status === "success" && data.data) {
-        const seenCodes = new Set<string>();
-        const uniqueBanks: Bank[] = [];
-        data.data.forEach((b: Bank, idx: number) => {
-          if (!seenCodes.has(b.code)) {
-            seenCodes.add(b.code);
-            uniqueBanks.push({ ...b, id: b.id || idx });
-          }
-        });
-        setBanks(uniqueBanks);
+        setBanks(data.data);
       }
     } catch {
       toast.error("Failed to load banks");
@@ -133,11 +126,43 @@ export function BankWithdrawalModal({
     }
   }, [selectedBank, accountNumber]);
 
+  // Calculate Flutterwave transfer fee
+  const calculateFee = async (amount: number) => {
+    if (amount < MIN_WITHDRAWAL) return;
+    setLoadingFee(true);
+    try {
+      const res = await fetch("/api/flutterwave/fee-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      if (res.ok && data.fee !== undefined) {
+        setFee(data.fee);
+      }
+    } catch {
+      // Fallback fee calculation if API fails
+      setFee(amount <= 5000 ? 10 : amount <= 50000 ? 25 : 50);
+    } finally {
+      setLoadingFee(false);
+    }
+  };
+
   useEffect(() => {
     if (accountNumber.length === 10 && selectedBank) {
       verifyAccount();
     }
   }, [accountNumber, selectedBank, verifyAccount]);
+
+  // Calculate fee when amount changes
+  useEffect(() => {
+    const amountNum = parseFloat(amount || "0");
+    if (amountNum >= MIN_WITHDRAWAL) {
+      calculateFee(amountNum);
+    } else {
+      setFee(0);
+    }
+  }, [amount]);
 
 
   const handleAmountContinue = () => {
@@ -176,7 +201,7 @@ export function BankWithdrawalModal({
     setStep("confirm");
   };
 
-  // Submit withdrawal via SMEPlug (ZERO fees!)
+  // Submit withdrawal via Flutterwave
   const handleSubmit = async () => {
     if (pin.length !== 4) {
       toast.error("Please enter your 4-digit PIN");
@@ -184,7 +209,7 @@ export function BankWithdrawalModal({
     }
     setProcessing(true);
     try {
-      const res = await fetch("/api/smeplug/transfer", {
+      const res = await fetch("/api/withdrawal/transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -320,11 +345,11 @@ export function BankWithdrawalModal({
                 </CardContent>
               </Card>
 
-              {/* Zero fees banner */}
-              <div className="flex items-center gap-3 p-3 rounded-xl border border-green-500/30 bg-green-500/10">
-                <IonIcon name="gift-outline" size="20px" className="text-green-500 shrink-0" />
-                <p className="text-sm text-green-500 font-medium">
-                  Zero withdrawal fees! 🎉
+              {/* Transfer fees info */}
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-blue-500/30 bg-blue-500/10">
+                <IonIcon name="information-circle-outline" size="20px" className="text-blue-500 shrink-0" />
+                <p className="text-sm text-blue-500 font-medium">
+                  Transfer fees apply (₦10-50 depending on amount)
                 </p>
               </div>
 
@@ -377,12 +402,25 @@ export function BankWithdrawalModal({
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Transfer Fee</span>
-                        <span className="font-medium text-green-500">₦0 (Free!)</span>
+                        <span className="font-medium text-foreground">
+                          {loadingFee ? (
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                              <span>Calculating...</span>
+                            </div>
+                          ) : (
+                            `₦${fee.toLocaleString()}`
+                          )}
+                        </span>
                       </div>
                       <div className="border-t border-border pt-3">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-foreground">You&apos;ll Receive</span>
-                          <span className="font-bold text-green-500 text-lg">₦{totalDebit.toLocaleString()}</span>
+                          <span className="font-semibold text-foreground">Total Debit</span>
+                          <span className="font-bold text-red-500 text-lg">₦{totalDebit.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm text-muted-foreground">You'll Receive</span>
+                          <span className="font-bold text-green-500">₦{parseFloat(amount || "0").toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -390,12 +428,12 @@ export function BankWithdrawalModal({
 
                   <Button
                     onClick={handleAmountContinue}
-                    disabled={!amount || parseFloat(amount) < MIN_WITHDRAWAL}
+                    disabled={!amount || parseFloat(amount) < MIN_WITHDRAWAL || loadingFee}
                     className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
                   >
                     <span className="flex items-center gap-2">
-                      Select Bank
-                      <IonIcon name="arrow-forward" size="18px" />
+                      {loadingFee ? "Calculating fee..." : "Select Bank"}
+                      {!loadingFee && <IonIcon name="arrow-forward" size="18px" />}
                     </span>
                   </Button>
                 </CardContent>
@@ -538,13 +576,17 @@ export function BankWithdrawalModal({
                     <IonIcon name="shield-checkmark" size="32px" color="#22c55e" />
                   </div>
                   <p className="text-3xl font-bold text-foreground">₦{parseFloat(amount).toLocaleString()}</p>
-                  <p className="text-sm text-green-500 mt-1">Zero fees! 🎉</p>
+                  <p className="text-sm text-muted-foreground mt-1">+ ₦{fee} transfer fee</p>
                 </div>
 
                 <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Bank</span>
-                    <span className="font-medium text-foreground">{selectedBank?.name}</span>
+                    <span className="text-muted-foreground">Amount</span>
+                    <span className="font-medium text-foreground">₦{parseFloat(amount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Transfer Fee</span>
+                    <span className="font-medium text-foreground">₦{fee.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Account</span>
@@ -556,8 +598,12 @@ export function BankWithdrawalModal({
                   </div>
                   <div className="border-t border-border pt-3">
                     <div className="flex justify-between">
-                      <span className="font-semibold text-foreground">You&apos;ll Receive</span>
-                      <span className="font-bold text-green-500">₦{totalDebit.toLocaleString()}</span>
+                      <span className="font-semibold text-foreground">Total Debit</span>
+                      <span className="font-bold text-red-500">₦{totalDebit.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-sm text-muted-foreground">Recipient Gets</span>
+                      <span className="font-bold text-green-500">₦{parseFloat(amount).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

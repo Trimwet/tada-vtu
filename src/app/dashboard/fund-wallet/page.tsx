@@ -22,6 +22,7 @@ import {
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
+import { CheckDepositsButton } from "@/components/CheckDepositsButton";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
@@ -391,6 +392,9 @@ export default function FundWalletPage() {
                     <IonIcon name={copied ? "checkmark-circle" : "copy"} size="20px" />
                     <span className="ml-2">{copied ? "Copied!" : "Copy Account Number"}</span>
                   </Button>
+
+                  {/* Check Deposits Button */}
+                  <CheckDepositsButton />
                 </>
               ) : tempAccount ? (
                 <>
@@ -516,6 +520,9 @@ export default function FundWalletPage() {
                       {copied ? "Copied!" : "Copy Details"}
                     </Button>
                   </div>
+
+                  {/* Check Deposits Button */}
+                  <CheckDepositsButton />
                 </>
               ) : (
                 <>

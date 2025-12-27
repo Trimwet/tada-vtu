@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { calculateBankTransferTotal } from '@/lib/api/flutterwave';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,7 @@ function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
-  return createClient(url, serviceKey);
+  return createSupabaseClient(url, serviceKey);
 }
 
 async function flutterwaveRequest<T>(
@@ -67,10 +68,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         status: 'success',
         data: {
-          account_number: existingAccount.account_number,
-          bank_name: existingAccount.bank_name,
-          account_name: existingAccount.account_name,
-          created_at: existingAccount.created_at,
+          account_number: (existingAccount as any).account_number,
+          bank_name: (existingAccount as any).bank_name,
+          account_name: (existingAccount as any).account_name,
+          created_at: (existingAccount as any).created_at,
         },
       });
     }
@@ -97,7 +98,9 @@ export async function POST(request: NextRequest) {
 
     console.log('Virtual account creation request:', {
       user_id, email, phone, firstname, lastname,
-      hasBvn: !!bvn, amount, account_type
+      hasBvn: !!bvn, amount, account_type,
+      timestamp: new Date().toISOString(),
+      userAgent: request.headers.get('user-agent'),
     });
 
     if (!user_id || !email) {
@@ -178,7 +181,7 @@ export async function POST(request: NextRequest) {
           order_ref: vaData.order_ref || txRef,
           flw_ref: vaData.flw_ref,
           is_active: true,
-          is_temporary: true,
+          is_temporary: true, // Explicitly set as temporary
           expected_amount: amount,
           expires_at: expiryDate.toISOString(),
         });
@@ -207,11 +210,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // PERMANENT ACCOUNT - Requires BVN
-    if (!bvn || bvn.length !== 11) {
-      console.error('BVN required but not provided or invalid');
+    // PERMANENT ACCOUNT - Requires BVN (STRICT VALIDATION)
+    if (!bvn) {
+      console.error('BVN is required for permanent virtual accounts');
       return NextResponse.json(
-        { status: 'error', message: 'A valid 11-digit BVN is required to create a permanent virtual account' },
+        { status: 'error', message: 'BVN is required to create a permanent virtual account. Use temporary accounts if you prefer not to provide BVN.' },
+        { status: 400 }
+      );
+    }
+
+    // Validate BVN format strictly
+    const bvnRegex = /^\d{11}$/;
+    if (!bvnRegex.test(bvn)) {
+      console.error('Invalid BVN format provided:', bvn?.length);
+      return NextResponse.json(
+        { status: 'error', message: 'BVN must be exactly 11 digits' },
+        { status: 400 }
+      );
+    }
+
+    // Additional BVN validation - check for obvious fake numbers
+    const invalidBvns = [
+      '00000000000', '11111111111', '22222222222', '33333333333', 
+      '44444444444', '55555555555', '66666666666', '77777777777',
+      '88888888888', '99999999999', '12345678901', '01234567890'
+    ];
+    
+    if (invalidBvns.includes(bvn)) {
+      console.error('Invalid/fake BVN provided:', bvn);
+      return NextResponse.json(
+        { status: 'error', message: 'Please provide a valid BVN' },
         { status: 400 }
       );
     }
@@ -281,7 +309,7 @@ export async function POST(request: NextRequest) {
 
     const vaData = flwResponse.data;
 
-    // Save to database
+    // Save to database with explicit is_temporary = false
     const { error: insertError } = await supabase
       .from('virtual_accounts')
       .insert({
@@ -292,6 +320,8 @@ export async function POST(request: NextRequest) {
         order_ref: vaData.order_ref,
         flw_ref: vaData.flw_ref,
         is_active: true,
+        is_temporary: false, // Explicitly set as permanent
+        expires_at: null, // Permanent accounts don't expire
       });
 
     if (insertError) {
