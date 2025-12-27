@@ -216,6 +216,7 @@ export function BankWithdrawalModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bankCode: selectedBank?.code,
+          bankName: selectedBank?.name,
           accountNumber,
           accountName,
           amount: parseFloat(amount),

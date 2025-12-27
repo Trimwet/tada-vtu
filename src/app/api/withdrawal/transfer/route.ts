@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { bankCode, accountNumber, accountName, amount, pin } = await request.json();
+    const { bankCode, bankName, accountNumber, accountName, amount, pin } = await request.json();
 
     // Validate inputs
     if (!bankCode || !accountNumber || !accountName || !amount) {
@@ -156,11 +156,33 @@ export async function POST(request: NextRequest) {
         .from('profiles')
         .update({ balance: userData.balance })
         .eq('id', user.id);
-      
+
       return NextResponse.json(
         { status: 'error', message: 'Failed to process withdrawal' },
         { status: 500 }
       );
+    }
+
+    // Create record in withdrawals table for status tracking via webhook
+    const { error: withdrawalTableError } = await adminSupabase
+      .from('withdrawals')
+      .insert({
+        user_id: user.id,
+        amount: withdrawalAmount,
+        fee: transferFee,
+        net_amount: withdrawalAmount,
+        account_number: accountNumber,
+        account_name: accountName,
+        bank_code: bankCode,
+        bank_name: bankName || 'Bank',
+        status: 'pending',
+        reference: reference, // This is the crucial link for the webhook
+      });
+
+    if (withdrawalTableError) {
+      console.error('Failed to create withdrawal table record:', withdrawalTableError);
+      // We don't necessarily need to fail the whole process here, but it's safer
+      // as the webhook relies on this record.
     }
 
     try {
@@ -196,7 +218,7 @@ export async function POST(request: NextRequest) {
 
         await adminSupabase
           .from('transactions')
-          .update({ 
+          .update({
             status: 'failed',
             response_data: {
               ...txRecord.response_data,
