@@ -47,7 +47,7 @@ async function flutterwaveRequest<T>(
   data?: Record<string, unknown>
 ): Promise<FlutterwaveResponse<T>> {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
-  
+
   if (!secretKey) {
     throw new Error('FLUTTERWAVE_SECRET_KEY not configured');
   }
@@ -72,11 +72,11 @@ async function flutterwaveRequest<T>(
 // Get list of Nigerian banks
 export async function getBanks(): Promise<BankData[]> {
   const result = await flutterwaveRequest<BankData[]>('/banks/NG');
-  
+
   if (result.status !== 'success' || !result.data) {
     throw new Error(result.message || 'Failed to fetch banks');
   }
-  
+
   return result.data;
 }
 
@@ -148,9 +148,11 @@ export async function initiateTransfer(params: TransferParams): Promise<Transfer
     if (result.status !== 'success' || !result.data) {
       // Enhanced error handling for common Flutterwave issues
       let errorMessage = result.message || 'Transfer failed';
-      
+
       if (errorMessage.toLowerCase().includes('merchant')) {
-        errorMessage = 'Your merchant account needs to be enabled for transfers. Please contact Flutterwave support.';
+        errorMessage = 'Withdrawals are currently disabled for your merchant account. Please login to your Flutterwave Dashboard and enable "Transfers" or "Payouts" to continue.';
+      } else if (errorMessage.toLowerCase().includes('pin') || errorMessage.toLowerCase().includes('otp')) {
+        errorMessage = 'Flutterwave requires a Transfer PIN or OTP for this transaction. Please check your Flutterwave security settings or provide the PIN.';
       } else if (errorMessage.toLowerCase().includes('insufficient')) {
         errorMessage = 'Insufficient balance in merchant account. Please fund your Flutterwave account.';
       } else if (errorMessage.toLowerCase().includes('limit')) {
@@ -196,11 +198,11 @@ export async function initiateTransfer(params: TransferParams): Promise<Transfer
 // Get transfer status
 export async function getTransferStatus(transferId: number): Promise<TransferData | null> {
   const result = await flutterwaveRequest<TransferData>(`/transfers/${transferId}`);
-  
+
   if (result.status !== 'success' || !result.data) {
     return null;
   }
-  
+
   return result.data;
 }
 
@@ -209,21 +211,21 @@ export async function getTransferFee(amount: number): Promise<number> {
   const result = await flutterwaveRequest<{ fee: number }[]>(
     `/transfers/fee?amount=${amount}&currency=NGN`
   );
-  
+
   if (result.status !== 'success' || !result.data || result.data.length === 0) {
     // Default fee structure for NGN transfers
     if (amount <= 5000) return 10.75;
     if (amount <= 50000) return 26.88;
     return 53.75;
   }
-  
+
   return result.data[0].fee;
 }
 
 // Retry failed transfer
 export async function retryTransfer(transferId: number): Promise<TransferResult> {
   const result = await flutterwaveRequest<TransferData>(`/transfers/${transferId}/retries`, 'POST');
-  
+
   if (result.status !== 'success' || !result.data) {
     return {
       success: false,
@@ -235,7 +237,7 @@ export async function retryTransfer(transferId: number): Promise<TransferResult>
       amount: 0,
     };
   }
-  
+
   return {
     success: true,
     reference: result.data.reference,

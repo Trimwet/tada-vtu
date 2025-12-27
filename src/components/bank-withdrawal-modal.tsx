@@ -209,6 +209,8 @@ export function BankWithdrawalModal({
     }
     setProcessing(true);
     try {
+      // CLEAR CACHE for debugging
+      console.log("[WITHDRAWAL] Submitting to Flutterwave...");
       const res = await fetch("/api/withdrawal/transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -260,7 +262,7 @@ export function BankWithdrawalModal({
   const stepLabels = ["Amount", "Bank", "Account", "Confirm"];
 
   const modalContent = (
-    <div 
+    <div
       className="fixed inset-0 flex flex-col"
       style={{ zIndex: 99999, backgroundColor: '#0a0a0a' }}
     >
@@ -272,14 +274,14 @@ export function BankWithdrawalModal({
             className="p-2 -ml-2 hover:bg-muted rounded-lg transition-colors"
             type="button"
           >
-            <IonIcon 
-              name={step === "amount" ? "close-outline" : "arrow-back-outline"} 
-              size="22px" 
+            <IonIcon
+              name={step === "amount" ? "close-outline" : "arrow-back-outline"}
+              size="22px"
             />
           </button>
           <h1 className="text-lg font-semibold text-foreground ml-2">{getTitle()}</h1>
         </div>
-        
+
         {/* Step Indicator - only show for non-success steps */}
         {step !== "success" && (
           <div className="px-4 pb-4 max-w-lg mx-auto w-full">
@@ -287,14 +289,13 @@ export function BankWithdrawalModal({
               {steps.map((s, idx) => (
                 <div key={s} className="flex items-center flex-1">
                   <div className="flex flex-col items-center">
-                    <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                        idx < currentStepIndex 
-                          ? "bg-green-500 text-white" 
-                          : idx === currentStepIndex 
-                            ? "bg-green-500 text-white" 
-                            : "bg-muted text-muted-foreground"
-                      }`}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${idx < currentStepIndex
+                        ? "bg-green-500 text-white"
+                        : idx === currentStepIndex
+                          ? "bg-green-500 text-white"
+                          : "bg-muted text-muted-foreground"
+                        }`}
                     >
                       {idx < currentStepIndex ? (
                         <IonIcon name="checkmark" size="16px" />
@@ -302,17 +303,15 @@ export function BankWithdrawalModal({
                         idx + 1
                       )}
                     </div>
-                    <span className={`text-xs mt-1 ${
-                      idx <= currentStepIndex ? "text-green-500" : "text-muted-foreground"
-                    }`}>
+                    <span className={`text-xs mt-1 ${idx <= currentStepIndex ? "text-green-500" : "text-muted-foreground"
+                      }`}>
                       {stepLabels[idx]}
                     </span>
                   </div>
                   {idx < steps.length - 1 && (
-                    <div 
-                      className={`flex-1 h-0.5 mx-2 mt-[-16px] ${
-                        idx < currentStepIndex ? "bg-green-500" : "bg-muted"
-                      }`}
+                    <div
+                      className={`flex-1 h-0.5 mx-2 mt-[-16px] ${idx < currentStepIndex ? "bg-green-500" : "bg-muted"
+                        }`}
                     />
                   )}
                 </div>
@@ -325,7 +324,7 @@ export function BankWithdrawalModal({
       {/* Content */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-          
+
           {/* Step 1: Amount */}
           {step === "amount" && (
             <>
@@ -363,11 +362,10 @@ export function BankWithdrawalModal({
                           key={value}
                           type="button"
                           onClick={() => setAmount(value.toString())}
-                          className={`px-3 py-2.5 rounded-lg border transition-colors text-sm font-medium ${
-                            amount === value.toString()
-                              ? "border-green-500 bg-green-500/10 text-green-500"
-                              : "border-border hover:border-green-500/50 text-foreground"
-                          }`}
+                          className={`px-3 py-2.5 rounded-lg border transition-colors text-sm font-medium ${amount === value.toString()
+                            ? "border-green-500 bg-green-500/10 text-green-500"
+                            : "border-border hover:border-green-500/50 text-foreground"
+                            }`}
                         >
                           ₦{value.toLocaleString()}
                         </button>

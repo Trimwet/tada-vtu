@@ -268,9 +268,6 @@ export default function DashboardPage() {
                 >
                   <IonIcon name="arrow-up-circle-outline" size="16px" />
                   Withdraw
-                  <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-amber-400 text-amber-900 text-[8px] font-bold rounded-full">
-                    FREE
-                  </span>
                 </Button>
               </div>
             </div>
