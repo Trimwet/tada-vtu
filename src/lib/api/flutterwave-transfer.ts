@@ -126,43 +126,71 @@ export async function initiateTransfer(params: TransferParams): Promise<Transfer
   const reference = params.reference || `TADA-WD-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
   const narration = params.narration || `TADA VTU Withdrawal`;
 
-  const result = await flutterwaveRequest<TransferData>('/transfers', 'POST', {
-    account_bank: params.bankCode,
-    account_number: params.accountNumber,
-    amount: params.amount,
-    narration: narration,
-    currency: 'NGN',
-    reference: reference,
-    callback_url: `${process.env.NEXTAUTH_URL || 'https://www.tadavtu.com'}/api/flutterwave/webhook`,
-    debit_currency: 'NGN',
-    meta: {
-      user_id: params.userId,
-      account_name: params.accountName,
-      type: 'withdrawal',
-    },
-  });
+  try {
+    const result = await flutterwaveRequest<TransferData>('/transfers', 'POST', {
+      account_bank: params.bankCode,
+      account_number: params.accountNumber,
+      amount: params.amount,
+      narration: narration,
+      currency: 'NGN',
+      reference: reference,
+      callback_url: `${process.env.NEXTAUTH_URL || 'https://www.tadavtu.com'}/api/flutterwave/webhook`,
+      debit_currency: 'NGN',
+      meta: {
+        user_id: params.userId,
+        account_name: params.accountName,
+        type: 'withdrawal',
+      },
+    });
 
-  if (result.status !== 'success' || !result.data) {
+    console.log('[FLW-TRANSFER] Full response:', JSON.stringify(result, null, 2));
+
+    if (result.status !== 'success' || !result.data) {
+      // Enhanced error handling for common Flutterwave issues
+      let errorMessage = result.message || 'Transfer failed';
+      
+      if (errorMessage.toLowerCase().includes('merchant')) {
+        errorMessage = 'Your merchant account needs to be enabled for transfers. Please contact Flutterwave support.';
+      } else if (errorMessage.toLowerCase().includes('insufficient')) {
+        errorMessage = 'Insufficient balance in merchant account. Please fund your Flutterwave account.';
+      } else if (errorMessage.toLowerCase().includes('limit')) {
+        errorMessage = 'Transfer amount exceeds your account limits. Please contact support.';
+      } else if (errorMessage.toLowerCase().includes('kyc')) {
+        errorMessage = 'Your merchant account requires KYC verification. Please complete verification with Flutterwave.';
+      }
+
+      return {
+        success: false,
+        reference: reference,
+        transferId: 0,
+        status: 'failed',
+        message: errorMessage,
+        fee: 0,
+        amount: params.amount,
+      };
+    }
+
+    return {
+      success: true,
+      reference: result.data.reference || reference,
+      transferId: result.data.id,
+      status: result.data.status,
+      message: result.message || 'Transfer initiated',
+      fee: result.data.fee || 0,
+      amount: result.data.amount,
+    };
+  } catch (error) {
+    console.error('[FLW-TRANSFER] Error:', error);
     return {
       success: false,
       reference: reference,
       transferId: 0,
       status: 'failed',
-      message: result.message || 'Transfer failed',
+      message: error instanceof Error ? error.message : 'Network error occurred',
       fee: 0,
       amount: params.amount,
     };
   }
-
-  return {
-    success: true,
-    reference: result.data.reference || reference,
-    transferId: result.data.id,
-    status: result.data.status,
-    message: result.message || 'Transfer initiated',
-    fee: result.data.fee || 0,
-    amount: result.data.amount,
-  };
 }
 
 // Get transfer status
