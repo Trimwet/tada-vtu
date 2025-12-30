@@ -1,20 +1,13 @@
 // TADA VTU Service Worker - Advanced Caching & Offline Support
-const CACHE_NAME = 'tada-vtu-v1.2.0';
-const STATIC_CACHE = 'tada-static-v1.2.0';
-const DYNAMIC_CACHE = 'tada-dynamic-v1.2.0';
-const API_CACHE = 'tada-api-v1.2.0';
+const CACHE_NAME = 'tada-vtu-v1.2.1';
+const STATIC_CACHE = 'tada-static-v1.2.1';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.2.1';
+const API_CACHE = 'tada-api-v1.2.1';
 
-// Critical resources to cache immediately
+// Critical resources to cache immediately (only guaranteed to exist)
 const STATIC_ASSETS = [
   '/',
-  '/dashboard',
-  '/login',
-  '/register',
-  '/manifest.json',
-  '/_next/static/css/app/layout.css',
-  '/_next/static/chunks/webpack.js',
-  '/_next/static/chunks/main.js',
-  '/_next/static/chunks/pages/_app.js',
+  '/manifest.json'
 ];
 
 // API endpoints to cache with different strategies
@@ -25,17 +18,41 @@ const API_CACHE_PATTERNS = [
   { pattern: '/api/loyalty', strategy: 'networkFirst', ttl: 600000 }, // 10 minutes
 ];
 
-// Install event - Cache critical resources
+// Install event - Cache critical resources with robust error handling
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
   
   event.waitUntil(
     Promise.all([
-      // Cache static assets
-      caches.open(STATIC_CACHE).then((cache) => {
+      // Cache static assets with individual error handling
+      caches.open(STATIC_CACHE).then(async (cache) => {
         console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
+        
+        // Cache each asset individually to avoid failing the entire batch
+        const cachePromises = STATIC_ASSETS.map(async (asset) => {
+          try {
+            const response = await fetch(asset);
+            if (response.ok) {
+              await cache.put(asset, response);
+              console.log('[SW] Successfully cached:', asset);
+            } else {
+              console.warn('[SW] Failed to cache (bad response):', asset, response.status);
+            }
+          } catch (error) {
+            console.warn('[SW] Failed to cache (network error):', asset, error.message);
+            // Don't throw - continue with other assets
+          }
+        });
+        
+        // Wait for all cache attempts to complete (success or failure)
+        await Promise.allSettled(cachePromises);
+        console.log('[SW] Static asset caching completed');
+        return Promise.resolve();
+      }).catch((error) => {
+        console.error('[SW] Failed to open static cache:', error);
+        return Promise.resolve(); // Don't fail installation
       }),
+      
       // Skip waiting to activate immediately
       self.skipWaiting()
     ])
@@ -63,7 +80,10 @@ self.addEventListener('activate', (event) => {
             }
           })
         );
+      }).catch((error) => {
+        console.error('[SW] Error cleaning up caches:', error);
       }),
+      
       // Take control of all clients
       self.clients.claim()
     ])
@@ -104,31 +124,70 @@ async function handleApiRequest(request) {
   
   if (!apiPattern) {
     // Don't cache unknown API endpoints
-    return fetch(request);
+    try {
+      return await fetch(request);
+    } catch (error) {
+      console.log('[SW] API request failed:', error);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Network Error', 
+          message: 'Unable to reach server' 
+        }),
+        { 
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
   }
 
-  const cache = await caches.open(API_CACHE);
-  
-  if (apiPattern.strategy === 'networkFirst') {
-    try {
-      // Try network first
-      const networkResponse = await fetch(request);
-      
-      if (networkResponse.ok) {
-        // Cache successful responses
-        const responseClone = networkResponse.clone();
-        await cache.put(request, responseClone);
+  try {
+    const cache = await caches.open(API_CACHE);
+    
+    if (apiPattern.strategy === 'networkFirst') {
+      try {
+        // Try network first
+        const networkResponse = await fetch(request);
         
-        // Set expiry metadata
-        const expiryTime = Date.now() + apiPattern.ttl;
-        await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
+        if (networkResponse.ok) {
+          // Cache successful responses
+          const responseClone = networkResponse.clone();
+          await cache.put(request, responseClone);
+          
+          // Set expiry metadata
+          const expiryTime = Date.now() + apiPattern.ttl;
+          await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
+        }
+        
+        return networkResponse;
+      } catch (error) {
+        console.log('[SW] Network failed, trying cache:', error);
+        
+        // Check if cached response is still valid
+        const cachedResponse = await cache.match(request);
+        const expiryResponse = await cache.match(`${request.url}:expiry`);
+        
+        if (cachedResponse && expiryResponse) {
+          const expiryTime = parseInt(await expiryResponse.text());
+          if (Date.now() < expiryTime) {
+            return cachedResponse;
+          }
+        }
+        
+        // Return offline fallback
+        return new Response(
+          JSON.stringify({ 
+            error: 'Offline', 
+            message: 'No network connection available' 
+          }),
+          { 
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
       }
-      
-      return networkResponse;
-    } catch (error) {
-      console.log('[SW] Network failed, trying cache:', error);
-      
-      // Check if cached response is still valid
+    } else if (apiPattern.strategy === 'cacheFirst') {
+      // Cache first strategy for static data
       const cachedResponse = await cache.match(request);
       const expiryResponse = await cache.match(`${request.url}:expiry`);
       
@@ -139,130 +198,144 @@ async function handleApiRequest(request) {
         }
       }
       
-      // Return offline fallback
-      return new Response(
-        JSON.stringify({ 
-          error: 'Offline', 
-          message: 'No network connection available' 
-        }),
-        { 
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
+      // Cache expired or not found, fetch from network
+      try {
+        const networkResponse = await fetch(request);
+        
+        if (networkResponse.ok) {
+          const responseClone = networkResponse.clone();
+          await cache.put(request, responseClone);
+          
+          const expiryTime = Date.now() + apiPattern.ttl;
+          await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
         }
-      );
-    }
-  } else if (apiPattern.strategy === 'cacheFirst') {
-    // Cache first strategy for static data
-    const cachedResponse = await cache.match(request);
-    const expiryResponse = await cache.match(`${request.url}:expiry`);
-    
-    if (cachedResponse && expiryResponse) {
-      const expiryTime = parseInt(await expiryResponse.text());
-      if (Date.now() < expiryTime) {
-        return cachedResponse;
+        
+        return networkResponse;
+      } catch (error) {
+        return cachedResponse || new Response(
+          JSON.stringify({ error: 'Service Unavailable' }), 
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
       }
     }
+  } catch (error) {
+    console.error('[SW] Cache operation failed:', error);
+    // Fallback to network only
+    return fetch(request);
+  }
+}
+
+// Static Assets Handler - Cache First with error handling
+async function handleStaticAssets(request) {
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    const cachedResponse = await cache.match(request);
     
-    // Cache expired or not found, fetch from network
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
     try {
       const networkResponse = await fetch(request);
       
       if (networkResponse.ok) {
-        const responseClone = networkResponse.clone();
-        await cache.put(request, responseClone);
-        
-        const expiryTime = Date.now() + apiPattern.ttl;
-        await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
+        await cache.put(request, networkResponse.clone());
       }
       
       return networkResponse;
     } catch (error) {
-      return cachedResponse || new Response('Offline', { status: 503 });
+      console.log('[SW] Failed to fetch static asset:', error);
+      return new Response('Asset not available offline', { status: 503 });
     }
-  }
-}
-
-// Static Assets Handler - Cache First
-async function handleStaticAssets(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cachedResponse = await cache.match(request);
-  
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      await cache.put(request, networkResponse.clone());
-    }
-    
-    return networkResponse;
   } catch (error) {
-    console.log('[SW] Failed to fetch static asset:', error);
-    return new Response('Asset not available offline', { status: 503 });
+    console.error('[SW] Static asset cache error:', error);
+    return fetch(request); // Fallback to network
   }
 }
 
 // Dashboard Pages Handler - Network First with Cache Fallback
 async function handleDashboardPages(request) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  
   try {
-    const networkResponse = await fetch(request);
+    const cache = await caches.open(DYNAMIC_CACHE);
     
-    if (networkResponse.ok) {
-      await cache.put(request, networkResponse.clone());
+    try {
+      const networkResponse = await fetch(request);
+      
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
+      }
+      
+      return networkResponse;
+    } catch (error) {
+      console.log('[SW] Network failed for dashboard page, trying cache');
+      
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
+      // Return offline page
+      return new Response(
+        `<!DOCTYPE html>
+        <html>
+          <head>
+            <title>TADA VTU - Offline</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { 
+                font-family: system-ui; 
+                text-align: center; 
+                padding: 2rem; 
+                background: #0a0a0a;
+                color: #fff;
+              }
+              .offline { color: #666; }
+              button {
+                background: #22c55e;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                margin-top: 1rem;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>You're offline</h1>
+            <p class="offline">Please check your internet connection and try again.</p>
+            <button onclick="window.location.reload()">Retry</button>
+          </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' } }
+      );
     }
-    
-    return networkResponse;
   } catch (error) {
-    console.log('[SW] Network failed for dashboard page, trying cache');
-    
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
-    // Return offline page
-    return caches.match('/offline.html') || new Response(
-      `<!DOCTYPE html>
-      <html>
-        <head>
-          <title>TADA VTU - Offline</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body { font-family: system-ui; text-align: center; padding: 2rem; }
-            .offline { color: #666; }
-          </style>
-        </head>
-        <body>
-          <h1>You're offline</h1>
-          <p class="offline">Please check your internet connection and try again.</p>
-          <button onclick="window.location.reload()">Retry</button>
-        </body>
-      </html>`,
-      { headers: { 'Content-Type': 'text/html' } }
-    );
+    console.error('[SW] Dashboard page cache error:', error);
+    return fetch(request); // Fallback to network
   }
 }
 
 // General Requests Handler
 async function handleGeneralRequests(request) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  
   try {
-    const networkResponse = await fetch(request);
+    const cache = await caches.open(DYNAMIC_CACHE);
     
-    if (networkResponse.ok) {
-      await cache.put(request, networkResponse.clone());
+    try {
+      const networkResponse = await fetch(request);
+      
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
+      }
+      
+      return networkResponse;
+    } catch (error) {
+      const cachedResponse = await cache.match(request);
+      return cachedResponse || new Response('Page not available offline', { status: 503 });
     }
-    
-    return networkResponse;
   } catch (error) {
-    const cachedResponse = await cache.match(request);
-    return cachedResponse || new Response('Page not available offline', { status: 503 });
+    console.error('[SW] General request cache error:', error);
+    return fetch(request); // Fallback to network
   }
 }
 
@@ -302,20 +375,24 @@ async function syncFailedTransactions() {
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
-    tag: data.tag || 'tada-notification',
-    data: data.data,
-    actions: data.actions || [],
-    requireInteraction: data.requireInteraction || false,
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: '/icon-192x192.png',
+      badge: '/badge-72x72.png',
+      tag: data.tag || 'tada-notification',
+      data: data.data,
+      actions: data.actions || [],
+      requireInteraction: data.requireInteraction || false,
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  } catch (error) {
+    console.error('[SW] Push notification error:', error);
+  }
 });
 
 // Notification click handler
@@ -338,6 +415,9 @@ self.addEventListener('notificationclick', (event) => {
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
+      })
+      .catch((error) => {
+        console.error('[SW] Notification click error:', error);
       })
   );
 });

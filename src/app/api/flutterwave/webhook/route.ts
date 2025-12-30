@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { BANK_TRANSFER_FEE } from '@/lib/api/flutterwave';
-import type { Database } from '@/types/database';
 
 // Force dynamic to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -11,7 +10,7 @@ function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
-  return createClient<Database>(url, serviceKey);
+  return createClient(url, serviceKey);
 }
 
 // GET endpoint for testing webhook URL accessibility
