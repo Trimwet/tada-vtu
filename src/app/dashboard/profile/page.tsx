@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/date-utils";
 
 export default function ProfilePage() {
   const { user, loading, refreshUser } = useSupabaseUser();
@@ -344,7 +345,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Member Since</span>
                 <span className="text-foreground font-medium">
-                  {new Date(user.created_at).toLocaleDateString("en-NG", {
+                  {formatDate(user.created_at, {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
