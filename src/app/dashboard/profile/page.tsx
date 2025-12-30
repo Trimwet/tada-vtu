@@ -351,43 +351,73 @@ export default function ProfilePage() {
                 <span className="text-foreground font-medium">
                   {(() => {
                     try {
-                      // First try our date utility
-                      const formattedDate = formatDate(user.created_at, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      });
+                      const dateValue = user.created_at;
+                      console.log("Debug - Raw created_at:", dateValue, "Type:", typeof dateValue);
                       
-                      // If it returns "Invalid Date", try alternative parsing
-                      if (formattedDate === "Invalid Date") {
-                        // Try parsing the PostgreSQL timestamp manually
-                        const dateStr = user.created_at;
-                        if (dateStr) {
-                          // Convert PostgreSQL format to ISO
-                          let isoString = dateStr;
-                          if (dateStr.includes(' ') && !dateStr.includes('T')) {
-                            isoString = dateStr.replace(' ', 'T');
-                          }
-                          if (!isoString.includes('+') && !isoString.includes('Z')) {
-                            isoString += 'Z';
-                          }
-                          
-                          const date = new Date(isoString);
-                          if (!isNaN(date.getTime())) {
-                            return date.toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            });
-                          }
-                        }
-                        return "Date unavailable";
+                      // Handle null/undefined
+                      if (!dateValue) {
+                        console.log("Debug - Date is null/undefined");
+                        return "Date not available";
                       }
                       
-                      return formattedDate;
+                      // Convert to string if it's not already
+                      const dateStr = String(dateValue);
+                      console.log("Debug - Date as string:", dateStr);
+                      
+                      // Try multiple parsing approaches
+                      let parsedDate = null;
+                      
+                      // Method 1: Direct Date parsing
+                      parsedDate = new Date(dateStr);
+                      if (!isNaN(parsedDate.getTime())) {
+                        console.log("Debug - Method 1 success:", parsedDate);
+                        return parsedDate.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        });
+                      }
+                      
+                      // Method 2: PostgreSQL format conversion
+                      let isoString = dateStr;
+                      if (dateStr.includes(' ') && !dateStr.includes('T')) {
+                        isoString = dateStr.replace(' ', 'T');
+                      }
+                      if (!isoString.includes('+') && !isoString.includes('Z') && !isoString.includes('-', 10)) {
+                        isoString += 'Z';
+                      }
+                      
+                      parsedDate = new Date(isoString);
+                      if (!isNaN(parsedDate.getTime())) {
+                        console.log("Debug - Method 2 success:", parsedDate);
+                        return parsedDate.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        });
+                      }
+                      
+                      // Method 3: Manual parsing for YYYY-MM-DD format
+                      const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                      if (dateMatch) {
+                        const [, year, month, day] = dateMatch;
+                        parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        if (!isNaN(parsedDate.getTime())) {
+                          console.log("Debug - Method 3 success:", parsedDate);
+                          return parsedDate.toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          });
+                        }
+                      }
+                      
+                      console.log("Debug - All methods failed for:", dateStr);
+                      return "Unable to parse date";
+                      
                     } catch (error) {
-                      console.error("Date formatting error:", error, "Raw date:", user.created_at);
-                      return "Date unavailable";
+                      console.error("Debug - Date parsing error:", error);
+                      return "Date parsing error";
                     }
                   })()}
                 </span>
