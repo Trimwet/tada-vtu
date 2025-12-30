@@ -40,10 +40,6 @@ export default function ProfilePage() {
         fullName: user.full_name || "",
         phoneNumber: user.phone_number || "",
       });
-      
-      // Debug the date issue
-      console.log("User created_at:", user.created_at, typeof user.created_at);
-      console.log("Formatted date:", formatDate(user.created_at));
     }
   }, [user]);
 
@@ -349,77 +345,14 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Member Since</span>
                 <span className="text-foreground font-medium">
-                  {(() => {
-                    try {
-                      const dateValue = user.created_at;
-                      console.log("Debug - Raw created_at:", dateValue, "Type:", typeof dateValue);
-                      
-                      // Handle null/undefined
-                      if (!dateValue) {
-                        console.log("Debug - Date is null/undefined");
-                        return "Date not available";
-                      }
-                      
-                      // Convert to string if it's not already
-                      const dateStr = String(dateValue);
-                      console.log("Debug - Date as string:", dateStr);
-                      
-                      // Try multiple parsing approaches
-                      let parsedDate = null;
-                      
-                      // Method 1: Direct Date parsing
-                      parsedDate = new Date(dateStr);
-                      if (!isNaN(parsedDate.getTime())) {
-                        console.log("Debug - Method 1 success:", parsedDate);
-                        return parsedDate.toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        });
-                      }
-                      
-                      // Method 2: PostgreSQL format conversion
-                      let isoString = dateStr;
-                      if (dateStr.includes(' ') && !dateStr.includes('T')) {
-                        isoString = dateStr.replace(' ', 'T');
-                      }
-                      if (!isoString.includes('+') && !isoString.includes('Z') && !isoString.includes('-', 10)) {
-                        isoString += 'Z';
-                      }
-                      
-                      parsedDate = new Date(isoString);
-                      if (!isNaN(parsedDate.getTime())) {
-                        console.log("Debug - Method 2 success:", parsedDate);
-                        return parsedDate.toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        });
-                      }
-                      
-                      // Method 3: Manual parsing for YYYY-MM-DD format
-                      const dateMatch = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-                      if (dateMatch) {
-                        const [, year, month, day] = dateMatch;
-                        parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                        if (!isNaN(parsedDate.getTime())) {
-                          console.log("Debug - Method 3 success:", parsedDate);
-                          return parsedDate.toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          });
-                        }
-                      }
-                      
-                      console.log("Debug - All methods failed for:", dateStr);
-                      return "Unable to parse date";
-                      
-                    } catch (error) {
-                      console.error("Debug - Date parsing error:", error);
-                      return "Date parsing error";
-                    }
-                  })()}
+                  {user.created_at ? 
+                    new Date(user.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }) : 
+                    "Date not available"
+                  }
                 </span>
               </div>
               <div className="flex items-center justify-between">
