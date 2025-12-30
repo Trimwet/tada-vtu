@@ -471,6 +471,100 @@ export interface Database {
           credited_at?: string;
         };
       };
+      virtual_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          account_number: string;
+          bank_name: string;
+          account_name: string;
+          order_ref: string | null;
+          flw_ref: string | null;
+          is_active: boolean;
+          is_temporary: boolean;
+          expected_amount: number | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          account_number: string;
+          bank_name: string;
+          account_name: string;
+          order_ref?: string | null;
+          flw_ref?: string | null;
+          is_active?: boolean;
+          is_temporary?: boolean;
+          expected_amount?: number | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          account_number?: string;
+          bank_name?: string;
+          account_name?: string;
+          order_ref?: string | null;
+          flw_ref?: string | null;
+          is_active?: boolean;
+          is_temporary?: boolean;
+          expected_amount?: number | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      withdrawals: {
+        Row: {
+          id: string;
+          user_id: string;
+          amount: number;
+          fee: number | null;
+          status: 'pending' | 'success' | 'failed';
+          reference: string;
+          bank_name: string | null;
+          account_number: string | null;
+          account_name: string | null;
+          failure_reason: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          amount: number;
+          fee?: number | null;
+          status?: 'pending' | 'success' | 'failed';
+          reference: string;
+          bank_name?: string | null;
+          account_number?: string | null;
+          account_name?: string | null;
+          failure_reason?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          amount?: number;
+          fee?: number | null;
+          status?: 'pending' | 'success' | 'failed';
+          reference?: string;
+          bank_name?: string | null;
+          account_number?: string | null;
+          account_name?: string | null;
+          failure_reason?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Functions: {
       update_user_balance: {
