@@ -40,6 +40,10 @@ export default function ProfilePage() {
         fullName: user.full_name || "",
         phoneNumber: user.phone_number || "",
       });
+      
+      // Debug the date issue
+      console.log("User created_at:", user.created_at, typeof user.created_at);
+      console.log("Formatted date:", formatDate(user.created_at));
     }
   }, [user]);
 
@@ -345,11 +349,47 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Member Since</span>
                 <span className="text-foreground font-medium">
-                  {formatDate(user.created_at, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {(() => {
+                    try {
+                      // First try our date utility
+                      const formattedDate = formatDate(user.created_at, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      });
+                      
+                      // If it returns "Invalid Date", try alternative parsing
+                      if (formattedDate === "Invalid Date") {
+                        // Try parsing the PostgreSQL timestamp manually
+                        const dateStr = user.created_at;
+                        if (dateStr) {
+                          // Convert PostgreSQL format to ISO
+                          let isoString = dateStr;
+                          if (dateStr.includes(' ') && !dateStr.includes('T')) {
+                            isoString = dateStr.replace(' ', 'T');
+                          }
+                          if (!isoString.includes('+') && !isoString.includes('Z')) {
+                            isoString += 'Z';
+                          }
+                          
+                          const date = new Date(isoString);
+                          if (!isNaN(date.getTime())) {
+                            return date.toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            });
+                          }
+                        }
+                        return "Date unavailable";
+                      }
+                      
+                      return formattedDate;
+                    } catch (error) {
+                      console.error("Date formatting error:", error, "Raw date:", user.created_at);
+                      return "Date unavailable";
+                    }
+                  })()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
