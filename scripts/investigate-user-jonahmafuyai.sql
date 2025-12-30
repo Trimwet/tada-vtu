@@ -18,80 +18,24 @@ SELECT
 FROM profiles 
 WHERE email = 'jonahmafuyai@gmail.com';
 
--- 2. Check all gift rooms created by this user
+-- 2. Check if gift_rooms table exists and what columns it has
 SELECT 
-    gr.id,
-    gr.token,
-    gr.amount,
-    gr.capacity,
-    gr.joined_count,
-    gr.claimed_count,
-    gr.status,
-    gr.created_at,
-    gr.expires_at,
-    gr.message
-FROM gift_rooms gr
-JOIN profiles p ON gr.creator_id = p.id
-WHERE p.email = 'jonahmafuyai@gmail.com'
-ORDER BY gr.created_at DESC;
+    column_name,
+    data_type
+FROM information_schema.columns 
+WHERE table_name = 'gift_rooms' 
+  AND table_schema = 'public'
+ORDER BY ordinal_position;
 
--- 3. Check all gift rooms this user participated in (but didn't create)
+-- 3. Check all gift-related tables that exist
 SELECT 
-    gr.id,
-    gr.token,
-    gr.amount,
-    gr.capacity,
-    gr.status,
-    gr.created_at,
-    creator.full_name as creator_name,
-    creator.email as creator_email,
-    grr.status as reservation_status,
-    grr.created_at as joined_at,
-    grr.claimed_at
-FROM gift_rooms gr
-JOIN profiles creator ON gr.creator_id = creator.id
-JOIN gift_reservations grr ON gr.id = grr.gift_room_id
-JOIN profiles participant ON grr.user_id = participant.id
-WHERE participant.email = 'jonahmafuyai@gmail.com'
-  AND creator.email != 'jonahmafuyai@gmail.com'  -- Exclude rooms they created
-ORDER BY grr.created_at DESC;
+    table_name
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+  AND table_name ILIKE '%gift%'
+ORDER BY table_name;
 
--- 4. Check all gift claims by this user
-SELECT 
-    gc.id,
-    gc.amount,
-    gc.claimed_at,
-    gr.token,
-    gr.amount as room_amount,
-    creator.full_name as room_creator,
-    creator.email as creator_email,
-    gc.referral_bonus_awarded
-FROM gift_claims gc
-JOIN gift_reservations grr ON gc.reservation_id = grr.id
-JOIN gift_rooms gr ON grr.gift_room_id = gr.id
-JOIN profiles creator ON gr.creator_id = creator.id
-JOIN profiles claimer ON gc.user_id = claimer.id
-WHERE claimer.email = 'jonahmafuyai@gmail.com'
-ORDER BY gc.claimed_at DESC;
-
--- 5. Check all gift room activities involving this user
-SELECT 
-    gra.id,
-    gra.activity_type,
-    gra.details,
-    gra.created_at,
-    gr.token,
-    gr.amount,
-    creator.full_name as room_creator,
-    creator.email as creator_email
-FROM gift_room_activities gra
-JOIN gift_rooms gr ON gra.gift_room_id = gr.id
-JOIN profiles creator ON gr.creator_id = creator.id
-JOIN profiles actor ON gra.user_id = actor.id
-WHERE actor.email = 'jonahmafuyai@gmail.com'
-ORDER BY gra.created_at DESC;
-
--- 6. Check wallet transactions related to gift rooms
+-- 4. Check wallet transactions for gift-related activities
 SELECT 
     wt.id,
     wt.type,
@@ -111,7 +55,7 @@ WHERE p.email = 'jonahmafuyai@gmail.com'
   )
 ORDER BY wt.created_at DESC;
 
--- 7. Check regular transactions for gift-related activities
+-- 5. Check regular transactions for gift-related activities
 SELECT 
     t.id,
     t.type,
@@ -130,29 +74,50 @@ WHERE p.email = 'jonahmafuyai@gmail.com'
   )
 ORDER BY t.created_at DESC;
 
--- 8. Look for potential wrongful refunds - Check if user received refunds for rooms they didn't create
+-- 6. Check for any refund transactions that might be wrongful
 SELECT 
-    'POTENTIAL WRONGFUL REFUND' as alert_type,
-    wt.id as transaction_id,
+    wt.id,
+    wt.type,
     wt.amount,
     wt.description,
     wt.reference,
     wt.created_at,
-    gr.token,
-    gr.creator_id,
-    creator.email as actual_creator_email,
-    participant.email as refund_recipient_email
+    p.email,
+    p.full_name
 FROM wallet_transactions wt
-JOIN profiles participant ON wt.user_id = participant.id
-LEFT JOIN gift_rooms gr ON wt.reference ILIKE '%' || gr.id || '%'
-LEFT JOIN profiles creator ON gr.creator_id = creator.id
-WHERE participant.email = 'jonahmafuyai@gmail.com'
+JOIN profiles p ON wt.user_id = p.id
+WHERE p.email = 'jonahmafuyai@gmail.com'
   AND wt.type = 'credit'
   AND wt.description ILIKE '%refund%'
-  AND gr.creator_id != participant.id  -- User received refund but wasn't the creator
 ORDER BY wt.created_at DESC;
 
--- 9. Check for any duplicate or suspicious refund patterns
+-- 7. Check user's overall transaction history for patterns
+SELECT 
+    t.type,
+    COUNT(*) as transaction_count,
+    SUM(t.amount) as total_amount,
+    MIN(t.created_at) as first_transaction,
+    MAX(t.created_at) as last_transaction
+FROM transactions t
+JOIN profiles p ON t.user_id = p.id
+WHERE p.email = 'jonahmafuyai@gmail.com'
+GROUP BY t.type
+ORDER BY total_amount DESC;
+
+-- 8. Check wallet transaction summary
+SELECT 
+    wt.type,
+    COUNT(*) as transaction_count,
+    SUM(wt.amount) as total_amount,
+    MIN(wt.created_at) as first_transaction,
+    MAX(wt.created_at) as last_transaction
+FROM wallet_transactions wt
+JOIN profiles p ON wt.user_id = p.id
+WHERE p.email = 'jonahmafuyai@gmail.com'
+GROUP BY wt.type
+ORDER BY total_amount DESC;
+
+-- 9. Look for suspicious refund patterns
 SELECT 
     COUNT(*) as refund_count,
     SUM(wt.amount) as total_refunded,
@@ -165,20 +130,22 @@ WHERE p.email = 'jonahmafuyai@gmail.com'
   AND wt.type = 'credit'
   AND wt.description ILIKE '%refund%'
 GROUP BY wt.reference
-HAVING COUNT(*) > 1  -- Multiple refunds for same reference
 ORDER BY total_refunded DESC;
 
--- 10. Summary of user's gift room financial activity
+-- 10. Check current account status
 SELECT 
-    'SUMMARY' as report_type,
-    COUNT(CASE WHEN gr.creator_id = p.id THEN 1 END) as rooms_created,
-    SUM(CASE WHEN gr.creator_id = p.id THEN gr.amount * gr.capacity END) as total_funded,
-    COUNT(CASE WHEN gc.user_id = p.id THEN 1 END) as gifts_claimed,
-    SUM(CASE WHEN gc.user_id = p.id THEN gc.amount END) as total_claimed,
-    SUM(CASE WHEN wt.description ILIKE '%refund%' AND wt.type = 'credit' THEN wt.amount END) as total_refunded
+    p.id,
+    p.full_name,
+    p.email,
+    p.balance,
+    p.total_spent,
+    p.created_at,
+    p.is_active,
+    CASE 
+        WHEN p.created_at IS NULL THEN 'NULL created_at'
+        WHEN p.created_at < '2020-01-01' THEN 'Invalid old date'
+        WHEN p.created_at > NOW() + INTERVAL '1 day' THEN 'Future date'
+        ELSE 'Valid date'
+    END as date_status
 FROM profiles p
-LEFT JOIN gift_rooms gr ON gr.creator_id = p.id
-LEFT JOIN gift_claims gc ON gc.user_id = p.id
-LEFT JOIN wallet_transactions wt ON wt.user_id = p.id
-WHERE p.email = 'jonahmafuyai@gmail.com'
-GROUP BY p.id, p.email;
+WHERE p.email = 'jonahmafuyai@gmail.com';
