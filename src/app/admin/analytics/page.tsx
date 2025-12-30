@@ -117,8 +117,25 @@ export default function AnalyticsPage() {
 
   const formatCurrency = (value: number) => `₦${value.toLocaleString()}`;
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+    try {
+      // Handle PostgreSQL timestamp format properly
+      let isoString = dateStr;
+      if (dateStr.includes(' ') && !dateStr.includes('T')) {
+        isoString = dateStr.replace(' ', 'T');
+      }
+      if (!isoString.includes('+') && !isoString.includes('Z')) {
+        isoString += 'Z';
+      }
+      
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) {
+        return 'Invalid';
+      }
+      return d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid';
+    }
   };
   const formatHour = (hour: number) => {
     if (hour === 0) return '12am';
