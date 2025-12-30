@@ -4,11 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     console.log('API: Auth user:', user?.id, 'Auth error:', authError);
-    
+
     if (authError || !user) {
       console.log('API: Authentication failed');
       return NextResponse.json({
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Build query
     let query = supabase
       .from('gift_rooms')
-      .select('*')
+      .select('id, sender_id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at')
       .eq('sender_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);

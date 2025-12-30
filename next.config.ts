@@ -15,6 +15,84 @@ const nextConfig: NextConfig = {
       '@supabase/supabase-js',
     ],
   },
+
+  // Advanced bundle splitting
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    if (!dev && !isServer) {
+      // Split vendor chunks more granularly
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          // Core React libraries
+          react: {
+            name: 'react',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            priority: 40,
+          },
+          // Supabase client
+          supabase: {
+            name: 'supabase',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/]@supabase[\\/]/,
+            priority: 35,
+          },
+          // UI libraries
+          ui: {
+            name: 'ui',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/](@radix-ui|@phosphor-icons|sonner)[\\/]/,
+            priority: 30,
+          },
+          // Charts (only for admin)
+          charts: {
+            name: 'charts',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/](recharts|d3-)[\\/]/,
+            priority: 25,
+          },
+          // Other vendor libraries
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 20,
+            minChunks: 2,
+          },
+          // Common components
+          common: {
+            name: 'common',
+            chunks: 'all',
+            minChunks: 2,
+            priority: 10,
+            reuseExistingChunk: true,
+          },
+        },
+      };
+
+      // Tree shaking optimizations
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
+    }
+
+    // Bundle analyzer in development
+    if (process.env.ANALYZE === 'true') {
+      try {
+        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+        config.plugins.push(
+          new BundleAnalyzerPlugin({
+            analyzerMode: 'server',
+            analyzerPort: 8888,
+            openAnalyzer: true,
+          })
+        );
+      } catch (error) {
+        console.warn('webpack-bundle-analyzer not found. Install it with: npm install webpack-bundle-analyzer --save-dev');
+      }
+    }
+
+    return config;
+  },
   
   // Image optimization
   images: {

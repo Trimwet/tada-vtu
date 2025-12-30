@@ -210,7 +210,7 @@ export function GiftRoomActivityFeed({ roomId, className = "" }: GiftRoomActivit
                   {activity.details && Object.keys(activity.details).length > 0 && (
                     <div className="mt-2 p-2 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">
-                        {activity.activity_type === 'claimed' && activity.details.referral_bonus_awarded && (
+                        {activity.activity_type === 'claimed' && (activity.details as any).referral_bonus_awarded && (
                           <span className="inline-flex items-center gap-1 text-green-600">
                             <IonIcon name="gift" size="12px" />
                             Referral bonus earned

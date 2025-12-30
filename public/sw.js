@@ -1,350 +1,340 @@
-// Service Worker for TADA VTU - Advanced Caching & Performance
-// IMPORTANT: Increment this version on each deployment to bust caches
-const SW_VERSION = '2';
-const CACHE_NAME = `tada-vtu-v${SW_VERSION}`;
-const DYNAMIC_CACHE = `tada-vtu-dynamic-v${SW_VERSION}`;
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+// TADA VTU Service Worker - Advanced Caching & Offline Support
+const CACHE_NAME = 'tada-vtu-v1.2.0';
+const STATIC_CACHE = 'tada-static-v1.2.0';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.2.0';
+const API_CACHE = 'tada-api-v1.2.0';
 
-// Assets to cache immediately on install (only truly static assets)
+// Critical resources to cache immediately
 const STATIC_ASSETS = [
-  '/logo-icon.svg',
-  '/logo.svg',
-  '/logo-dark.svg',
+  '/',
+  '/dashboard',
+  '/login',
+  '/register',
   '/manifest.json',
-  '/offline.html'
+  '/_next/static/css/app/layout.css',
+  '/_next/static/chunks/webpack.js',
+  '/_next/static/chunks/main.js',
+  '/_next/static/chunks/pages/_app.js',
 ];
 
-// Patterns for resources to cache
-const CACHE_PATTERNS = {
-  // Cache-first strategy (only immutable static assets like images/fonts)
-  cacheFirst: [
-    /\.(?:woff2?|ttf|otf|eot)$/,
-    /\/fonts\//,
-    /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/
-  ],
-  // Network-first strategy (API calls, dynamic content, JS/CSS)
-  networkFirst: [
-    /\/api\//,
-    /\/_next\/data\//,
-    /\/_next\/static\//,  // JS/CSS chunks - network first to avoid stale code
-    /\.(?:css|js)$/,
-    /\.json$/
-  ],
-  // Stale-while-revalidate strategy (pages - but not RSC payloads)
-  staleWhileRevalidate: [],
-  // Never cache - critical for RSC and real-time data
-  neverCache: [
-    /\/api\/auth/,
-    /\/api\/admin/,
-    /\/api\/flutterwave/,
-    /\/api\/inlomax\/.*\/(airtime|data|cable|electricity|betting)/,
-    /socket\.io/,
-    /hot-update/,
-    /\.rsc$/,           // RSC payloads
-    /\?_rsc=/,          // RSC query params
-    /\/dashboard/,      // Dashboard pages - always fresh
-    /\/profile/,
-    /\/transactions/,
-    /\/rewards/
-  ]
-};
+// API endpoints to cache with different strategies
+const API_CACHE_PATTERNS = [
+  { pattern: '/api/user', strategy: 'networkFirst', ttl: 300000 }, // 5 minutes
+  { pattern: '/api/data-plans', strategy: 'cacheFirst', ttl: 3600000 }, // 1 hour
+  { pattern: '/api/inlomax/services', strategy: 'cacheFirst', ttl: 3600000 },
+  { pattern: '/api/loyalty', strategy: 'networkFirst', ttl: 600000 }, // 10 minutes
+];
 
-// Install event - cache static assets
+// Install event - Cache critical resources
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker');
-
+  console.log('[SW] Installing service worker...');
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
+    Promise.all([
+      // Cache static assets
+      caches.open(STATIC_CACHE).then((cache) => {
         console.log('[SW] Caching static assets');
-        // Add offline fallback page first
-        return cache.addAll(['/offline.html']).catch(err => {
-          console.log('[SW] Could not cache offline page:', err);
-        }).then(() => {
-          // Then try to cache other static assets
-          return Promise.all(
-            STATIC_ASSETS.filter(asset => asset !== '/offline.html').map(asset => {
-              return cache.add(asset).catch(err => {
-                console.log(`[SW] Could not cache ${asset}:`, err);
-              });
-            })
-          );
-        });
-      })
-      .then(() => self.skipWaiting())
+        return cache.addAll(STATIC_ASSETS);
+      }),
+      // Skip waiting to activate immediately
+      self.skipWaiting()
+    ])
   );
 });
 
-// Activate event - clean old caches and force refresh clients
+// Activate event - Clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker v' + SW_VERSION);
-
+  console.log('[SW] Activating service worker...');
+  
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          // Delete ALL old caches that don't match current version
-          if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-    .then(() => self.clients.claim())
-    .then(() => {
-      // Notify all clients to refresh if they have stale code
-      self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => {
-          client.postMessage({ type: 'SW_UPDATED', version: SW_VERSION });
-        });
-      });
-    })
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (
+              cacheName !== CACHE_NAME &&
+              cacheName !== STATIC_CACHE &&
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== API_CACHE
+            ) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients
+      self.clients.claim()
+    ])
   );
 });
 
-// Fetch event - serve from cache when possible
+// Fetch event - Implement caching strategies
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Skip non-GET requests
-  if (request.method !== 'GET') return;
-
-  // Skip chrome extensions
-  if (url.protocol === 'chrome-extension:') return;
-
-  // Skip if should never cache
-  if (CACHE_PATTERNS.neverCache.some(pattern => pattern.test(url.pathname))) {
+  if (request.method !== 'GET') {
     return;
   }
 
-  // Determine caching strategy
-  let strategy = 'networkFirst'; // default
-
-  if (CACHE_PATTERNS.cacheFirst.some(pattern => pattern.test(url.pathname))) {
-    strategy = 'cacheFirst';
-  } else if (CACHE_PATTERNS.staleWhileRevalidate.some(pattern => pattern.test(url.pathname))) {
-    strategy = 'staleWhileRevalidate';
+  // Skip chrome-extension and other non-http requests
+  if (!url.protocol.startsWith('http')) {
+    return;
   }
 
-  switch (strategy) {
-    case 'cacheFirst':
-      event.respondWith(cacheFirstStrategy(request));
-      break;
-    case 'staleWhileRevalidate':
-      event.respondWith(staleWhileRevalidateStrategy(request));
-      break;
-    default:
-      event.respondWith(networkFirstStrategy(request));
+  // Handle different types of requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(request));
+  } else if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(handleStaticAssets(request));
+  } else if (url.pathname.startsWith('/dashboard')) {
+    event.respondWith(handleDashboardPages(request));
+  } else {
+    event.respondWith(handleGeneralRequests(request));
   }
 });
 
-// Cache-first strategy - ideal for static assets
-async function cacheFirstStrategy(request) {
-  try {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      // Return from cache, but update in background
-      fetchAndCache(request, CACHE_NAME);
-      return cachedResponse;
-    }
-
-    // Not in cache, fetch from network
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    console.log('[SW] Cache-first strategy failed:', error);
-    // If both cache and network fail, return offline page
-    const cachedOffline = await caches.match('/offline.html');
-    return cachedOffline || new Response('Offline', { status: 503 });
+// API Request Handler - Network First with Cache Fallback
+async function handleApiRequest(request) {
+  const url = new URL(request.url);
+  const apiPattern = API_CACHE_PATTERNS.find(p => url.pathname.includes(p.pattern));
+  
+  if (!apiPattern) {
+    // Don't cache unknown API endpoints
+    return fetch(request);
   }
-}
 
-// Network-first strategy - ideal for dynamic content
-async function networkFirstStrategy(request) {
-  try {
-    const networkResponse = await fetchWithTimeout(request, 3000);
-    if (networkResponse.ok) {
-      // Cache successful responses
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
-
-      // Clean old entries from dynamic cache
-      cleanDynamicCache();
-    }
-    return networkResponse;
-  } catch (error) {
-    // Network failed, try cache
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-
-    // Return offline page for navigation requests
-    if (request.mode === 'navigate') {
-      const cachedOffline = await caches.match('/offline.html');
-      return cachedOffline || new Response('Offline', { status: 503 });
-    }
-
-    return new Response('Network error', { status: 503 });
-  }
-}
-
-// Stale-while-revalidate strategy - serve from cache, update in background
-async function staleWhileRevalidateStrategy(request) {
-  const cachedResponse = await caches.match(request);
-
-  const fetchPromise = fetch(request)
-    .then(async (networkResponse) => {
+  const cache = await caches.open(API_CACHE);
+  
+  if (apiPattern.strategy === 'networkFirst') {
+    try {
+      // Try network first
+      const networkResponse = await fetch(request);
+      
       if (networkResponse.ok) {
-        const cache = await caches.open(DYNAMIC_CACHE);
-        cache.put(request, networkResponse.clone());
+        // Cache successful responses
+        const responseClone = networkResponse.clone();
+        await cache.put(request, responseClone);
+        
+        // Set expiry metadata
+        const expiryTime = Date.now() + apiPattern.ttl;
+        await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
       }
+      
       return networkResponse;
-    })
-    .catch(() => null);
-
-  return cachedResponse || fetchPromise || new Response('Offline', { status: 503 });
+    } catch (error) {
+      console.log('[SW] Network failed, trying cache:', error);
+      
+      // Check if cached response is still valid
+      const cachedResponse = await cache.match(request);
+      const expiryResponse = await cache.match(`${request.url}:expiry`);
+      
+      if (cachedResponse && expiryResponse) {
+        const expiryTime = parseInt(await expiryResponse.text());
+        if (Date.now() < expiryTime) {
+          return cachedResponse;
+        }
+      }
+      
+      // Return offline fallback
+      return new Response(
+        JSON.stringify({ 
+          error: 'Offline', 
+          message: 'No network connection available' 
+        }),
+        { 
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+  } else if (apiPattern.strategy === 'cacheFirst') {
+    // Cache first strategy for static data
+    const cachedResponse = await cache.match(request);
+    const expiryResponse = await cache.match(`${request.url}:expiry`);
+    
+    if (cachedResponse && expiryResponse) {
+      const expiryTime = parseInt(await expiryResponse.text());
+      if (Date.now() < expiryTime) {
+        return cachedResponse;
+      }
+    }
+    
+    // Cache expired or not found, fetch from network
+    try {
+      const networkResponse = await fetch(request);
+      
+      if (networkResponse.ok) {
+        const responseClone = networkResponse.clone();
+        await cache.put(request, responseClone);
+        
+        const expiryTime = Date.now() + apiPattern.ttl;
+        await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
+      }
+      
+      return networkResponse;
+    } catch (error) {
+      return cachedResponse || new Response('Offline', { status: 503 });
+    }
+  }
 }
 
-// Fetch with timeout
-function fetchWithTimeout(request, timeout = 5000) {
-  return Promise.race([
-    fetch(request),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Request timeout')), timeout)
-    )
-  ]);
-}
-
-// Background fetch and cache
-async function fetchAndCache(request, cacheName) {
+// Static Assets Handler - Cache First
+async function handleStaticAssets(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cachedResponse = await cache.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
   try {
     const networkResponse = await fetch(request);
+    
     if (networkResponse.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
+      await cache.put(request, networkResponse.clone());
     }
+    
+    return networkResponse;
   } catch (error) {
-    // Silent fail - this is background update
+    console.log('[SW] Failed to fetch static asset:', error);
+    return new Response('Asset not available offline', { status: 503 });
   }
 }
 
-// Clean old entries from dynamic cache
-async function cleanDynamicCache() {
+// Dashboard Pages Handler - Network First with Cache Fallback
+async function handleDashboardPages(request) {
   const cache = await caches.open(DYNAMIC_CACHE);
-  const requests = await cache.keys();
-  const now = Date.now();
-
-  // Keep only last 50 dynamic entries or entries less than 7 days old
-  if (requests.length > 50) {
-    const toDelete = requests.slice(0, requests.length - 50);
-    await Promise.all(toDelete.map(request => cache.delete(request)));
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('[SW] Network failed for dashboard page, trying cache');
+    
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // Return offline page
+    return caches.match('/offline.html') || new Response(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <title>TADA VTU - Offline</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: system-ui; text-align: center; padding: 2rem; }
+            .offline { color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>You're offline</h1>
+          <p class="offline">Please check your internet connection and try again.</p>
+          <button onclick="window.location.reload()">Retry</button>
+        </body>
+      </html>`,
+      { headers: { 'Content-Type': 'text/html' } }
+    );
   }
 }
 
-// Listen for messages from the client
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+// General Requests Handler
+async function handleGeneralRequests(request) {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      await cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    const cachedResponse = await cache.match(request);
+    return cachedResponse || new Response('Page not available offline', { status: 503 });
   }
+}
 
-  if (event.data && event.data.type === 'CACHE_ASSETS') {
-    caches.open(CACHE_NAME).then(cache => {
-      cache.addAll(event.data.assets);
-    });
-  }
-
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    caches.keys().then(names => {
-      names.forEach(name => caches.delete(name));
-    });
+// Background Sync for failed transactions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync-transactions') {
+    event.waitUntil(syncFailedTransactions());
   }
 });
 
-// ==========================================
-// PUSH NOTIFICATIONS
-// ==========================================
-
-// Handle push notification received
-self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received');
-
-  let data = {
-    title: 'TADA VTU',
-    body: 'You have a new notification!',
-    icon: '/logo-icon.svg',
-    badge: '/logo-icon.svg',
-    tag: 'default',
-    data: { url: '/dashboard' },
-  };
-
+async function syncFailedTransactions() {
   try {
-    if (event.data) {
-      const payload = event.data.json();
-      data = { ...data, ...payload };
+    // Get failed transactions from IndexedDB
+    const failedTransactions = await getFailedTransactions();
+    
+    for (const transaction of failedTransactions) {
+      try {
+        const response = await fetch('/api/transactions/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(transaction)
+        });
+        
+        if (response.ok) {
+          await removeFailedTransaction(transaction.id);
+        }
+      } catch (error) {
+        console.log('[SW] Failed to sync transaction:', error);
+      }
     }
-  } catch (e) {
-    console.log('[SW] Error parsing push data:', e);
+  } catch (error) {
+    console.log('[SW] Background sync failed:', error);
   }
+}
 
+// Push notification handler
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  
+  const data = event.data.json();
   const options = {
     body: data.body,
-    icon: data.icon || '/logo-icon.svg',
-    badge: data.badge || '/logo-icon.svg',
+    icon: '/icon-192x192.png',
+    badge: '/badge-72x72.png',
     tag: data.tag || 'tada-notification',
-    data: data.data || { url: '/dashboard' },
-    vibrate: [100, 50, 100],
-    requireInteraction: data.tag === 'gift',
+    data: data.data,
     actions: data.actions || [],
-    // Renotify if same tag
-    renotify: true,
+    requireInteraction: data.requireInteraction || false,
   };
-
+  
   event.waitUntil(
     self.registration.showNotification(data.title, options)
   );
 });
 
-// Handle notification click
+// Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked:', event.action);
-
   event.notification.close();
-
-  // Get the URL to open
-  let urlToOpen = '/dashboard';
   
-  if (event.notification.data && event.notification.data.url) {
-    urlToOpen = event.notification.data.url;
-  }
-
-  // Handle action buttons
-  if (event.action === 'open') {
-    // Open gift action
-    urlToOpen = '/dashboard/send-gift?tab=received';
-  } else if (event.action === 'later') {
-    // Just close the notification
-    return;
-  }
-
-  // Focus existing window or open new one
+  const urlToOpen = event.notification.data?.url || '/dashboard';
+  
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // Check if there's already a window open
-        for (const client of windowClients) {
-          if (client.url.includes('tadavtu.com') && 'focus' in client) {
-            client.navigate(urlToOpen);
+      .then((clientList) => {
+        // Check if app is already open
+        for (const client of clientList) {
+          if (client.url.includes(urlToOpen) && 'focus' in client) {
             return client.focus();
           }
         }
-        // Open new window if none exists
+        
+        // Open new window
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
@@ -352,15 +342,15 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Handle notification close
-self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification closed');
-  // Could track analytics here
-});
+// Helper functions for IndexedDB operations
+async function getFailedTransactions() {
+  // Implementation would use IndexedDB to store failed transactions
+  return [];
+}
 
-// Periodic cache cleanup (every 24 hours when SW is active)
-setInterval(() => {
-  cleanDynamicCache();
-}, 24 * 60 * 60 * 1000);
+async function removeFailedTransaction(id) {
+  // Implementation would remove transaction from IndexedDB
+  console.log('[SW] Removing failed transaction:', id);
+}
 
-console.log('[SW] Service Worker loaded');
+console.log('[SW] Service Worker loaded successfully');

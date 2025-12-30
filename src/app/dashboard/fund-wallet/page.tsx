@@ -22,7 +22,12 @@ import {
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
-import { CheckDepositsButton } from "@/components/CheckDepositsButton";
+import dynamic from "next/dynamic";
+
+const CheckDepositsButton = dynamic(
+  () => import("@/components/CheckDepositsButton").then(mod => mod.CheckDepositsButton),
+  { ssr: false }
+);
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
@@ -278,8 +283,8 @@ export default function FundWalletPage() {
           <button
             onClick={() => setPaymentMethod("bank")}
             className={`p-4 rounded-xl border-2 transition-all ${paymentMethod === "bank"
-                ? "border-green-500 bg-green-500/10"
-                : "border-border hover:border-green-500/50"
+              ? "border-green-500 bg-green-500/10"
+              : "border-border hover:border-green-500/50"
               }`}
           >
             <div className="flex flex-col items-center gap-2">
@@ -299,8 +304,8 @@ export default function FundWalletPage() {
           <button
             onClick={() => setPaymentMethod("card")}
             className={`p-4 rounded-xl border-2 transition-all ${paymentMethod === "card"
-                ? "border-green-500 bg-green-500/10"
-                : "border-border hover:border-green-500/50"
+              ? "border-green-500 bg-green-500/10"
+              : "border-border hover:border-green-500/50"
               }`}
           >
             <div className="flex flex-col items-center gap-2">
@@ -617,8 +622,8 @@ export default function FundWalletPage() {
                             key={amt}
                             onClick={() => setTempAmount(amt.toString())}
                             className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${tempAmount === amt.toString()
-                                ? "border-green-500 bg-green-500/10 text-green-500"
-                                : "border-border hover:border-green-500/50"
+                              ? "border-green-500 bg-green-500/10 text-green-500"
+                              : "border-border hover:border-green-500/50"
                               }`}
                           >
                             ₦{amt.toLocaleString()}
@@ -770,8 +775,8 @@ export default function FundWalletPage() {
                       key={value}
                       onClick={() => handleQuickAmount(value)}
                       className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${amount === value.toString()
-                          ? "border-green-500 bg-green-500/10 text-green-500"
-                          : "border-border hover:border-green-500/50 text-foreground"
+                        ? "border-green-500 bg-green-500/10 text-green-500"
+                        : "border-border hover:border-green-500/50 text-foreground"
                         }`}
                     >
                       ₦{value.toLocaleString()}

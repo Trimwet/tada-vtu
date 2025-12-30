@@ -305,33 +305,17 @@
     }
 
     /* Stagger animation delays */
-    .stagger-1 {
-        animation-delay: 0.1s;
-    }
-    .stagger-2 {
-        animation-delay: 0.2s;
-    }
-    .stagger-3 {
-        animation-delay: 0.3s;
-    }
-    .stagger-4 {
-        animation-delay: 0.4s;
-    }
-    .stagger-5 {
-        animation-delay: 0.5s;
-    }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
 
     /* Shake animation for errors */
     @keyframes shake {
-        0%, 100% {
-            transform: translateX(0);
-        }
-        10%, 30%, 50%, 70%, 90% {
-            transform: translateX(-5px);
-        }
-        20%, 40%, 60%, 80% {
-            transform: translateX(5px);
-        }
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
     }
     .animate-shake {
         animation: shake 0.5s ease-in-out;
@@ -339,135 +323,44 @@
 
     /* Pulse once animation for live ticker */
     @keyframes pulse-once {
-        0% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-        }
-        50% {
-            box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-        }
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
     .animate-pulse-once {
         animation: pulse-once 1s ease-out;
     }
 
-    /* Floating gradient orb animations */
+    /* Floating animations */
     @keyframes float {
-        0%, 100% {
-            transform: translateY(0) translateX(0);
-        }
-        25% {
-            transform: translateY(-20px) translateX(10px);
-        }
-        50% {
-            transform: translateY(-10px) translateX(-10px);
-        }
-        75% {
-            transform: translateY(-25px) translateX(5px);
-        }
+        0%, 100% { transform: translateY(0) translateX(0); }
+        25% { transform: translateY(-20px) translateX(10px); }
+        50% { transform: translateY(-10px) translateX(-10px); }
+        75% { transform: translateY(-25px) translateX(5px); }
     }
+    .animate-float { animation: float 8s ease-in-out infinite; }
     
-    @keyframes float-delayed {
-        0%, 100% {
-            transform: translateY(0) translateX(0);
-        }
-        25% {
-            transform: translateY(15px) translateX(-15px);
-        }
-        50% {
-            transform: translateY(-15px) translateX(10px);
-        }
-        75% {
-            transform: translateY(10px) translateX(-5px);
-        }
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
-    
-    @keyframes float-slow {
-        0%, 100% {
-            transform: translateY(0) translateX(0) scale(1);
-        }
-        33% {
-            transform: translateY(-30px) translateX(20px) scale(1.05);
-        }
-        66% {
-            transform: translateY(15px) translateX(-15px) scale(0.95);
-        }
-    }
-    
-    .animate-float {
-        animation: float 8s ease-in-out infinite;
-    }
-    
-    .animate-float-delayed {
-        animation: float-delayed 10s ease-in-out infinite;
-        animation-delay: 2s;
-    }
-    
-    .animate-float-slow {
-        animation: float-slow 12s ease-in-out infinite;
-        animation-delay: 4s;
-    }
+    .animate-spin-slow { animation: spin-slow 8s linear infinite; }
 }
 
 /* Mobile-first improvements */
 @layer utilities {
-    /* Safe area for notched phones */
-    .safe-top {
-        padding-top: env(safe-area-inset-top, 0px);
-    }
-    
-    .safe-bottom {
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-    }
-    
-    .safe-left {
-        padding-left: env(safe-area-inset-left, 0px);
-    }
-    
-    .safe-right {
-        padding-right: env(safe-area-inset-right, 0px);
-    }
-    
-    /* Better touch targets */
-    .touch-target {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    /* Prevent text selection on buttons */
+    .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
     .no-select {
         -webkit-user-select: none;
         user-select: none;
         -webkit-tap-highlight-color: transparent;
     }
-    
-    /* Smooth momentum scrolling on iOS */
-    .scroll-smooth-ios {
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Hide content when keyboard is open */
-    @media (max-height: 500px) {
-        .hide-on-keyboard {
-            display: none !important;
-        }
-    }
-    
-    /* Bottom padding for mobile nav */
-    .pb-mobile-nav {
-        padding-bottom: 80px;
-    }
-    
-    @media (min-width: 1024px) {
-        .pb-mobile-nav {
-            padding-bottom: 0;
-        }
-    }
+    .pb-mobile-nav { padding-bottom: 80px; }
+    @media (min-width: 1024px) { .pb-mobile-nav { padding-bottom: 0; } }
 }
 
-/* Sonner toast overrides */
+/* Sonner toast overrides & animations */
 [data-sonner-toaster] {
     --normal-bg: hsl(240 10% 6%);
     --normal-border: hsl(240 6% 12%);
@@ -478,6 +371,17 @@
     background: hsl(240 10% 6%) !important;
     border: 1px solid hsl(240 6% 15%) !important;
     color: hsl(0 0% 98%) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(8px);
+}
+
+@keyframes toast-slide-in {
+  from { transform: translateY(-100%) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+[data-sonner-toast] {
+  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
 }
 
 [data-sonner-toast][data-type="success"] {
@@ -486,451 +390,4 @@
 
 [data-sonner-toast][data-type="error"] {
     border-color: rgba(239, 68, 68, 0.3) !important;
-}
-
-[data-sonner-toast][data-type="info"] {
-    border-color: rgba(59, 130, 246, 0.3) !important;
-}
-
-/* Toast Animations */
-@keyframes toast-slide-in {
-  from {
-    transform: translateY(-100%) scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes toast-slide-out {
-  from {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(-100%) scale(0.9);
-    opacity: 0;
-  }
-}
-
-@keyframes toast-shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
-}
-
-@keyframes toast-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes toast-pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  50% { box-shadow: 0 0 20px 5px rgba(34, 197, 94, 0.2); }
-}
-
-/* Sonner toast overrides */
-[data-sonner-toaster] {
-  --normal-bg: #1f2937;
-  --normal-border: #374151;
-  --normal-text: #ffffff;
-}
-
-[data-sonner-toast] {
-  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
-  border-radius: 12px !important;
-  backdrop-filter: blur(8px);
-}
-
-[data-sonner-toast][data-removed="true"] {
-  animation: toast-slide-out 0.3s ease-in forwards;
-}
-
-[data-sonner-toast][data-type="success"] {
-  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards,
-             toast-pulse-glow 2s ease-in-out infinite;
-}
-
-[data-sonner-toast][data-type="error"] {
-  animation: toast-slide-in 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards,
-             toast-shake 0.5s ease-in-out;
-}
-
-[data-sonner-toast] [data-icon] {
-  animation: toast-bounce 0.5s ease-in-out;
-}
-
-/* Toast close button */
-[data-sonner-toast] [data-close-button] {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: none !important;
-  border-radius: 50% !important;
-  transition: all 0.2s ease;
-}
-
-[data-sonner-toast] [data-close-button]:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.1);
-}
-
-
-/* Gift Card Confetti Animation */
-@keyframes confetti {
-  0% {
-    transform: translateY(-100vh) rotate(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
-}
-
-.animate-confetti {
-  animation: confetti 3s ease-out forwards;
-}
-
-/* Hearts animation for love gifts */
-@keyframes hearts-float {
-  0% {
-    transform: translateY(100vh) scale(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) scale(1);
-    opacity: 0;
-  }
-}
-
-.animate-hearts {
-  animation: hearts-float 4s ease-out forwards;
-}
-
-/* Balloons animation */
-@keyframes balloons {
-  0% {
-    transform: translateY(100vh) scale(0.5);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(50vh) scale(1);
-  }
-  100% {
-    transform: translateY(-100vh) scale(1.2);
-    opacity: 0;
-  }
-}
-
-.animate-balloons {
-  animation: balloons 5s ease-out forwards;
-}
-
-/* Sparkle animation */
-@keyframes sparkle {
-  0%, 100% {
-    transform: scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1) rotate(180deg);
-    opacity: 1;
-  }
-}
-
-.animate-sparkle {
-  animation: sparkle 1.5s ease-in-out infinite;
-}
-
-/* Gift box shake animation */
-@keyframes gift-shake {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-5deg);
-  }
-  75% {
-    transform: rotate(5deg);
-  }
-}
-
-.animate-gift-shake {
-  animation: gift-shake 0.5s ease-in-out infinite;
-}
-
-/* Celebration burst */
-@keyframes burst {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-.animate-burst {
-  animation: burst 0.6s ease-out forwards;
-}
-
-
-/* ========================================
-   PREMIUM GIFT CARD ANIMATIONS
-   Telegram-style smooth animations
-   ======================================== */
-
-/* Floating gift animation */
-@keyframes gift-float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(-10px) rotate(-2deg);
-  }
-  50% {
-    transform: translateY(-5px) rotate(0deg);
-  }
-  75% {
-    transform: translateY(-12px) rotate(2deg);
-  }
-}
-
-.animate-gift-float {
-  animation: gift-float 4s ease-in-out infinite;
-}
-
-/* Gift wiggle - anticipation animation */
-@keyframes gift-wiggle {
-  0%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-  10% {
-    transform: rotate(-3deg) scale(1.02);
-  }
-  20% {
-    transform: rotate(3deg) scale(1.02);
-  }
-  30% {
-    transform: rotate(-2deg) scale(1.01);
-  }
-  40% {
-    transform: rotate(2deg) scale(1.01);
-  }
-  50%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-}
-
-.animate-gift-wiggle {
-  animation: gift-wiggle 2s ease-in-out infinite;
-}
-
-/* Floating particles */
-@keyframes float-particle {
-  0%, 100% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0.3;
-  }
-  25% {
-    transform: translateY(-30px) translateX(15px) scale(1.2);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(-15px) translateX(-10px) scale(0.8);
-    opacity: 0.4;
-  }
-  75% {
-    transform: translateY(-40px) translateX(5px) scale(1.1);
-    opacity: 0.3;
-  }
-}
-
-.animate-float-particle {
-  animation: float-particle 15s ease-in-out infinite;
-}
-
-/* Confetti burst explosion */
-@keyframes confetti-burst {
-  0% {
-    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(var(--ty, -500px)) translateX(var(--tx, 0)) rotate(var(--r, 720deg)) scale(0);
-    opacity: 0;
-  }
-}
-
-.animate-confetti-burst {
-  animation: confetti-burst 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-/* Sparkle star animation */
-@keyframes sparkle-star {
-  0%, 100% {
-    transform: scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1) rotate(180deg);
-    opacity: 1;
-  }
-}
-
-.animate-sparkle-star {
-  animation: sparkle-star 2s ease-in-out infinite;
-}
-
-/* Expanding rings */
-@keyframes ring-expand {
-  0% {
-    width: 60px;
-    height: 60px;
-    opacity: 0.8;
-  }
-  100% {
-    width: 200px;
-    height: 200px;
-    opacity: 0;
-  }
-}
-
-.animate-ring-expand {
-  animation: ring-expand 2s ease-out infinite;
-}
-
-/* Pulse scale animation */
-@keyframes pulse-scale {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse-scale {
-  animation: pulse-scale 1.5s ease-in-out infinite;
-}
-
-.animate-pulse-scale-delayed {
-  animation: pulse-scale 1.5s ease-in-out infinite;
-  animation-delay: 0.3s;
-}
-
-/* Slow spin for orbiting elements */
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
-}
-
-/* Success pop animation */
-@keyframes success-pop {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-success-pop {
-  animation: success-pop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-
-/* Number pop animation for amount reveal */
-@keyframes number-pop {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-number-pop {
-  animation: number-pop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-  animation-delay: 0.2s;
-}
-
-/* Enhanced scale-in with bounce */
-@keyframes scale-in-bounce {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-scale-in {
-  animation: scale-in-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-/* Slide up with fade */
-@keyframes slide-up-fade {
-  0% {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-up {
-  animation: slide-up-fade 0.5s ease-out forwards;
-}
-
-/* Gift shake during opening */
-@keyframes gift-shake-intense {
-  0%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: rotate(-8deg) scale(1.05);
-  }
-  20%, 40%, 60%, 80% {
-    transform: rotate(8deg) scale(1.05);
-  }
-}
-
-.animate-gift-shake {
-  animation: gift-shake-intense 0.8s ease-in-out infinite;
 }

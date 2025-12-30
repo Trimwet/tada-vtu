@@ -26,34 +26,22 @@ const STATUS_FILTERS: { value: GiftRoomStatus | 'all'; label: string; icon: stri
 ];
 
 export default function GiftRoomsPage() {
-  const { user } = useSupabaseUser();
-  const { loading, getUserGiftRooms, shareGiftRoom, subscribeToRoom } = useGiftRoom();
+  const { user, loading: authLoading } = useSupabaseUser();
+  const { loading: roomsLoading, giftRooms, getUserGiftRooms, shareGiftRoom, subscribeToRoom } = useGiftRoom();
 
-  const [giftRooms, setGiftRooms] = useState<GiftRoom[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<GiftRoom[]>([]);
   const [statusFilter, setStatusFilter] = useState<GiftRoomStatus | 'all'>('all');
-  const [selectedRoom, setSelectedRoom] = useState<GiftRoom | null>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
-  // Load gift rooms
-  useEffect(() => {
-    if (!user) return;
-
-    const loadGiftRooms = async () => {
-      const rooms = await getUserGiftRooms();
-      if (rooms) {
-        setGiftRooms(rooms);
-      }
-    };
-
-    loadGiftRooms();
-  }, [user, getUserGiftRooms]);
+  const selectedRoom = useMemo(() =>
+    selectedRoomId ? giftRooms.find(r => r.id === selectedRoomId) || null : null
+    , [giftRooms, selectedRoomId]);
 
   // Filter rooms based on status
-  useEffect(() => {
+  const filteredRooms = useMemo(() => {
     if (statusFilter === 'all') {
-      setFilteredRooms(giftRooms);
+      return giftRooms;
     } else {
-      setFilteredRooms(giftRooms.filter(room => room.status === statusFilter));
+      return giftRooms.filter(room => room.status === statusFilter);
     }
   }, [giftRooms, statusFilter]);
 
@@ -63,14 +51,7 @@ export default function GiftRoomsPage() {
 
     const unsubscribe = subscribeToRoom(selectedRoom.id, () => {
       // Refresh all rooms to keep list and stats in sync
-      getUserGiftRooms().then(rooms => {
-        if (rooms) {
-          setGiftRooms(rooms);
-          // Also update the selected room object to reflect changes (e.g. claimed_count)
-          const updated = rooms.find(r => r.id === selectedRoom.id);
-          if (updated) setSelectedRoom(updated);
-        }
-      });
+      getUserGiftRooms();
     });
 
     return () => {
@@ -96,7 +77,9 @@ export default function GiftRoomsPage() {
     totalClaimed: giftRooms.reduce((sum, room) => sum + (room.claimed_count * room.amount), 0),
   }), [giftRooms]);
 
-  if (loading && giftRooms.length === 0) {
+  const isLoading = authLoading || (roomsLoading && giftRooms.length === 0);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
@@ -138,7 +121,7 @@ export default function GiftRoomsPage() {
       </header>
 
       <main className="container mx-auto px-4 lg:px-8 py-6 max-w-6xl space-y-6">
-        {giftRooms.length === 0 ? (
+        {!isLoading && giftRooms.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <IonIcon name="gift" size="40px" color="#22c55e" />
@@ -268,13 +251,14 @@ export default function GiftRoomsPage() {
                 ) : (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRooms.map((room) => (
-                      <GiftRoomCard
-                        key={room.id}
-                        room={room}
-                        onShare={handleShare}
-                        onView={handleViewRoom}
-                        className={selectedRoom?.id === room.id ? 'ring-2 ring-green-500' : ''}
-                      />
+                      <div key={room.id} onClick={() => setSelectedRoomId(room.id)} className="cursor-pointer">
+                        <GiftRoomCard
+                          room={room}
+                          onShare={handleShare}
+                          onView={handleViewRoom}
+                          className={selectedRoomId === room.id ? 'ring-2 ring-green-500' : ''}
+                        />
+                      </div>
                     ))}
                   </div>
                 )}

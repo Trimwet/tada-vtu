@@ -1,48 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { getSupabase } from "@/lib/supabase/client";
-import type { Transaction, Profile } from "@/types/database";
+import type { Profile, Transaction } from "@/types/database";
+import useSWR, { useSWRConfig } from "swr";
+import { supabaseFetcher } from "@/lib/swr-fetcher";
 import { useAuth } from "./useAuth";
 
 export function useSupabaseUser() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const { mutate } = useSWRConfig();
   const supabase = getSupabase();
 
-  const fetchTransactions = useCallback(
-    async (limit?: number) => {
-      if (!user?.id) return [];
-
-      setLoading(true);
-      try {
-        let query = supabase
-          .from("transactions")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (limit) {
-          query = query.limit(limit);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        setTransactions((data || []) as Transaction[]);
-        return (data || []) as Transaction[];
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user?.id, supabase]
-  );
+  // Helper to refresh transactions across the app
+  const refreshTransactions = useCallback((limit = 10) => {
+    if (!user?.id) return;
+    mutate(["transactions", {
+      select: "id, type, amount, status, reference, description, created_at, phone_number, network",
+      eq: { user_id: user.id },
+      order: { column: "created_at", ascending: false },
+      limit
+    }]);
+  }, [user?.id, mutate]);
 
   const creditWallet = useCallback(
     async (amount: number, reference: string, description: string) => {
@@ -60,11 +39,11 @@ export function useSupabaseUser() {
       if (error) throw error;
 
       await refreshProfile();
-      await fetchTransactions();
+      refreshTransactions();
 
       return { success: true };
     },
-    [user, supabase, refreshProfile, fetchTransactions]
+    [user, supabase, refreshProfile, refreshTransactions]
   );
 
   const debitWallet = useCallback(
@@ -110,67 +89,73 @@ export function useSupabaseUser() {
       if (txnError) throw txnError;
 
       await refreshProfile();
-      await fetchTransactions();
+      refreshTransactions();
 
       return data;
     },
-    [user, supabase, refreshProfile, fetchTransactions]
+    [user, supabase, refreshProfile, refreshTransactions]
   );
 
-  // Fetch transactions when user is available
-  useEffect(() => {
-    if (user?.id) {
-      fetchTransactions();
-    }
-  }, [user?.id, fetchTransactions]);
-
   // Create fallback profile
-  const fallbackProfile: Profile | null = user
+  const fallbackProfile: Profile | null = useMemo(() => user
     ? {
-        id: user.id,
-        email: user.email || null,
-        full_name: user.user_metadata?.full_name || null,
-        phone_number: null,
-        balance: 0,
-        referral_code: null,
-        referred_by: null,
-        pin: null,
-        kyc_level: 0,
-        is_active: true,
-        created_at: user.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        // Loyalty fields
-        loyalty_points: 0,
-        loyalty_tier: "bronze",
-        total_points_earned: 0,
-        login_streak: 0,
-        longest_streak: 0,
-        last_login_date: null,
-        spin_available: true,
-        last_spin_date: null,
-        birthday: null,
-        total_spent: 0,
-      }
-    : null;
+      id: user.id,
+      email: user.email || null,
+      full_name: user.user_metadata?.full_name || null,
+      phone_number: null,
+      balance: 0,
+      referral_code: null,
+      referred_by: null,
+      pin: null,
+      kyc_level: 0,
+      is_active: true,
+      created_at: user.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      loyalty_points: 0,
+      loyalty_tier: "bronze",
+      total_points_earned: 0,
+      login_streak: 0,
+      longest_streak: 0,
+      last_login_date: null,
+      spin_available: true,
+      last_spin_date: null,
+      birthday: null,
+      total_spent: 0,
+    }
+    : null, [user]);
+
+  const memoizedUser = useMemo(() => profile || fallbackProfile, [profile, fallbackProfile]);
 
   return {
-    user: profile || fallbackProfile,
+    user: memoizedUser,
     loading: authLoading,
-    transactionsLoading: loading,
-    transactions,
     creditWallet,
     debitWallet,
     refreshUser: refreshProfile,
-    fetchTransactions,
   };
 }
 
-export function useSupabaseTransactions(limit?: number) {
-  const { transactions, loading, fetchTransactions } = useSupabaseUser();
+export function useSupabaseTransactions(limit = 10) {
+  const { user } = useSupabaseUser();
+
+  const swrKey = user?.id
+    ? ["transactions", {
+      select: "id, type, amount, status, reference, description, created_at, phone_number, network",
+      eq: { user_id: user.id },
+      order: { column: "created_at", ascending: false },
+      limit
+    }]
+    : null;
+
+  const { data, error, isLoading, mutate } = useSWR<Transaction[]>(swrKey, supabaseFetcher, {
+    revalidateOnFocus: true,
+    dedupingInterval: 5000,
+  });
 
   return {
-    transactions: limit ? transactions.slice(0, limit) : transactions,
-    loading,
-    refresh: fetchTransactions,
+    transactions: data || [],
+    loading: isLoading,
+    error,
+    refreshTransactions: mutate,
   };
 }

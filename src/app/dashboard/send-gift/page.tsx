@@ -228,7 +228,7 @@ export default function SendGiftPage() {
           <Link href="/dashboard" className="p-2 -ml-2 hover:bg-muted rounded-lg lg:hidden">
             <IonIcon name="arrow-back-outline" size="20px" />
           </Link>
-          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">Send Gift</h1>
+          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">Create Gift Room</h1>
         </div>
       </header>
 
@@ -255,9 +255,9 @@ export default function SendGiftPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <IonIcon name="gift" size="20px" color="#22c55e" />
-              Gift Type
+              Gift Room Type
             </CardTitle>
-            <CardDescription>Choose who can receive your gift</CardDescription>
+            <CardDescription>Choose how many people can claim your gift</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <button
@@ -275,8 +275,8 @@ export default function SendGiftPage() {
                   <IonIcon name="person" size="20px" color={giftType === 'personal' ? '#22c55e' : '#888'} />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Personal Gift</p>
-                  <p className="text-sm text-muted-foreground">Send to one specific person</p>
+                  <p className="font-semibold text-foreground">Personal Gift Room</p>
+                  <p className="text-sm text-muted-foreground">One person can claim this gift</p>
                 </div>
               </div>
             </button>
@@ -296,8 +296,8 @@ export default function SendGiftPage() {
                   <IonIcon name="people" size="20px" color={giftType === 'group' ? '#22c55e' : '#888'} />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Group Gift</p>
-                  <p className="text-sm text-muted-foreground">Send to 2-50 people you know</p>
+                  <p className="font-semibold text-foreground">Group Gift Room</p>
+                  <p className="text-sm text-muted-foreground">2-50 people can claim gifts</p>
                 </div>
               </div>
             </button>
@@ -318,7 +318,7 @@ export default function SendGiftPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground">Public Giveaway</p>
-                  <p className="text-sm text-muted-foreground">Open to anyone with the link (up to 1000)</p>
+                  <p className="text-sm text-muted-foreground">Up to 1000 people can claim (viral sharing)</p>
                 </div>
               </div>
             </button>

@@ -319,6 +319,117 @@ class GiftRoomService {
       return { hasReservation: false };
     }
   }
+
+  /**
+   * Get refund information for a gift room (only for creators)
+   */
+  async getRefundInfo(roomId: string): Promise<{
+    success: boolean;
+    data?: {
+      room_id: string;
+      status: string;
+      total_capacity: number;
+      claimed_count: number;
+      unclaimed_count: number;
+      amount_per_gift: number;
+      potential_refund_amount: number;
+      can_refund: boolean;
+      created_at: string;
+      expires_at: string;
+      is_expired: boolean;
+    };
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/refund?room_id=${roomId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting refund info:', error);
+      return {
+        success: false,
+        error: 'Failed to get refund information'
+      };
+    }
+  }
+
+  /**
+   * Request refund for a gift room (only for creators)
+   */
+  async requestRefund(roomId: string): Promise<{
+    success: boolean;
+    data?: {
+      refund_amount: number;
+      unclaimed_count: number;
+      message: string;
+    };
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ room_id: roomId }),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error requesting refund:', error);
+      return {
+        success: false,
+        error: 'Failed to process refund request'
+      };
+    }
+  }
+
+  /**
+   * Validate if current user is the creator of a gift room
+   */
+  async validateCreatorOwnership(roomId: string): Promise<{
+    success: boolean;
+    isCreator: boolean;
+    error?: string;
+  }> {
+    try {
+      const refundInfo = await this.getRefundInfo(roomId);
+      
+      if (!refundInfo.success) {
+        // If we get a 403 error, user is not the creator
+        if (refundInfo.error?.includes('Unauthorized')) {
+          return {
+            success: true,
+            isCreator: false
+          };
+        }
+        return {
+          success: false,
+          isCreator: false,
+          error: refundInfo.error
+        };
+      }
+
+      return {
+        success: true,
+        isCreator: true
+      };
+    } catch (error) {
+      console.error('Error validating creator ownership:', error);
+      return {
+        success: false,
+        isCreator: false,
+        error: 'Failed to validate ownership'
+      };
+    }
+  }
 }
 
 // Export singleton instance

@@ -44,7 +44,7 @@ export interface Transaction {
   provider?: string;
   recipient?: string;
   apiReference?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
 }
 

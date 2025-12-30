@@ -17,8 +17,16 @@ import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
-import { CreatePinModal } from "@/components/create-pin-modal";
-import { VerifyPinModal } from "@/components/verify-pin-modal";
+import dynamic from "next/dynamic";
+
+const CreatePinModal = dynamic(
+  () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
+  { ssr: false }
+);
+const VerifyPinModal = dynamic(
+  () => import("@/components/verify-pin-modal").then(mod => mod.VerifyPinModal),
+  { ssr: false }
+);
 
 
 interface DataPlan {

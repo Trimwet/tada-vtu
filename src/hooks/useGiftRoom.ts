@@ -8,6 +8,8 @@ import {
   GiftRoomDetailsResponse
 } from '@/types/gift-room';
 import { toast } from '@/lib/toast';
+import useSWR from 'swr';
+import { apiFetcher } from '@/lib/swr-fetcher';
 
 export function useGiftRoom() {
   const [loading, setLoading] = useState(false);
@@ -153,28 +155,14 @@ export function useGiftRoom() {
     }
   }, []);
 
-  const getUserGiftRooms = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await giftRoomService.getUserGiftRooms();
-
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        toast.error("Failed to load gift rooms", response.error);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error getting user gift rooms:", error);
-      toast.error("Something went wrong", "Please try again");
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: userRooms = [], isLoading: userRoomsLoading, mutate: mutateUserRooms } = useSWR<GiftRoom[]>('/api/gift-rooms/my-rooms', apiFetcher, {
+    revalidateOnFocus: true,
+    dedupingInterval: 10000,
+  });
 
   return {
-    loading,
+    loading: loading || userRoomsLoading,
+    giftRooms: userRooms,
     creating,
     joining,
     claiming,
@@ -184,7 +172,7 @@ export function useGiftRoom() {
     claimGift,
     shareGiftRoom,
     getGiftRoomHistory,
-    getUserGiftRooms,
+    getUserGiftRooms: () => mutateUserRooms(),
     subscribeToRoom: useCallback((roomId: string, onUpdate: () => void) => {
       const supabase = createClient();
       console.log(`Subscribing to room ${roomId}`);

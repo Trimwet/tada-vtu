@@ -23,7 +23,7 @@ export async function GET(
     const { data: roomData, error: roomError } = await supabase
       .from('gift_rooms')
       .select(`
-        *,
+        id, sender_id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at,
         sender:profiles!sender_id (
           full_name,
           referral_code
@@ -55,7 +55,7 @@ export async function GET(
     if (deviceHash) {
       const { data: reservation } = await supabase
         .from('reservations')
-        .select('*')
+        .select('id, room_id, device_fingerprint, status, created_at, expires_at, claimed_at')
         .eq('room_id', (roomData as any).id)
         .eq('device_fingerprint', deviceHash)
         .single();
@@ -68,11 +68,11 @@ export async function GET(
     const isRoomSender = user && user.id === (roomData as any).sender_id;
 
     // Determine if user can join
-    const canJoin = !isExpired && 
-                   (roomData as any).status === 'active' && 
-                   (roomData as any).joined_count < (roomData as any).capacity &&
-                   !userReservation &&
-                   !isRoomSender; // Prevent sender from joining their own room
+    const canJoin = !isExpired &&
+      (roomData as any).status === 'active' &&
+      (roomData as any).joined_count < (roomData as any).capacity &&
+      !userReservation &&
+      !isRoomSender; // Prevent sender from joining their own room
 
     // Calculate spots remaining
     const spotsRemaining = Math.max(0, (roomData as any).capacity - (roomData as any).joined_count);

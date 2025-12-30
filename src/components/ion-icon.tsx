@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 import {
   Phone,
   PhoneCall,
@@ -690,7 +692,7 @@ interface IonIconProps {
   weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
 }
 
-export function IonIcon({
+export const IonIcon = memo(function IonIcon({
   name,
   size = "20px",
   color,
@@ -716,4 +718,4 @@ export function IonIcon({
       <IconComponent size={sizeNum} weight={weight} />
     </span>
   );
-}
+});

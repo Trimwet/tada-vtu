@@ -10,8 +10,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
+import { getSupabase } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
+
+const GiftRoomSystemStatus = dynamic(
+  () => import('@/components/gift-room-system-status').then(mod => mod.GiftRoomSystemStatus),
+  { ssr: false }
+);
 import Link from "next/link";
-import { GiftRoomSystemStatus } from "@/components/gift-room-system-status";
 import { toast } from "@/lib/toast";
 
 export default function AdminGiftRoomsPage() {
@@ -23,9 +29,9 @@ export default function AdminGiftRoomsPage() {
       const response = await fetch('/api/gift-rooms/cleanup', {
         method: 'POST',
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         toast.success("Cleanup completed", {
           description: `Processed ${data.data?.expired_rooms_processed || 0} expired rooms`
@@ -93,14 +99,14 @@ export default function AdminGiftRoomsPage() {
                 )}
                 Run Manual Cleanup
               </Button>
-              
+
               <Link href="/api/gift-rooms/health" target="_blank">
                 <Button variant="outline" className="flex items-center gap-2">
                   <IonIcon name="analytics" size="16px" />
                   View Raw Health Data
                 </Button>
               </Link>
-              
+
               <Link href="/admin/analytics">
                 <Button variant="outline" className="flex items-center gap-2">
                   <IonIcon name="bar-chart" size="16px" />

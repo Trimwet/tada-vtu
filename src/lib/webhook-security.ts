@@ -62,11 +62,11 @@ export class WebhookSecurity {
   static async verifyWebhookRequest(
     request: NextRequest,
     provider: 'flutterwave' | 'inlomax'
-  ): Promise<{ isValid: boolean; payload: any; error?: string }> {
+  ): Promise<{ isValid: boolean; payload: Record<string, any> | null; error?: string }> {
     try {
       const body = await request.text();
-      const signature = request.headers.get('verif-hash') || 
-                       request.headers.get('x-signature') || '';
+      const signature = request.headers.get('verif-hash') ||
+        request.headers.get('x-signature') || '';
 
       if (!signature) {
         return {
@@ -84,12 +84,12 @@ export class WebhookSecurity {
           secretKey = process.env.FLUTTERWAVE_SECRET_HASH!;
           isValid = this.verifyFlutterwaveWebhook(signature, body, secretKey);
           break;
-        
+
         case 'inlomax':
           secretKey = process.env.INLOMAX_WEBHOOK_SECRET!;
           isValid = this.verifyInlomaxWebhook(signature, body, secretKey);
           break;
-        
+
         default:
           return {
             isValid: false,
@@ -107,7 +107,7 @@ export class WebhookSecurity {
       }
 
       const payload = JSON.parse(body);
-      
+
       // Additional validation
       if (!payload || typeof payload !== 'object') {
         return {
@@ -141,7 +141,7 @@ export class WebhookSecurity {
   ): boolean {
     const now = Math.floor(Date.now() / 1000);
     const diff = Math.abs(now - timestamp);
-    
+
     return diff <= toleranceSeconds;
   }
 
@@ -149,10 +149,10 @@ export class WebhookSecurity {
    * Rate limit webhook endpoints
    */
   static async checkWebhookRateLimit(
-    provider: string,
-    identifier: string,
-    maxRequests: number = 100,
-    windowSeconds: number = 3600
+    _provider: string,
+    _identifier: string,
+    _maxRequests: number = 100,
+    _windowSeconds: number = 3600
   ): Promise<boolean> {
     // Implementation would use Redis or database
     // For now, return true (allow all)
@@ -167,8 +167,8 @@ export async function webhookMiddleware(
 ) {
   // Verify webhook signature
   const verification = await WebhookSecurity.verifyWebhookRequest(request, provider);
-  
-  if (!verification.isValid) {
+
+  if (!verification.isValid || !verification.payload) {
     console.error(`Webhook verification failed for ${provider}:`, verification.error);
     return new Response(
       JSON.stringify({ error: 'Webhook verification failed' }),
@@ -181,7 +181,7 @@ export async function webhookMiddleware(
     const isValidTimestamp = WebhookSecurity.isWebhookTimestampValid(
       verification.payload.timestamp
     );
-    
+
     if (!isValidTimestamp) {
       console.error(`Webhook timestamp invalid for ${provider}`);
       return new Response(

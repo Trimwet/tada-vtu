@@ -17,9 +17,20 @@ import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
-import { CreatePinModal } from "@/components/create-pin-modal";
-import { VerifyPinModal } from "@/components/verify-pin-modal";
-import { BeneficiariesCard } from "@/components/beneficiaries-card";
+import dynamic from "next/dynamic";
+
+const CreatePinModal = dynamic(
+  () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
+  { ssr: false }
+);
+const VerifyPinModal = dynamic(
+  () => import("@/components/verify-pin-modal").then(mod => mod.VerifyPinModal),
+  { ssr: false }
+);
+const BeneficiariesCard = dynamic(
+  () => import("@/components/beneficiaries-card").then(mod => mod.BeneficiariesCard),
+  { ssr: false }
+);
 
 const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 

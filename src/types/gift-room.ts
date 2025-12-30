@@ -17,7 +17,7 @@ export interface GiftRoom {
   status: GiftRoomStatus;
   joined_count: number;
   claimed_count: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   expires_at: string;
   updated_at: string;
@@ -51,7 +51,7 @@ export interface GiftRoomActivity {
   room_id?: string;
   user_id?: string;
   activity_type: ActivityType;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;

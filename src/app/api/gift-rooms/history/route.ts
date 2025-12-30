@@ -5,7 +5,7 @@ import { GiftRoomListResponse } from '@/types/gift-room';
 export async function GET(request: NextRequest): Promise<NextResponse<GiftRoomListResponse>> {
   try {
     const supabase = await createClient();
-    
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<GiftRoomLi
     // Get gift rooms sent by user
     const { data: sentRooms, error: sentError } = await supabase
       .from('gift_rooms')
-      .select('*')
+      .select('id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at')
       .eq('sender_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -36,11 +36,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<GiftRoomLi
       }, { status: 500 });
     }
 
-    // Get gift claims received by user
     const { data: receivedClaims, error: receivedError } = await supabase
       .from('gift_claims')
       .select(`
-        *,
+        id, reservation_id, user_id, amount, referral_bonus_awarded, claimed_at,
         reservation:reservations (
           room_id,
           room:gift_rooms (

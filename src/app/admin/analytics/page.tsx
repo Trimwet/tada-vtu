@@ -6,10 +6,22 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from 'recharts';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for Recharts components to reduce initial bundle size
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
+const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false });
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
+const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
 
 type DateRange = 'today' | '7d' | '30d' | '90d' | 'custom';
 
@@ -81,11 +93,11 @@ export default function AnalyticsPage() {
       if (range === 'custom' && customStart && customEnd) {
         url += `&start=${customStart}&end=${customEnd}`;
       }
-      
+
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           router.push('/admin/login');
@@ -93,7 +105,7 @@ export default function AnalyticsPage() {
         }
         throw new Error('Failed to fetch');
       }
-      
+
       const result = await res.json();
       setData(result);
     } catch (error) {
@@ -173,7 +185,7 @@ export default function AnalyticsPage() {
                   {r === 'today' ? 'Today' : r === 'custom' ? 'Custom' : `Last ${r.replace('d', ' days')}`}
                 </Button>
               ))}
-              
+
               {range === 'custom' && (
                 <div className="flex items-center gap-2 ml-4">
                   <Input
@@ -191,7 +203,7 @@ export default function AnalyticsPage() {
                   />
                 </div>
               )}
-              
+
               {loading && <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin ml-2" />}
             </div>
           </CardContent>
@@ -244,18 +256,18 @@ export default function AnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data.chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={formatDate}
                         stroke="#9ca3af"
                         fontSize={12}
                       />
-                      <YAxis 
-                        tickFormatter={(v) => `₦${(v/1000).toFixed(0)}k`}
+                      <YAxis
+                        tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`}
                         stroke="#9ca3af"
                         fontSize={12}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value) => formatCurrency(Number(value) || 0)}
                         labelFormatter={formatDate}
                         contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
@@ -282,7 +294,7 @@ export default function AnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9ca3af" fontSize={11} />
                         <YAxis stroke="#9ca3af" fontSize={11} />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={formatDate}
                           contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                         />
@@ -304,7 +316,7 @@ export default function AnalyticsPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9ca3af" fontSize={11} />
                         <YAxis stroke="#9ca3af" fontSize={11} />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={formatDate}
                           contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                         />
@@ -341,7 +353,7 @@ export default function AnalyticsPage() {
                               <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <Tooltip
                             formatter={(value) => formatCurrency(Number(value) || 0)}
                             contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                           />
@@ -385,21 +397,21 @@ export default function AnalyticsPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data.hourlyData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="hour" 
+                        <XAxis
+                          dataKey="hour"
                           tickFormatter={formatHour}
-                          stroke="#9ca3af" 
+                          stroke="#9ca3af"
                           fontSize={10}
                           interval={2}
                         />
                         <YAxis stroke="#9ca3af" fontSize={11} />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={(h) => formatHour(h as number)}
                           contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                         />
-                        <Bar 
-                          dataKey="transactions" 
-                          name="Transactions" 
+                        <Bar
+                          dataKey="transactions"
+                          name="Transactions"
                           fill="#f59e0b"
                           radius={[2, 2, 0, 0]}
                         />
@@ -425,8 +437,8 @@ export default function AnalyticsPage() {
                     <BarChart data={data.chartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                       <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9ca3af" fontSize={11} />
-                      <YAxis tickFormatter={(v) => `₦${(v/1000).toFixed(0)}k`} stroke="#9ca3af" fontSize={11} />
-                      <Tooltip 
+                      <YAxis tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} stroke="#9ca3af" fontSize={11} />
+                      <Tooltip
                         formatter={(value) => formatCurrency(Number(value) || 0)}
                         labelFormatter={formatDate}
                         contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
@@ -461,7 +473,7 @@ export default function AnalyticsPage() {
                   <div className="bg-gray-700/50 rounded-lg p-4">
                     <p className="text-gray-400 text-sm">Conversion</p>
                     <p className="text-white font-semibold">
-                      {data.summary.newUsers > 0 
+                      {data.summary.newUsers > 0
                         ? `${((data.summary.totalTransactions / data.summary.newUsers) || 0).toFixed(1)} txns/user`
                         : 'N/A'}
                     </p>

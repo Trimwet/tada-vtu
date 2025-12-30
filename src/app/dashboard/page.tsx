@@ -25,6 +25,8 @@ import { TierBadge } from "@/components/tier-badge";
 import { getUserTier } from "@/lib/pricing-tiers";
 import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
 import dynamic from "next/dynamic";
+import useSWR from "swr";
+import { supabaseFetcher } from "@/lib/swr-fetcher";
 
 // Lazy load heavy components
 const BankWithdrawalModal = dynamic(
@@ -38,6 +40,23 @@ export default function DashboardPage() {
   const { user, loading: userLoading } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
+
+  const startOfMonth = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  }, []);
+
+  const swrKey = user?.id
+    ? ["transactions", {
+      select: "id, amount, type, status, description, created_at",
+      eq: { user_id: user.id },
+      gte: { column: "created_at", value: startOfMonth },
+      order: { column: "created_at", ascending: false },
+      limit: 100
+    }]
+    : null;
+
+  const { data: allTransactions = [] } = useSWR<any[]>(swrKey, supabaseFetcher);
   const { hasUnread } = useNotifications(user?.id);
   const [hideBalance, setHideBalance] = useState(() => {
     if (typeof window !== "undefined") {
@@ -47,41 +66,12 @@ export default function DashboardPage() {
   });
 
   const [showWithdrawal, setShowWithdrawal] = useState(false);
-  const [allTransactions, setAllTransactions] = useState<
-    typeof recentTransactions
-  >([]);
-
   // Check if user needs to add phone number (for Google signups)
   useEffect(() => {
     if (user?.id && !user.phone_number) {
       checkAndNotifyMissingPhone(user.id, user.phone_number);
     }
   }, [user?.id, user?.phone_number]);
-
-  // Fetch all transactions for this month - optimized with useCallback
-  const fetchMonthlyData = useCallback(async () => {
-    if (!user?.id) return;
-
-    const supabase = getSupabase();
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-    const { data: monthTxns } = await supabase
-      .from("transactions")
-      .select("id, amount, type, status, description, created_at")
-      .eq("user_id", user.id)
-      .gte("created_at", startOfMonth)
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (monthTxns) {
-      setAllTransactions(monthTxns);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchMonthlyData();
-  }, [fetchMonthlyData]);
 
   // Calculate monthly stats from transactions - only count successful ones
   const monthlyStats = useMemo(() => {

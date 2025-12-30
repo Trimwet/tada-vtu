@@ -249,7 +249,7 @@ export function LiveTransactionTicker() {
     const interval = setInterval(() => {
       const newTransaction = generateTransaction();
       setTransactions(prev => [newTransaction, ...prev.slice(0, 2)]);
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [mounted]);

@@ -211,7 +211,28 @@ export class GiftRoomCleanupService {
   async forceExpireRoom(roomId: string): Promise<{ success: boolean; error?: string }> {
     try {
       const supabase = await createClient();
-      const { error } = await (supabase as any)
+      
+      // First, get the room details to find the sender_id and calculate refund amount
+      const { data: room, error: roomError } = await (supabase as any)
+        .from('gift_rooms')
+        .select('sender_id, amount, capacity, claimed_count, status')
+        .eq('id', roomId)
+        .single();
+
+      if (roomError || !room) {
+        return { success: false, error: 'Gift room not found' };
+      }
+
+      if (room.status === 'expired' || room.status === 'completed') {
+        return { success: false, error: 'Gift room already expired or completed' };
+      }
+
+      // Calculate unclaimed amount to refund
+      const unclaimedCount = room.capacity - room.claimed_count;
+      const refundAmount = unclaimedCount * room.amount;
+
+      // Update room status to expired
+      const { error: updateError } = await (supabase as any)
         .from('gift_rooms')
         .update({ 
           status: 'expired',
@@ -219,19 +240,40 @@ export class GiftRoomCleanupService {
         })
         .eq('id', roomId);
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (updateError) {
+        return { success: false, error: updateError.message };
       }
 
-      // Process refunds for this specific room (simplified)
-      try {
-        await (supabase as any).rpc('update_user_balance', {
-          user_id: roomId, // This should be the sender_id, need to get it first
-          amount: 0, // This should be calculated based on unclaimed amount
-          transaction_type: 'refund'
-        });
-      } catch (refundError) {
-        console.error('Error processing refund:', refundError);
+      // Process refund to the ORIGINAL CREATOR (sender_id) only if there's an amount to refund
+      if (refundAmount > 0) {
+        try {
+          await (supabase as any).rpc('update_user_balance', {
+            p_user_id: room.sender_id, // CRITICAL: Only refund to the original creator
+            p_amount: refundAmount,
+            p_type: 'credit',
+            p_description: `Gift room refund - ${unclaimedCount} unclaimed gifts`,
+            p_reference: `gift_refund_${roomId}`
+          });
+
+          // Log the refund activity
+          await (supabase as any)
+            .from('gift_room_activities')
+            .insert({
+              room_id: roomId,
+              user_id: room.sender_id, // Log against the creator
+              activity_type: 'refunded',
+              details: { 
+                amount: refundAmount,
+                unclaimed_count: unclaimedCount,
+                forced: true,
+                timestamp: new Date().toISOString()
+              }
+            });
+
+        } catch (refundError) {
+          console.error('Error processing refund:', refundError);
+          return { success: false, error: 'Failed to process refund' };
+        }
       }
 
       // Log the forced expiration
@@ -240,8 +282,13 @@ export class GiftRoomCleanupService {
           .from('gift_room_activities')
           .insert({
             room_id: roomId,
+            user_id: room.sender_id,
             activity_type: 'expired',
-            details: { forced: true, timestamp: new Date().toISOString() }
+            details: { 
+              forced: true, 
+              refund_amount: refundAmount,
+              timestamp: new Date().toISOString() 
+            }
           });
       } catch (logError) {
         console.error('Error logging activity:', logError);

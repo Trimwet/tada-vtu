@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, full_name, phone_number, email, balance, referral_code, kyc_level, loyalty_points, loyalty_tier, total_points_earned, login_streak, longest_streak, spin_available, birthday, total_spent")
           .eq("id", userId)
           .single();
 
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq("id", data.user.id);
 
         if (!updateError) break;
-        
+
         // Wait and retry
         await new Promise(resolve => setTimeout(resolve, 500));
       }
