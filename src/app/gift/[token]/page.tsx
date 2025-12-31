@@ -365,24 +365,24 @@ export default function GiftRoomPage() {
                 ) : (
                   // User not logged in - require login first
                   <div className="space-y-3">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
-                      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <IonIcon name="information-circle" size="20px" />
                         <span className="font-medium">Login Required</span>
                       </div>
-                      <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                      <p className="text-sm text-green-600/80 dark:text-green-300 mt-1">
                         Please login or create an account to secure your spot
                       </p>
                     </div>
                     <div className="flex gap-3">
                       <Link href={`/login?redirect=/gift/${token}`} className="flex-1">
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full border-green-500/30 text-green-600 hover:bg-green-500/10">
                           <IonIcon name="log-in" size="18px" className="mr-2" />
                           Login
                         </Button>
                       </Link>
                       <Link href={`/register?redirect=/gift/${token}`} className="flex-1">
-                        <Button className="w-full bg-green-500 hover:bg-green-600">
+                        <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
                           <IonIcon name="person-add" size="18px" className="mr-2" />
                           Sign Up
                         </Button>
@@ -392,10 +392,10 @@ export default function GiftRoomPage() {
                 )}
 
                 {/* Time Left */}
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
                   <div className="flex items-center gap-2">
-                    <IonIcon name="time" size="16px" color="#3b82f6" />
-                    <span className="text-sm font-medium text-blue-600">
+                    <IonIcon name="time" size="16px" color="#22c55e" />
+                    <span className="text-sm font-medium text-green-600">
                       {timeLeft}
                     </span>
                   </div>

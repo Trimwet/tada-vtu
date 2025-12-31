@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +16,7 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useGiftRoom } from "@/hooks/useGiftRoom";
 import { GiftRoomCard } from "@/components/gift-room-card";
 import { GiftRoomStats } from "@/components/gift-room-stats";
-import { GiftRoom, GiftRoomStatus } from "@/types/gift-room";
+import { GiftRoomStatus } from "@/types/gift-room";
 
 const STATUS_FILTERS: { value: GiftRoomStatus | 'all'; label: string; icon: string }[] = [
   { value: 'all', label: 'All', icon: 'list' },
@@ -26,11 +27,19 @@ const STATUS_FILTERS: { value: GiftRoomStatus | 'all'; label: string; icon: stri
 ];
 
 export default function GiftRoomsPage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useSupabaseUser();
   const { loading: roomsLoading, giftRooms, getUserGiftRooms, shareGiftRoom, subscribeToRoom } = useGiftRoom();
 
   const [statusFilter, setStatusFilter] = useState<GiftRoomStatus | 'all'>('all');
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?redirect=/dashboard/gift-rooms');
+    }
+  }, [user, authLoading, router]);
 
   const selectedRoom = useMemo(() =>
     selectedRoomId ? giftRooms.find(r => r.id === selectedRoomId) || null : null
@@ -141,7 +150,7 @@ export default function GiftRoomsPage() {
           </div>
         ) : (
           <>
-            {/* Overview Stats */}
+            {/* Overview Stats - Green/White/Black theme */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
@@ -159,8 +168,8 @@ export default function GiftRoomsPage() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="pulse" size="24px" color="#3b82f6" />
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <IonIcon name="pulse" size="24px" color="#22c55e" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">
                     {totalStats.activeRooms}
@@ -173,8 +182,8 @@ export default function GiftRoomsPage() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="trending-up" size="24px" color="#8b5cf6" />
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <IonIcon name="trending-up" size="24px" color="#22c55e" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">
                     ₦{totalStats.totalSent.toLocaleString()}
@@ -187,8 +196,8 @@ export default function GiftRoomsPage() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="checkmark-done" size="24px" color="#10b981" />
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <IonIcon name="checkmark-done" size="24px" color="#22c55e" />
                   </div>
                   <div className="text-2xl font-bold text-foreground">
                     ₦{totalStats.totalClaimed.toLocaleString()}
