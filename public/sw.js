@@ -1,8 +1,8 @@
 // TADA VTU Service Worker - Advanced Caching & Offline Support
-const CACHE_NAME = 'tada-vtu-v1.2.1';
-const STATIC_CACHE = 'tada-static-v1.2.1';
-const DYNAMIC_CACHE = 'tada-dynamic-v1.2.1';
-const API_CACHE = 'tada-api-v1.2.1';
+const CACHE_NAME = 'tada-vtu-v1.3.0';
+const STATIC_CACHE = 'tada-static-v1.3.0';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.3.0';
+const API_CACHE = 'tada-api-v1.3.0';
 
 // Critical resources to cache immediately (only guaranteed to exist)
 const STATIC_ASSETS = [
