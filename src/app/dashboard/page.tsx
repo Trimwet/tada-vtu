@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -150,10 +151,33 @@ export default function DashboardPage() {
     ? getTimeBasedGreeting((user.full_name || "User").split(" ")[0]).greeting
     : "Welcome";
 
+  const router = useRouter(); // Import might need to add import from next/navigation at top
+
+  // Force redirect if user is missing after loading
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.replace("/login");
+    }
+  }, [userLoading, user, router]);
+
   // Show loading while user data is being fetched
   // AuthGuard handles the redirect if user is not authenticated
   if (userLoading || !user) {
-    return <LoadingScreen message="Loading your dashboard..." />;
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <LoadingScreen message="Loading your dashboard..." />
+        {/* Escape hatch if frozen */}
+        <button
+          onClick={() => {
+            localStorage.clear();
+            window.location.href = '/login';
+          }}
+          className="mt-8 text-xs text-muted-foreground hover:text-red-500 underline transition-colors"
+        >
+          Stuck? Tap to reset
+        </button>
+      </div>
+    );
   }
 
   return (
