@@ -52,30 +52,55 @@ export async function GET(
 
     // Check for existing reservation if device hash provided
     let userReservation = null;
+    const { data: { user } } = await supabase.auth.getUser();
+    
     if (deviceHash) {
       const { data: reservation } = await supabase
         .from('reservations')
         .select('id, room_id, device_fingerprint, status, created_at, expires_at, claimed_at')
         .eq('room_id', (roomData as any).id)
         .eq('device_fingerprint', deviceHash)
+        .eq('status', 'active')
         .single();
 
       userReservation = reservation;
     }
 
-    // Check authentication to see if user is the sender
-    const { data: { user } } = await supabase.auth.getUser();
+    // Also check by user_id if authenticated
+    if (user && !userReservation) {
+      const { data: reservation } = await supabase
+        .from('reservations')
+        .select('id, room_id, device_fingerprint, status, created_at, expires_at, claimed_at')
+        .eq('room_id', (roomData as any).id)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
+
+      userReservation = reservation;
+    }
+
+    // Check if user is the sender
     const isRoomSender = user && user.id === (roomData as any).sender_id;
+
+    // Get actual count of active reservations (more accurate than joined_count)
+    const { count: activeReservationsCount } = await supabase
+      .from('reservations')
+      .select('*', { count: 'exact', head: true })
+      .eq('room_id', (roomData as any).id)
+      .eq('status', 'active')
+      .gt('expires_at', new Date().toISOString());
+
+    const actualActiveCount = activeReservationsCount || 0;
 
     // Determine if user can join
     const canJoin = !isExpired &&
       (roomData as any).status === 'active' &&
-      (roomData as any).joined_count < (roomData as any).capacity &&
+      actualActiveCount < (roomData as any).capacity &&
       !userReservation &&
       !isRoomSender; // Prevent sender from joining their own room
 
-    // Calculate spots remaining
-    const spotsRemaining = Math.max(0, (roomData as any).capacity - (roomData as any).joined_count);
+    // Calculate spots remaining based on actual active reservations
+    const spotsRemaining = Math.max(0, (roomData as any).capacity - actualActiveCount);
 
     return NextResponse.json({
       success: true,

@@ -104,9 +104,22 @@ class GiftRoomService {
       const data = await response.json();
       
       if (!response.ok) {
+        // Provide more specific error messages
+        let errorMessage = data.error || 'Failed to join gift room';
+        
+        if (response.status === 400) {
+          if (errorMessage.includes('spots have been taken')) {
+            errorMessage = 'All spots have been taken. Please try another gift room.';
+          } else if (errorMessage.includes('already have a reservation')) {
+            errorMessage = 'You already have a spot in this gift room.';
+          } else if (errorMessage.includes('cannot join your own')) {
+            errorMessage = 'You cannot join your own gift room.';
+          }
+        }
+        
         return {
           success: false,
-          error: data.error || 'Failed to join gift room',
+          error: errorMessage,
         };
       }
 
@@ -115,7 +128,7 @@ class GiftRoomService {
       console.error('Error joining gift room:', error);
       return {
         success: false,
-        error: 'Network error. Please try again.',
+        error: 'Network error. Please check your connection and try again.',
       };
     }
   }

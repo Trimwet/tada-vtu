@@ -80,7 +80,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       'unknown';
 
     // Create reservation using database function
-    // Cast strict arguments including optional user_id
     const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation', {
       p_room_id: (room as any).id,
       p_device_fingerprint: device_fingerprint.hash,
@@ -91,15 +90,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
     if (createError) {
       console.error('Error creating reservation:', createError);
 
-      // Handle specific errors
+      // Handle specific errors with better messaging
       if (createError.message.includes('Gift room is full')) {
         return NextResponse.json({
           success: false,
-          error: 'This gift room is now full. Try joining another gift room.'
+          error: 'All spots have been taken. Try joining another gift room.'
         }, { status: 400 });
       }
 
-      if (createError.message.includes('Device already has a reservation')) {
+      if (createError.message.includes('already has a reservation') || createError.message.includes('duplicate key')) {
         return NextResponse.json({
           success: false,
           error: 'You already have a reservation in this gift room'
@@ -113,9 +112,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
         }, { status: 400 });
       }
 
+      if (createError.message.includes('cannot join your own')) {
+        return NextResponse.json({
+          success: false,
+          error: 'You cannot join your own gift room'
+        }, { status: 400 });
+      }
+
       return NextResponse.json({
         success: false,
-        error: `Failed to join: ${createError.message}`
+        error: `Failed to join gift room: ${createError.message}`
       }, { status: 400 });
     }
 
@@ -145,13 +151,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       console.error('Error fetching updated room:', roomFetchError);
     }
 
-    // Link reservation to user if logged in
-    if (user) {
-      // Use any cast to bypass strict typing on table definition
+    // Link reservation to user if logged in (this should already be done in create_reservation)
+    if (user && reservationId) {
       const { error: linkError } = await (supabase
         .from('reservations') as any)
         .update({ user_id: user.id })
-        .eq('id', reservationId);
+        .eq('id', reservationId)
+        .is('user_id', null); // Only update if not already linked
 
       if (linkError) {
         console.error('Error linking reservation to user:', linkError);
