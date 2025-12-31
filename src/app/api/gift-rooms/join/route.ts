@@ -114,8 +114,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
 
       return NextResponse.json({
         success: false,
-        error: 'Failed to join gift room. Please try again.'
-      }, { status: 500 });
+        error: `Failed to join: ${createError.message}`
+      }, { status: 400 });
     }
 
     // Get the created reservation details

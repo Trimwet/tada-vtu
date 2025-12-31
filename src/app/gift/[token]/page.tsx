@@ -190,7 +190,7 @@ export default function GiftRoomPage() {
     );
   }
 
-  const { room, sender, user_reservation, can_join, spots_remaining } = roomData;
+  const { room, sender = { full_name: "Someone", referral_code: "" }, user_reservation, can_join, spots_remaining } = roomData;
   const isExpired = isGiftRoomExpired(room.expires_at);
   const timeLeft = getTimeUntilExpiration(room.expires_at);
 
