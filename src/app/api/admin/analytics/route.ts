@@ -87,8 +87,8 @@ export async function GET(request: NextRequest) {
 
       let revenue = 0;
       let deposits = 0;
-      let transactions = txns?.length || 0;
-      let users = newUsers?.length || 0;
+      const transactions = txns?.length || 0;
+      const users = newUsers?.length || 0;
 
       txns?.forEach(txn => {
         const amount = Math.abs(txn.amount);
