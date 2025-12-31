@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { JoinGiftRoomRequest, JoinGiftRoomResponse } from '@/types/gift-room';
+import { JoinGiftRoomResponse } from '@/types/gift-room';
 
 export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftRoomResponse>> {
   try {
     const supabase = await createClient();
 
-    // Parse request body
-    const body: JoinGiftRoomRequest = await request.json();
-    const { room_token, device_fingerprint, contact_info } = body;
-
-    // Validate input
-    if (!room_token || !device_fingerprint) {
+    // SIMPLIFIED: Require authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: room_token, device_fingerprint'
-      }, { status: 400 });
+        error: 'Please login to join this gift room'
+      }, { status: 401 });
     }
 
-    // Check authentication to prevent sender from joining their own room
-    const { data: { user } } = await supabase.auth.getUser();
+    // Parse request body
+    const body = await request.json();
+    const { room_token } = body;
+
+    if (!room_token) {
+      return NextResponse.json({
+        success: false,
+        error: 'Room token is required'
+      }, { status: 400 });
+    }
 
     // Get gift room details
     const { data: room, error: roomError } = await supabase
@@ -36,18 +42,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
     }
 
     // Prevent sender from joining their own room
-    if (user && user.id === (room as any).sender_id) {
+    if (user.id === (room as any).sender_id) {
       return NextResponse.json({
         success: false,
         error: 'You cannot join your own gift room'
       }, { status: 400 });
-    }
-
-    if (roomError || !room) {
-      return NextResponse.json({
-        success: false,
-        error: 'Gift room not found'
-      }, { status: 404 });
     }
 
     // Check if room is expired
@@ -74,23 +73,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       }, { status: 400 });
     }
 
-    // Get client IP for logging
-    const clientIP = request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
-
-    // Create reservation using database function
-    const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation', {
+    // SIMPLIFIED: Create reservation using new database function
+    const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation_simple', {
       p_room_id: (room as any).id,
-      p_device_fingerprint: device_fingerprint.hash,
-      p_contact_info: contact_info || null,
-      p_user_id: user?.id || null
+      p_user_id: user.id
     });
 
     if (createError) {
       console.error('Error creating reservation:', createError);
 
-      // Handle specific errors with better messaging
       if (createError.message.includes('Gift room is full')) {
         return NextResponse.json({
           success: false,
@@ -109,13 +100,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
         return NextResponse.json({
           success: false,
           error: 'This gift room is no longer available'
-        }, { status: 400 });
-      }
-
-      if (createError.message.includes('cannot join your own')) {
-        return NextResponse.json({
-          success: false,
-          error: 'You cannot join your own gift room'
         }, { status: 400 });
       }
 
@@ -141,43 +125,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
     }
 
     // Get updated room details
-    const { data: updatedRoom, error: roomFetchError } = await supabase
+    const { data: updatedRoom } = await supabase
       .from('gift_rooms')
       .select('*')
       .eq('id', (room as any).id)
       .single();
-
-    if (roomFetchError) {
-      console.error('Error fetching updated room:', roomFetchError);
-    }
-
-    // Link reservation to user if logged in (this should already be done in create_reservation)
-    if (user && reservationId) {
-      const { error: linkError } = await (supabase
-        .from('reservations') as any)
-        .update({ user_id: user.id })
-        .eq('id', reservationId)
-        .is('user_id', null); // Only update if not already linked
-
-      if (linkError) {
-        console.error('Error linking reservation to user:', linkError);
-      }
-    }
-
-    // Log the join activity with IP address
-    await supabase
-      .from('gift_room_activities')
-      .insert({
-        room_id: (room as any).id,
-        activity_type: 'joined',
-        details: {
-          reservation_id: reservationId,
-          device_fingerprint: device_fingerprint.hash,
-          contact_info: contact_info || null
-        },
-        ip_address: clientIP,
-        user_agent: request.headers.get('user-agent') || 'unknown'
-      } as any);
 
     return NextResponse.json({
       success: true,
