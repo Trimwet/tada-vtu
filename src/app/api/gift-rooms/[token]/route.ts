@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { GiftRoomDetailsResponse } from '@/types/gift-room';
 
 export async function GET(
@@ -8,6 +9,7 @@ export async function GET(
 ): Promise<NextResponse<GiftRoomDetailsResponse>> {
   try {
     const supabase = await createClient();
+    const adminClient = createAdminClient(); // Use admin client to bypass RLS for public gift page
     const { token } = await params;
     const { searchParams } = new URL(request.url);
     const deviceHash = searchParams.get('device_hash');
@@ -19,8 +21,8 @@ export async function GET(
       }, { status: 400 });
     }
 
-    // Get gift room details with sender info
-    const { data: roomData, error: roomError } = await supabase
+    // Get gift room details with sender info (using admin client to bypass RLS)
+    const { data: roomData, error: roomError } = await adminClient
       .from('gift_rooms')
       .select(`
         id, sender_id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at,
@@ -82,8 +84,8 @@ export async function GET(
     // Check if user is the sender
     const isRoomSender = user && user.id === (roomData as any).sender_id;
 
-    // Get actual count of active reservations (more accurate than joined_count)
-    const { count: activeReservationsCount } = await supabase
+    // Get actual count of active reservations (using admin client)
+    const { count: activeReservationsCount } = await adminClient
       .from('reservations')
       .select('*', { count: 'exact', head: true })
       .eq('room_id', (roomData as any).id)
