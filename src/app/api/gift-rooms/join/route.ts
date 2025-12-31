@@ -80,12 +80,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       'unknown';
 
     // Create reservation using database function
-    const { data: reservationId, error: createError } = await supabase
-      .rpc('create_reservation', {
-        p_room_id: (room as any).id,
-        p_device_fingerprint: device_fingerprint.hash,
-        p_contact_info: contact_info || null
-      } as any);
+    // Cast strict arguments
+    const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation', {
+      p_room_id: (room as any).id,
+      p_device_fingerprint: device_fingerprint.hash,
+      p_contact_info: contact_info || null
+    });
 
     if (createError) {
       console.error('Error creating reservation:', createError);
