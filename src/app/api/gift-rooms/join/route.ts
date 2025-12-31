@@ -80,11 +80,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       'unknown';
 
     // Create reservation using database function
-    // Cast strict arguments
+    // Cast strict arguments including optional user_id
     const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation', {
       p_room_id: (room as any).id,
       p_device_fingerprint: device_fingerprint.hash,
-      p_contact_info: contact_info || null
+      p_contact_info: contact_info || null,
+      p_user_id: user?.id || null
     });
 
     if (createError) {
