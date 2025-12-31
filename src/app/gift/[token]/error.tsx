@@ -25,7 +25,7 @@ export default function GiftRoomError({
                 </div>
 
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-foreground">Gift Room Unavaiable</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Gift Room Unavailable</h1>
                     <p className="text-muted-foreground">
                         We couldn't load this gift room. It might have expired or been removed.
                     </p>
@@ -48,11 +48,11 @@ export default function GiftRoomError({
                     </Button>
                 </div>
 
-                {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-4 p-4 bg-muted rounded-lg text-left overflow-auto max-h-40 text-xs text-muted-foreground">
-                        {error.message}
-                    </div>
-                )}
+                <div className="mt-4 p-4 bg-muted rounded-lg text-left overflow-auto max-h-40 text-xs text-muted-foreground break-all">
+                    <p className="font-semibold text-red-500 mb-1">Error Details:</p>
+                    {error.message || JSON.stringify(error)}
+                    {error.digest && <p className="mt-1 text-xs opacity-70">Digest: {error.digest}</p>}
+                </div>
             </div>
         </div>
     );
