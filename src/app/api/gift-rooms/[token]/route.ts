@@ -81,7 +81,7 @@ export async function GET(
       success: true,
       data: {
         room: roomData,
-        sender: (roomData as any).sender,
+        sender: (roomData as any).sender || { full_name: 'Someone', referral_code: '' },
         user_reservation: userReservation || undefined,
         can_join: canJoin,
         spots_remaining: spotsRemaining

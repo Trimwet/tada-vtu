@@ -11,12 +11,12 @@ import Link from "next/link";
 import { toast } from "@/lib/toast";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { giftRoomService } from "@/lib/gift-room-service";
-import { 
-  GiftRoom, 
-  Reservation, 
-  getGiftRoomTypeLabel, 
+import {
+  GiftRoom,
+  Reservation,
+  getGiftRoomTypeLabel,
   getTimeUntilExpiration,
-  isGiftRoomExpired 
+  isGiftRoomExpired
 } from "@/types/gift-room";
 import { AnimatedBackground } from "@/components/animated-background";
 
@@ -56,7 +56,7 @@ export default function GiftRoomPage() {
     const loadGiftRoom = async () => {
       setLoading(true);
       const response = await giftRoomService.getGiftRoomDetails(token);
-      
+
       if (response.success && response.data) {
         setRoomData(response.data);
       } else {
@@ -82,7 +82,7 @@ export default function GiftRoomPage() {
         toast.success("Spot secured!", {
           description: "Complete signup to claim your gift"
         });
-        
+
         // Update room data with new reservation
         setRoomData(prev => prev ? {
           ...prev,
@@ -139,9 +139,9 @@ export default function GiftRoomPage() {
   const handleShare = async () => {
     if (!roomData) return;
 
-    const message = roomData.room.message 
-      ? `${roomData.sender.full_name} sent you a gift: "${roomData.room.message}"`
-      : `${roomData.sender.full_name} sent you a gift!`;
+    const message = roomData.room.message
+      ? `${roomData.sender?.full_name || "Someone"} sent you a gift: "${roomData.room.message}"`
+      : `${roomData.sender?.full_name || "Someone"} sent you a gift!`;
 
     const success = await giftRoomService.shareGiftRoom(token, message);
     if (success) {
@@ -197,7 +197,7 @@ export default function GiftRoomPage() {
   return (
     <div className="min-h-screen bg-background">
       <AnimatedBackground />
-      
+
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -208,7 +208,7 @@ export default function GiftRoomPage() {
             You've Got a Gift!
           </h1>
           <p className="text-muted-foreground">
-            From {sender.full_name}
+            From {sender?.full_name || "Someone"}
           </p>
         </div>
 
@@ -292,7 +292,7 @@ export default function GiftRoomPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {user_reservation.status === 'claimed' ? (
                     <div className="text-center py-4">
                       <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -392,7 +392,7 @@ export default function GiftRoomPage() {
                         </div>
                       )}
                     </Button>
-                    
+
                     <button
                       onClick={() => setShowContactForm(true)}
                       className="w-full text-sm text-green-500 hover:text-green-400 transition-colors"
