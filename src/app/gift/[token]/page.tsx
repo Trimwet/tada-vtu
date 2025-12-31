@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "@/lib/toast";
@@ -42,12 +40,6 @@ export default function GiftRoomPage() {
   const [claiming, setClaiming] = useState(false);
   const [roomData, setRoomData] = useState<GiftRoomPageData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [contactInfo, setContactInfo] = useState({
-    email: "",
-    phone: "",
-    name: "",
-  });
-  const [showContactForm, setShowContactForm] = useState(false);
 
   // Load gift room data
   useEffect(() => {
@@ -68,19 +60,18 @@ export default function GiftRoomPage() {
     loadGiftRoom();
   }, [token]);
 
+
+  // SIMPLIFIED: Join requires login - no more orphaned reservations
   const handleJoinRoom = async () => {
-    if (!roomData) return;
+    if (!roomData || !user) return;
 
     setJoining(true);
     try {
-      const response = await giftRoomService.joinGiftRoom(
-        token,
-        showContactForm ? contactInfo : undefined
-      );
+      const response = await giftRoomService.joinGiftRoom(token);
 
       if (response.success && response.data) {
         toast.success("Spot secured!", {
-          description: "Complete signup to claim your gift"
+          description: "You can now claim your gift"
         });
 
         // Update room data with new reservation
@@ -94,8 +85,8 @@ export default function GiftRoomPage() {
       } else {
         toast.error("Failed to join", response.error);
       }
-    } catch (error) {
-      console.error("Error joining room:", error);
+    } catch (err) {
+      console.error("Error joining room:", err);
       toast.error("Something went wrong", "Please try again");
     } finally {
       setJoining(false);
@@ -128,8 +119,8 @@ export default function GiftRoomPage() {
       } else {
         toast.error("Failed to claim gift", response.error);
       }
-    } catch (error) {
-      console.error("Error claiming gift:", error);
+    } catch (err) {
+      console.error("Error claiming gift:", err);
       toast.error("Something went wrong", "Please try again");
     } finally {
       setClaiming(false);
@@ -193,6 +184,7 @@ export default function GiftRoomPage() {
   const { room, sender = { full_name: "Someone", referral_code: "" }, user_reservation, can_join, spots_remaining } = roomData;
   const isExpired = isGiftRoomExpired(room.expires_at);
   const timeLeft = getTimeUntilExpiration(room.expires_at);
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -305,7 +297,7 @@ export default function GiftRoomPage() {
                         ₦{room.amount.toLocaleString()} was added to your wallet
                       </p>
                     </div>
-                  ) : user ? (
+                  ) : (
                     <Button
                       onClick={handleClaimGift}
                       disabled={claiming}
@@ -323,40 +315,18 @@ export default function GiftRoomPage() {
                         </div>
                       )}
                     </Button>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground text-center">
-                        Complete signup to claim your gift
-                      </p>
-                      <div className="flex gap-3">
-                        <Link href="/login" className="flex-1">
-                          <Button variant="outline" className="w-full">
-                            <IonIcon name="log-in" size="18px" className="mr-2" />
-                            Login
-                          </Button>
-                        </Link>
-                        <Link href="/register" className="flex-1">
-                          <Button className="w-full bg-green-500 hover:bg-green-600">
-                            <IonIcon name="person-add" size="18px" className="mr-2" />
-                            Sign Up
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
                   )}
                 </div>
 
                 {/* Expiration Warning */}
-                {!isExpired && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <IonIcon name="time" size="16px" color="#f59e0b" />
-                      <span className="text-sm font-medium text-amber-600">
-                        {timeLeft}
-                      </span>
-                    </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <IonIcon name="time" size="16px" color="#f59e0b" />
+                    <span className="text-sm font-medium text-amber-600">
+                      {timeLeft}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             ) : room.status === 'full' ? (
               <div className="text-center py-6">
@@ -372,99 +342,63 @@ export default function GiftRoomPage() {
               </div>
             ) : can_join ? (
               <div className="space-y-4">
-                {/* Join Options */}
-                {!showContactForm ? (
-                  <div className="space-y-3">
-                    <Button
-                      onClick={handleJoinRoom}
-                      disabled={joining}
-                      className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
-                    >
-                      {joining ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Securing Spot...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <IonIcon name="add-circle" size="20px" />
-                          Secure My Spot
-                        </div>
-                      )}
-                    </Button>
-
-                    <button
-                      onClick={() => setShowContactForm(true)}
-                      className="w-full text-sm text-green-500 hover:text-green-400 transition-colors"
-                    >
-                      + Add contact info for reminders
-                    </button>
-                  </div>
+                {user ? (
+                  // User is logged in - can join directly
+                  <Button
+                    onClick={handleJoinRoom}
+                    disabled={joining}
+                    className="w-full h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                  >
+                    {joining ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Securing Spot...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <IonIcon name="add-circle" size="20px" />
+                        Secure My Spot
+                      </div>
+                    )}
+                  </Button>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium">Name (optional)</Label>
-                        <Input
-                          type="text"
-                          placeholder="Your name"
-                          value={contactInfo.name}
-                          onChange={(e) => setContactInfo(prev => ({ ...prev, name: e.target.value }))}
-                          className="h-10"
-                        />
+                  // User not logged in - require login first
+                  <div className="space-y-3">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                        <IonIcon name="information-circle" size="20px" />
+                        <span className="font-medium">Login Required</span>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium">Email (optional)</Label>
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          value={contactInfo.email}
-                          onChange={(e) => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
-                          className="h-10"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Phone (optional)</Label>
-                        <Input
-                          type="tel"
-                          placeholder="080XXXXXXXX"
-                          value={contactInfo.phone}
-                          onChange={(e) => setContactInfo(prev => ({ ...prev, phone: e.target.value }))}
-                          className="h-10"
-                        />
-                      </div>
+                      <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                        Please login or create an account to secure your spot
+                      </p>
                     </div>
-
                     <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowContactForm(false)}
-                        className="flex-1"
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        onClick={handleJoinRoom}
-                        disabled={joining}
-                        className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        {joining ? "Joining..." : "Join Room"}
-                      </Button>
+                      <Link href={`/login?redirect=/gift/${token}`} className="flex-1">
+                        <Button variant="outline" className="w-full">
+                          <IonIcon name="log-in" size="18px" className="mr-2" />
+                          Login
+                        </Button>
+                      </Link>
+                      <Link href={`/register?redirect=/gift/${token}`} className="flex-1">
+                        <Button className="w-full bg-green-500 hover:bg-green-600">
+                          <IonIcon name="person-add" size="18px" className="mr-2" />
+                          Sign Up
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 )}
 
                 {/* Time Left */}
-                {!isExpired && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <IonIcon name="time" size="16px" color="#3b82f6" />
-                      <span className="text-sm font-medium text-blue-600">
-                        {timeLeft}
-                      </span>
-                    </div>
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <IonIcon name="time" size="16px" color="#3b82f6" />
+                    <span className="text-sm font-medium text-blue-600">
+                      {timeLeft}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <div className="text-center py-6">
