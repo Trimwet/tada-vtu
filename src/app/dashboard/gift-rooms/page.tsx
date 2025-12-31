@@ -41,6 +41,13 @@ export default function GiftRoomsPage() {
     }
   }, [user, authLoading, router]);
 
+  // Fetch rooms when user is available
+  useEffect(() => {
+    if (user && !authLoading) {
+      getUserGiftRooms();
+    }
+  }, [user, authLoading, getUserGiftRooms]);
+
   const selectedRoom = useMemo(() =>
     selectedRoomId ? giftRooms.find(r => r.id === selectedRoomId) || null : null
     , [giftRooms, selectedRoomId]);
