@@ -76,7 +76,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Combine and deduplicate
-    const allRooms = [...(sentRooms || []), ...joinedRooms];
+    type GiftRoom = {
+      id: string;
+      sender_id: string;
+      type: string;
+      capacity: number;
+      amount: number;
+      total_amount: number;
+      message: string | null;
+      token: string;
+      status: string;
+      joined_count: number;
+      claimed_count: number;
+      created_at: string;
+      expires_at: string;
+    };
+    
+    const allRooms: GiftRoom[] = [...(sentRooms || []), ...joinedRooms];
     const uniqueRooms = Array.from(
       new Map(allRooms.map(room => [room.id, room])).values()
     );
