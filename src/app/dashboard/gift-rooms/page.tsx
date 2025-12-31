@@ -86,12 +86,17 @@ export default function GiftRoomsPage() {
     window.open(`/gift/${token}`, '_blank');
   };
 
-  const totalStats = useMemo(() => ({
-    totalRooms: giftRooms.length,
-    activeRooms: giftRooms.filter(r => r.status === 'active').length,
-    totalSent: giftRooms.reduce((sum, room) => sum + room.total_amount, 0),
-    totalClaimed: giftRooms.reduce((sum, room) => sum + (room.claimed_count * room.amount), 0),
-  }), [giftRooms]);
+  const totalStats = useMemo(() => {
+    // Isolate stats for rooms where the current user is the sender
+    const userSentRooms = giftRooms.filter(r => user && r.sender_id === user.id);
+
+    return {
+      totalRooms: userSentRooms.length,
+      activeRooms: userSentRooms.filter(r => r.status === 'active').length,
+      totalSent: userSentRooms.reduce((sum, room) => sum + room.total_amount, 0),
+      totalClaimed: userSentRooms.reduce((sum, room) => sum + (room.claimed_count * room.amount), 0),
+    };
+  }, [giftRooms, user]);
 
   const isLoading = authLoading || (roomsLoading && giftRooms.length === 0);
 

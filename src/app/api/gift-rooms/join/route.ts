@@ -8,7 +8,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
 
     // SIMPLIFIED: Require authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json({
         success: false,
@@ -73,9 +73,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       }, { status: 400 });
     }
 
-    // SIMPLIFIED: Create reservation using new database function
-    const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation_simple', {
+    // Extract additional info from body
+    const { device_fingerprint, contact_info } = body;
+
+    // USE ROBUST: Create reservation using idempotent database function
+    const { data: reservationId, error: createError } = await (supabase.rpc as any)('create_reservation', {
       p_room_id: (room as any).id,
+      p_device_fingerprint: device_fingerprint?.hash || null,
+      p_contact_info: contact_info || null,
       p_user_id: user.id
     });
 
