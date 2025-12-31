@@ -1,4 +1,5 @@
 "use client";
+// v2.0 - Simplified gift room flow: requires login before joining
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
