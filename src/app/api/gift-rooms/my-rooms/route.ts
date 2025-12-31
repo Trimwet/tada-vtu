@@ -25,34 +25,66 @@ export async function GET(request: NextRequest) {
 
     console.log('API: Querying gift_rooms for user:', user.id);
 
-    // Build query
-    let query = supabase
+    // 1. Get rooms created by user (Sent)
+    let sentQuery = supabase
       .from('gift_rooms')
       .select('id, sender_id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at')
       .eq('sender_id', user.id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('created_at', { ascending: false });
 
     // Add status filter if provided
     if (status && ['active', 'full', 'expired', 'completed'].includes(status)) {
-      query = query.eq('status', status);
+      sentQuery = sentQuery.eq('status', status);
     }
 
-    const { data: rooms, error: roomsError } = await query;
-    console.log('API: Query result:', rooms, 'Error:', roomsError);
+    // 2. Get rooms joined by user (Received/Joined)
+    // First get the reservation room_ids
+    const { data: reservations } = await supabase
+      .from('reservations')
+      .select('room_id')
+      .eq('user_id', user.id);
 
-    if (roomsError) {
-      console.error('Error fetching user gift rooms:', roomsError);
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to fetch gift rooms'
-      }, { status: 500 });
+    const joinedRoomIds = (reservations as any[])?.map(r => r.room_id) || [];
+
+    let joinedQuery = supabase
+      .from('gift_rooms')
+      .select('id, sender_id, type, capacity, amount, total_amount, message, token, status, joined_count, claimed_count, created_at, expires_at')
+      .in('id', joinedRoomIds)
+      .order('created_at', { ascending: false });
+
+    if (status && ['active', 'full', 'expired', 'completed'].includes(status)) {
+      joinedQuery = joinedQuery.eq('status', status);
     }
 
-    console.log('API: Returning rooms:', rooms?.length || 0, 'rooms');
+    // Execute queries in parallel
+    const [sentResult, joinedResult] = await Promise.all([sentQuery, joinedQuery]);
+
+    if (sentResult.error) {
+      console.error('Error fetching sent rooms:', sentResult.error);
+      throw sentResult.error;
+    }
+
+    if (joinedResult.error) {
+      console.error('Error fetching joined rooms:', joinedResult.error);
+      throw joinedResult.error;
+    }
+
+    // Combine and deduplicate (in case user joined their own room, though we prevent that)
+    const allRooms = [...(sentResult.data || []), ...(joinedResult.data || [])] as any[];
+
+    // Deduplicate by ID
+    const uniqueRooms = Array.from(new Map(allRooms.map(room => [room.id, room])).values());
+
+    // Sort combined results by created_at desc
+    uniqueRooms.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    // Apply pagination manually since we combined results
+    const paginatedRooms = uniqueRooms.slice(offset, offset + limit);
+
+    console.log('API: Returning rooms:', paginatedRooms.length, 'total unique:', uniqueRooms.length);
     return NextResponse.json({
       success: true,
-      data: rooms || []
+      data: paginatedRooms
     });
 
   } catch (error) {

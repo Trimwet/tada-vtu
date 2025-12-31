@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogoInline } from '@/components/logo';
 import { toast } from 'sonner';
+import { StatCard } from '@/components/admin/StatCard';
+import { AnalyticsCharts } from '@/components/admin/AnalyticsCharts';
+import { Wallet, Users, TrendUp, CreditCard, CurrencyNgn, ChartLineUp, Storefront } from '@phosphor-icons/react';
 
 interface Stats {
   totalUsers: number;
@@ -72,6 +75,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'transactions'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [inlomaxBalance, setInlomaxBalance] = useState<number | null>(null);
@@ -143,12 +147,18 @@ export default function AdminDashboard() {
       setStats(data.stats || getDefaultStats());
       setUsers(data.users || []);
       setTransactions(data.transactions || []);
-      
+
       try {
         const balanceRes = await fetch('/api/inlomax/balance');
         const balanceData = await balanceRes.json();
         if (balanceData.status === 'success') setInlomaxBalance(balanceData.balance);
-      } catch {}
+      } catch { }
+
+      try {
+        const analyticsRes = await fetch('/api/admin/analytics?range=30d', { headers: { Authorization: `Bearer ${token}` } });
+        const analyticsData = await analyticsRes.json();
+        setAnalytics(analyticsData);
+      } catch (e) { console.error("Analytics fetch error", e); }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load dashboard data');
@@ -173,7 +183,7 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.phone_number?.includes(searchQuery)
@@ -241,246 +251,158 @@ export default function AdminDashboard() {
 
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && stats && (
-          <div className="space-y-6">
-            {/* Section 1: NET PROFIT - THE REAL MONEY */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                💵 Net Profit
-                <span className="text-xs font-normal text-gray-400">(Your actual profit after all costs)</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className={`border-2 ${stats.netProfit >= 0 ? 'bg-gradient-to-br from-green-600 to-emerald-700 border-green-500' : 'bg-gradient-to-br from-red-600 to-red-700 border-red-500'}`}>
-                  <CardContent className="p-6">
-                    <p className="text-white/80 text-sm mb-1">Total Net Profit</p>
-                    <p className="text-4xl font-bold text-white">
-                      {stats.netProfit >= 0 ? '+' : ''}₦{stats.netProfit.toLocaleString()}
-                    </p>
-                    <p className="text-white/60 text-xs mt-2">After Flutterwave fees & VTU costs</p>
-                  </CardContent>
-                </Card>
-                <Card className={`border-2 ${stats.todayNetProfit >= 0 ? 'bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500' : 'bg-gradient-to-br from-orange-600 to-orange-700 border-orange-500'}`}>
-                  <CardContent className="p-6">
-                    <p className="text-white/80 text-sm mb-1">Today&apos;s Net Profit</p>
-                    <p className="text-4xl font-bold text-white">
-                      {stats.todayNetProfit >= 0 ? '+' : ''}₦{stats.todayNetProfit.toLocaleString()}
-                    </p>
-                    <p className="text-white/60 text-xs mt-2">Profit made today</p>
-                  </CardContent>
-                </Card>
-              </div>
+          <div className="space-y-8 animate-in fade-in duration-500">
+            {/* 1. Hero Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard
+                title="Total Revenue"
+                value={`₦${stats.totalEarnings.toLocaleString()}`}
+                icon={<CurrencyNgn weight="bold" className="w-5 h-5" />}
+                trend={{
+                  value: analytics?.summary?.trends?.revenue || 0,
+                  direction: (analytics?.summary?.trends?.revenue || 0) >= 0 ? 'up' : 'down',
+                  label: 'vs last period'
+                }}
+                color="green"
+              />
+              <StatCard
+                title="Net Profit"
+                value={`₦${stats.netProfit.toLocaleString()}`}
+                icon={<ChartLineUp weight="bold" className="w-5 h-5" />}
+                color={stats.netProfit >= 0 ? "blue" : "red"}
+                description="Actual profit after costs"
+              />
+              <StatCard
+                title="Active Users"
+                value={stats.activeUsers.toString()}
+                icon={<Users weight="bold" className="w-5 h-5" />}
+                trend={{
+                  value: analytics?.summary?.trends?.users || 0,
+                  direction: (analytics?.summary?.trends?.users || 0) >= 0 ? 'up' : 'down',
+                  label: 'vs last period'
+                }}
+                color="orange"
+              />
+              <StatCard
+                title="Total Transactions"
+                value={stats.totalTransactions.toLocaleString()}
+                icon={<CreditCard weight="bold" className="w-5 h-5" />}
+                trend={{
+                  value: analytics?.summary?.trends?.transactions || 0,
+                  direction: (analytics?.summary?.trends?.transactions || 0) >= 0 ? 'up' : 'down',
+                  label: 'vs last period'
+                }}
+                color="purple"
+              />
             </div>
 
-            {/* Section 2: Revenue vs Costs Breakdown */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                📊 Revenue vs Costs
-                <span className="text-xs font-normal text-gray-400">(Detailed breakdown)</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Revenue Side */}
-                <Card className="bg-green-900/30 border-green-500/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-green-400 text-sm flex items-center gap-2">
-                      📈 Revenue (Money In)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between items-center p-2 bg-green-500/10 rounded">
-                      <span className="text-gray-300 text-sm">Service Fees (1%)</span>
-                      <span className="text-green-400 font-bold">+₦{stats.serviceFees.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-green-500/10 rounded">
-                      <span className="text-gray-300 text-sm">Airtime Margin (2.5%)</span>
-                      <span className="text-green-400 font-bold">+₦{stats.airtimeMargin.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-green-500/10 rounded">
-                      <span className="text-gray-300 text-sm">Data Margin (5%)</span>
-                      <span className="text-green-400 font-bold">+₦{stats.dataMargin.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-green-500/10 rounded">
-                      <span className="text-gray-300 text-sm">Bills Margin (0.5%)</span>
-                      <span className="text-green-400 font-bold">+₦{stats.otherMargin.toLocaleString()}</span>
-                    </div>
-                    <div className="border-t border-green-500/30 pt-2 flex justify-between items-center">
-                      <span className="text-white font-semibold">Total Revenue</span>
-                      <span className="text-green-400 font-bold text-lg">+₦{stats.totalEarnings.toLocaleString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Costs Side */}
-                <Card className="bg-red-900/30 border-red-500/50">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-red-400 text-sm flex items-center gap-2">
-                      📉 Costs (Money Out)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between items-center p-2 bg-red-500/10 rounded">
-                      <span className="text-gray-300 text-sm">Flutterwave Fees (~1%)</span>
-                      <span className="text-red-400 font-bold">-₦{stats.flutterwaveFeesPaid.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-red-500/10 rounded opacity-50">
-                      <span className="text-gray-400 text-sm">VTU Costs (paid from Inlomax)</span>
-                      <span className="text-gray-400 text-xs">Separate account</span>
-                    </div>
-                    <div className="border-t border-red-500/30 pt-2 flex justify-between items-center">
-                      <span className="text-white font-semibold">Total Costs</span>
-                      <span className="text-red-400 font-bold text-lg">-₦{stats.flutterwaveFeesPaid.toLocaleString()}</span>
-                    </div>
-                    <div className="bg-gray-800 rounded p-3 mt-2">
-                      <p className="text-gray-400 text-xs">💡 VTU costs are paid from your Inlomax wallet, not from customer deposits. Your profit margin is the difference between what customers pay and what Inlomax charges.</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+            {/* 2. Main Analytics Charts */}
+            <div className="py-2">
+              <AnalyticsCharts
+                data={analytics?.chartData || []}
+                serviceBreakdown={analytics?.serviceBreakdown}
+                loading={!analytics}
+                trends={analytics?.summary?.trends}
+              />
             </div>
 
-            {/* Section 3: API Balances */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                🔌 API Wallets
-                <span className="text-xs font-normal text-gray-400">(Your payment gateway balances)</span>
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className={`border-2 ${stats.flutterwaveBalance < 1000 ? 'bg-red-900/30 border-red-500' : 'bg-blue-900/30 border-blue-500'}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-300 text-sm">Flutterwave Balance</p>
-                        <p className="text-2xl font-bold text-white">₦{stats.flutterwaveBalance.toLocaleString()}</p>
-                        <p className="text-gray-400 text-xs mt-1">Money from customer deposits</p>
-                      </div>
-                      <div className="text-4xl">💳</div>
+            {/* 3. Detailed Financials (Collapsible or just Grid, let's keep them prominent) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-blue-400" /> API Wallet Balances
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-gray-900/50 border border-gray-700/50">
+                    <div>
+                      <p className="text-gray-400 text-xs">Flutterwave (Deposits)</p>
+                      <p className="text-xl font-bold text-white">₦{stats.flutterwaveBalance.toLocaleString()}</p>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card className={`border-2 ${(inlomaxBalance || stats.inlomaxBalance) < 5000 ? 'bg-red-900/30 border-red-500' : 'bg-purple-900/30 border-purple-500'}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-300 text-sm">Inlomax Balance</p>
-                        <p className="text-2xl font-bold text-white">
-                          ₦{(inlomaxBalance || stats.inlomaxBalance || 0).toLocaleString()}
-                        </p>
-                        <p className="text-gray-400 text-xs mt-1">For airtime/data fulfillment</p>
-                        {(inlomaxBalance || stats.inlomaxBalance || 0) < 5000 && (
-                          <p className="text-red-400 text-xs mt-1">⚠️ Low! Fund your Inlomax</p>
-                        )}
-                      </div>
-                      <div className="text-4xl">📱</div>
+                    <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                      <span className="text-orange-500 font-bold">F</span>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Section 4: Liability */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                ⚠️ Liability
-                <span className="text-xs font-normal text-gray-400">(Money you owe to users)</span>
-              </h2>
-              <Card className="bg-yellow-900/30 border-yellow-500/50">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 text-sm">Total User Wallet Balances</p>
-                    <p className="text-3xl font-bold text-yellow-400">₦{stats.totalUserBalances.toLocaleString()}</p>
-                    <p className="text-gray-400 text-xs mt-1">This is money users have in their wallets that you must be able to fulfill</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-gray-400 text-xs">Make sure Flutterwave + Inlomax</p>
-                    <p className="text-gray-400 text-xs">balances can cover this</p>
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-gray-900/50 border border-gray-700/50">
+                    <div>
+                      <p className="text-gray-400 text-xs">Inlomax (VTU Provider)</p>
+                      <p className="text-xl font-bold text-white">₦{(inlomaxBalance || stats.inlomaxBalance || 0).toLocaleString()}</p>
+                      {(inlomaxBalance || stats.inlomaxBalance || 0) < 5000 && <p className="text-red-500 text-[10px] mt-1">⚠️ Low Balance</p>}
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <span className="text-purple-500 font-bold">I</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-white text-base flex items-center gap-2">
+                    <Storefront className="w-4 h-4 text-green-400" /> Revenue Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Airtime Margin</span>
+                    <span className="text-green-400">+₦{stats.airtimeMargin.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Data Margin</span>
+                    <span className="text-green-400">+₦{stats.dataMargin.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400">Service Fees</span>
+                    <span className="text-green-400">+₦{stats.serviceFees.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-gray-700 my-2 pt-2 flex justify-between font-medium">
+                    <span className="text-white">Gross Revenue</span>
+                    <span className="text-green-400">₦{stats.totalEarnings.toLocaleString()}</span>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Section 3: Platform Stats - USER & TRANSACTION DATA */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                📈 Platform Statistics
-                <span className="text-xs font-normal text-gray-400">(User and transaction data)</span>
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">Total Users</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
-                    <p className="text-gray-500 text-xs">Registered accounts</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">Active Users</p>
-                    <p className="text-2xl font-bold text-green-500">{stats.activeUsers}</p>
-                    <p className="text-gray-500 text-xs">Made transactions</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">Total Deposits</p>
-                    <p className="text-2xl font-bold text-blue-500">₦{(stats.totalDeposits/1000).toFixed(0)}k</p>
-                    <p className="text-gray-500 text-xs">Money added by users</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">Total Purchases</p>
-                    <p className="text-2xl font-bold text-orange-500">₦{(stats.totalPurchases/1000).toFixed(0)}k</p>
-                    <p className="text-gray-500 text-xs">Airtime/Data bought</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">User Balances</p>
-                    <p className="text-2xl font-bold text-yellow-500">₦{(stats.totalUserBalances/1000).toFixed(0)}k</p>
-                    <p className="text-gray-500 text-xs">Money in wallets</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <p className="text-gray-400 text-xs mb-1">Pending Txns</p>
-                    <p className="text-2xl font-bold text-red-500">{stats.pendingTransactions}</p>
-                    <p className="text-gray-500 text-xs">Need attention</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Section 4: Recent Transactions */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                🕐 Recent Transactions
-                <span className="text-xs font-normal text-gray-400">(Latest 10 transactions)</span>
-              </h2>
-              <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    {transactions.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4">No transactions yet</p>
-                    ) : transactions.slice(0, 10).map((txn) => (
-                      <div key={txn.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-                        <div>
-                          <p className="text-white font-medium text-sm">{txn.description || txn.type}</p>
-                          <p className="text-gray-400 text-xs">{new Date(txn.created_at).toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-bold ${txn.amount > 0 ? 'text-green-500' : 'text-white'}`}>
+            {/* 4. Recent Transactions */}
+            <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white text-lg">Recent Transactions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead>
+                      <tr className="text-gray-400 border-b border-gray-700">
+                        <th className="py-2">Description</th>
+                        <th className="py-2">Date</th>
+                        <th className="py-2 text-right">Amount</th>
+                        <th className="py-2 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {transactions.slice(0, 8).map((txn) => (
+                        <tr key={txn.id} className="hover:bg-gray-700/30">
+                          <td className="py-3 px-1 text-white">{txn.description || txn.type}</td>
+                          <td className="py-3 px-1 text-gray-500 text-xs">{new Date(txn.created_at).toLocaleString()}</td>
+                          <td className={`py-3 px-1 text-right font-medium ${txn.amount > 0 ? 'text-green-400' : 'text-gray-300'}`}>
                             {txn.amount > 0 ? '+' : ''}₦{Math.abs(txn.amount).toLocaleString()}
-                          </p>
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            txn.status === 'success' ? 'bg-green-500/20 text-green-400' :
-                            txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>{txn.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                          </td>
+                          <td className="py-3 px-1 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] ${txn.status === 'success' ? 'bg-green-500/10 text-green-400' :
+                              txn.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' :
+                                'bg-red-500/10 text-red-400'
+                              }`}>
+                              {txn.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -582,22 +504,20 @@ export default function AdminDashboard() {
                             <p className="text-gray-500 text-xs">ID: {txn.id.slice(0, 8)}...</p>
                           </td>
                           <td className="p-3">
-                            <span className={`px-2 py-1 rounded text-xs capitalize ${
-                              txn.type === 'deposit' ? 'bg-green-500/20 text-green-400' :
+                            <span className={`px-2 py-1 rounded text-xs capitalize ${txn.type === 'deposit' ? 'bg-green-500/20 text-green-400' :
                               txn.type === 'airtime' ? 'bg-blue-500/20 text-blue-400' :
-                              txn.type === 'data' ? 'bg-purple-500/20 text-purple-400' :
-                              'bg-gray-600 text-gray-300'
-                            }`}>{txn.type}</span>
+                                txn.type === 'data' ? 'bg-purple-500/20 text-purple-400' :
+                                  'bg-gray-600 text-gray-300'
+                              }`}>{txn.type}</span>
                           </td>
                           <td className={`p-3 text-right font-bold ${txn.amount > 0 ? 'text-green-500' : 'text-white'}`}>
                             {txn.amount > 0 ? '+' : ''}₦{Math.abs(txn.amount).toLocaleString()}
                           </td>
                           <td className="p-3 text-center">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              txn.status === 'success' ? 'bg-green-500/20 text-green-400' :
+                            <span className={`px-2 py-1 rounded text-xs ${txn.status === 'success' ? 'bg-green-500/20 text-green-400' :
                               txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                              'bg-red-500/20 text-red-400'
-                            }`}>{txn.status}</span>
+                                'bg-red-500/20 text-red-400'
+                              }`}>{txn.status}</span>
                           </td>
                           <td className="p-3 text-gray-400 text-sm">{new Date(txn.created_at).toLocaleString()}</td>
                         </tr>

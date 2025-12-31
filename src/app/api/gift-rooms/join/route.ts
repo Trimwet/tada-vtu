@@ -5,7 +5,7 @@ import { JoinGiftRoomRequest, JoinGiftRoomResponse } from '@/types/gift-room';
 export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftRoomResponse>> {
   try {
     const supabase = await createClient();
-    
+
     // Parse request body
     const body: JoinGiftRoomRequest = await request.json();
     const { room_token, device_fingerprint, contact_info } = body;
@@ -75,9 +75,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
     }
 
     // Get client IP for logging
-    const clientIP = request.headers.get('x-forwarded-for') || 
-                    request.headers.get('x-real-ip') || 
-                    'unknown';
+    const clientIP = request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
 
     // Create reservation using database function
     const { data: reservationId, error: createError } = await supabase
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
 
     if (createError) {
       console.error('Error creating reservation:', createError);
-      
+
       // Handle specific errors
       if (createError.message.includes('Gift room is full')) {
         return NextResponse.json({
@@ -142,6 +142,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
 
     if (roomFetchError) {
       console.error('Error fetching updated room:', roomFetchError);
+    }
+
+    // Link reservation to user if logged in
+    if (user) {
+      // Use any cast to bypass strict typing on table definition
+      const { error: linkError } = await (supabase
+        .from('reservations') as any)
+        .update({ user_id: user.id })
+        .eq('id', reservationId);
+
+      if (linkError) {
+        console.error('Error linking reservation to user:', linkError);
+      }
     }
 
     // Log the join activity with IP address

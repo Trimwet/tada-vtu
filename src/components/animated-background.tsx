@@ -49,10 +49,19 @@ export function AnimatedBackground() {
 
     // Initialize shapes with 3D depth
     const initShapes = () => {
-      const shapes: Shape[] = [];
-      const shapeCount = Math.floor((canvas.width * canvas.height) / 40000); // Slightly more shapes
+      const getShapeCount = () => {
+        const pixelCount = canvas.width * canvas.height;
+        // Reduce count significantly for mobile devices
+        if (window.innerWidth < 768) {
+          return Math.floor(pixelCount / 80000); // Very few shapes on mobile
+        }
+        return Math.floor(pixelCount / 40000);
+      };
 
-      for (let i = 0; i < Math.min(shapeCount, 30); i++) {
+      const shapes: Shape[] = [];
+      const shapeCount = getShapeCount();
+
+      for (let i = 0; i < Math.min(shapeCount, window.innerWidth < 768 ? 10 : 30); i++) {
         const z = Math.random(); // 0 = far background, 1 = close foreground
         const baseSize = Math.random() * 50 + 15;
         shapes.push({
