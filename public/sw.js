@@ -1,8 +1,8 @@
 // TADA VTU Service Worker - Advanced Caching & Offline Support
-const CACHE_NAME = 'tada-vtu-v1.3.0';
-const STATIC_CACHE = 'tada-static-v1.3.0';
-const DYNAMIC_CACHE = 'tada-dynamic-v1.3.0';
-const API_CACHE = 'tada-api-v1.3.0';
+const CACHE_NAME = 'tada-vtu-v1.3.1';
+const STATIC_CACHE = 'tada-static-v1.3.1';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.3.1';
+const API_CACHE = 'tada-api-v1.3.1';
 
 // Critical resources to cache immediately (only guaranteed to exist)
 const STATIC_ASSETS = [
@@ -21,13 +21,13 @@ const API_CACHE_PATTERNS = [
 // Install event - Cache critical resources with robust error handling
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
-  
+
   event.waitUntil(
     Promise.all([
       // Cache static assets with individual error handling
       caches.open(STATIC_CACHE).then(async (cache) => {
         console.log('[SW] Caching static assets');
-        
+
         // Cache each asset individually to avoid failing the entire batch
         const cachePromises = STATIC_ASSETS.map(async (asset) => {
           try {
@@ -43,7 +43,7 @@ self.addEventListener('install', (event) => {
             // Don't throw - continue with other assets
           }
         });
-        
+
         // Wait for all cache attempts to complete (success or failure)
         await Promise.allSettled(cachePromises);
         console.log('[SW] Static asset caching completed');
@@ -52,7 +52,7 @@ self.addEventListener('install', (event) => {
         console.error('[SW] Failed to open static cache:', error);
         return Promise.resolve(); // Don't fail installation
       }),
-      
+
       // Skip waiting to activate immediately
       self.skipWaiting()
     ])
@@ -62,7 +62,7 @@ self.addEventListener('install', (event) => {
 // Activate event - Clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating service worker...');
-  
+
   event.waitUntil(
     Promise.all([
       // Clean up old caches
@@ -83,7 +83,7 @@ self.addEventListener('activate', (event) => {
       }).catch((error) => {
         console.error('[SW] Error cleaning up caches:', error);
       }),
-      
+
       // Take control of all clients
       self.clients.claim()
     ])
@@ -121,7 +121,7 @@ self.addEventListener('fetch', (event) => {
 async function handleApiRequest(request) {
   const url = new URL(request.url);
   const apiPattern = API_CACHE_PATTERNS.find(p => url.pathname.includes(p.pattern));
-  
+
   if (!apiPattern) {
     // Don't cache unknown API endpoints
     try {
@@ -129,11 +129,11 @@ async function handleApiRequest(request) {
     } catch (error) {
       console.log('[SW] API request failed:', error);
       return new Response(
-        JSON.stringify({ 
-          error: 'Network Error', 
-          message: 'Unable to reach server' 
+        JSON.stringify({
+          error: 'Network Error',
+          message: 'Unable to reach server'
         }),
-        { 
+        {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         }
@@ -143,44 +143,44 @@ async function handleApiRequest(request) {
 
   try {
     const cache = await caches.open(API_CACHE);
-    
+
     if (apiPattern.strategy === 'networkFirst') {
       try {
         // Try network first
         const networkResponse = await fetch(request);
-        
+
         if (networkResponse.ok) {
           // Cache successful responses
           const responseClone = networkResponse.clone();
           await cache.put(request, responseClone);
-          
+
           // Set expiry metadata
           const expiryTime = Date.now() + apiPattern.ttl;
           await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
         }
-        
+
         return networkResponse;
       } catch (error) {
         console.log('[SW] Network failed, trying cache:', error);
-        
+
         // Check if cached response is still valid
         const cachedResponse = await cache.match(request);
         const expiryResponse = await cache.match(`${request.url}:expiry`);
-        
+
         if (cachedResponse && expiryResponse) {
           const expiryTime = parseInt(await expiryResponse.text());
           if (Date.now() < expiryTime) {
             return cachedResponse;
           }
         }
-        
+
         // Return offline fallback
         return new Response(
-          JSON.stringify({ 
-            error: 'Offline', 
-            message: 'No network connection available' 
+          JSON.stringify({
+            error: 'Offline',
+            message: 'No network connection available'
           }),
-          { 
+          {
             status: 503,
             headers: { 'Content-Type': 'application/json' }
           }
@@ -190,30 +190,30 @@ async function handleApiRequest(request) {
       // Cache first strategy for static data
       const cachedResponse = await cache.match(request);
       const expiryResponse = await cache.match(`${request.url}:expiry`);
-      
+
       if (cachedResponse && expiryResponse) {
         const expiryTime = parseInt(await expiryResponse.text());
         if (Date.now() < expiryTime) {
           return cachedResponse;
         }
       }
-      
+
       // Cache expired or not found, fetch from network
       try {
         const networkResponse = await fetch(request);
-        
+
         if (networkResponse.ok) {
           const responseClone = networkResponse.clone();
           await cache.put(request, responseClone);
-          
+
           const expiryTime = Date.now() + apiPattern.ttl;
           await cache.put(`${request.url}:expiry`, new Response(expiryTime.toString()));
         }
-        
+
         return networkResponse;
       } catch (error) {
         return cachedResponse || new Response(
-          JSON.stringify({ error: 'Service Unavailable' }), 
+          JSON.stringify({ error: 'Service Unavailable' }),
           { status: 503, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -230,18 +230,18 @@ async function handleStaticAssets(request) {
   try {
     const cache = await caches.open(STATIC_CACHE);
     const cachedResponse = await cache.match(request);
-    
+
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     try {
       const networkResponse = await fetch(request);
-      
+
       if (networkResponse.ok) {
         await cache.put(request, networkResponse.clone());
       }
-      
+
       return networkResponse;
     } catch (error) {
       console.log('[SW] Failed to fetch static asset:', error);
@@ -257,23 +257,23 @@ async function handleStaticAssets(request) {
 async function handleDashboardPages(request) {
   try {
     const cache = await caches.open(DYNAMIC_CACHE);
-    
+
     try {
       const networkResponse = await fetch(request);
-      
+
       if (networkResponse.ok) {
         await cache.put(request, networkResponse.clone());
       }
-      
+
       return networkResponse;
     } catch (error) {
       console.log('[SW] Network failed for dashboard page, trying cache');
-      
+
       const cachedResponse = await cache.match(request);
       if (cachedResponse) {
         return cachedResponse;
       }
-      
+
       // Return offline page
       return new Response(
         `<!DOCTYPE html>
@@ -320,14 +320,14 @@ async function handleDashboardPages(request) {
 async function handleGeneralRequests(request) {
   try {
     const cache = await caches.open(DYNAMIC_CACHE);
-    
+
     try {
       const networkResponse = await fetch(request);
-      
+
       if (networkResponse.ok) {
         await cache.put(request, networkResponse.clone());
       }
-      
+
       return networkResponse;
     } catch (error) {
       const cachedResponse = await cache.match(request);
@@ -350,7 +350,7 @@ async function syncFailedTransactions() {
   try {
     // Get failed transactions from IndexedDB
     const failedTransactions = await getFailedTransactions();
-    
+
     for (const transaction of failedTransactions) {
       try {
         const response = await fetch('/api/transactions/retry', {
@@ -358,7 +358,7 @@ async function syncFailedTransactions() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(transaction)
         });
-        
+
         if (response.ok) {
           await removeFailedTransaction(transaction.id);
         }
@@ -374,7 +374,7 @@ async function syncFailedTransactions() {
 // Push notification handler
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-  
+
   try {
     const data = event.data.json();
     const options = {
@@ -386,7 +386,7 @@ self.addEventListener('push', (event) => {
       actions: data.actions || [],
       requireInteraction: data.requireInteraction || false,
     };
-    
+
     event.waitUntil(
       self.registration.showNotification(data.title, options)
     );
@@ -398,9 +398,9 @@ self.addEventListener('push', (event) => {
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
+
   const urlToOpen = event.notification.data?.url || '/dashboard';
-  
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
@@ -410,7 +410,7 @@ self.addEventListener('notificationclick', (event) => {
             return client.focus();
           }
         }
-        
+
         // Open new window
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
