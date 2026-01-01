@@ -1,5 +1,5 @@
-import { 
-  CreateGiftRoomRequest, 
+import {
+  CreateGiftRoomRequest,
   CreateGiftRoomResponse,
   JoinGiftRoomRequest,
   JoinGiftRoomResponse,
@@ -29,7 +29,7 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -53,7 +53,7 @@ class GiftRoomService {
   async getGiftRoomDetails(token: string): Promise<GiftRoomDetailsResponse> {
     try {
       const deviceFingerprint = generateEnhancedFingerprint();
-      
+
       const response = await fetch(`${this.baseUrl}/${token}?device_hash=${deviceFingerprint.hash}`, {
         method: 'GET',
         headers: {
@@ -62,7 +62,7 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -86,7 +86,7 @@ class GiftRoomService {
   async joinGiftRoom(roomToken: string, contactInfo?: { email?: string; phone?: string; name?: string }): Promise<JoinGiftRoomResponse> {
     try {
       const deviceFingerprint = generateEnhancedFingerprint();
-      
+
       const params: JoinGiftRoomRequest = {
         room_token: roomToken,
         device_fingerprint: deviceFingerprint,
@@ -102,11 +102,11 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Provide more specific error messages
         let errorMessage = data.error || 'Failed to join gift room';
-        
+
         if (response.status === 400) {
           if (errorMessage.includes('spots have been taken')) {
             errorMessage = 'All spots have been taken. Please try another gift room.';
@@ -116,7 +116,7 @@ class GiftRoomService {
             errorMessage = 'You cannot join your own gift room.';
           }
         }
-        
+
         return {
           success: false,
           error: errorMessage,
@@ -151,7 +151,7 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -182,7 +182,7 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -216,7 +216,7 @@ class GiftRoomService {
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Response data:', data);
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -247,7 +247,7 @@ class GiftRoomService {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         return {
           success: false,
@@ -414,7 +414,7 @@ class GiftRoomService {
   }> {
     try {
       const refundInfo = await this.getRefundInfo(roomId);
-      
+
       if (!refundInfo.success) {
         // If we get a 403 error, user is not the creator
         if (refundInfo.error?.includes('Unauthorized')) {
@@ -442,6 +442,18 @@ class GiftRoomService {
         error: 'Failed to validate ownership'
       };
     }
+  }
+
+  /**
+   * Format currency in Nigerian Naira
+   */
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   }
 }
 
