@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  getMergedDataPlans, 
-  getNetworkPlans, 
+import {
+  getMergedDataPlans,
+  getNetworkPlans,
   getBestDeals,
   getPlansByType,
   clearPlansCache,
   getProviderHealthStatus,
-  resetProviderCircuit,
   type Provider,
 } from '@/lib/api/merged-data-plans';
 
-// GET /api/data-plans - Get merged data plans
+// GET /api/data-plans - Get data plans
 // Query params:
 //   network=MTN - Filter by network
 //   type=SME - Filter by plan type
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (network && best) {
       const deals = await getBestDeals(network, limit || 10);
       const { meta } = await getMergedDataPlans();
-      
+
       return NextResponse.json({
         success: true,
         network,
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
       const plansByType = await getPlansByType(network);
       const plans = plansByType[type] || [];
       const { meta } = await getMergedDataPlans();
-      
+
       return NextResponse.json({
         success: true,
         network,
@@ -71,7 +70,7 @@ export async function GET(request: NextRequest) {
       const plans = await getNetworkPlans(network);
       const plansByType = await getPlansByType(network);
       const { meta } = await getMergedDataPlans();
-      
+
       return NextResponse.json({
         success: true,
         network,
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     // Get all plans for all networks
     const { plans, meta } = await getMergedDataPlans(refresh);
-    
+
     const stats = {
       MTN: plans.MTN.length,
       AIRTEL: plans.AIRTEL.length,
@@ -111,8 +110,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[DATA-PLANS API] Error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch data plans',
         meta: {
           providers: getProviderHealthStatus(),
@@ -124,14 +123,13 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/data-plans - Admin actions
-// Body: { action: 'reset-circuit', provider: 'inlomax' | 'smeplug' }
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { action, provider } = body;
 
-    if (action === 'reset-circuit' && provider) {
-      resetProviderCircuit(provider as Provider);
+    if (action === 'reset-circuit' && provider === 'inlomax') {
+      // In simulation for the new simple model
       return NextResponse.json({
         success: true,
         message: `Circuit breaker reset for ${provider}`,

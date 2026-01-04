@@ -11,7 +11,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDataPlans, DataPlan as MergedDataPlan, Provider } from "@/hooks/useDataPlans";
+import { IonIcon } from "@/components/ion-icon";
+import Link from "next/link";
+import { toast } from "@/lib/toast";
+import { NETWORKS } from "@/lib/constants";
+import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { useTransactionPin } from "@/hooks/useTransactionPin";
+import dynamic from "next/dynamic";
+import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
+
+const CreatePinModal = dynamic(
+  () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
+  { ssr: false }
+);
+const VerifyPinModal = dynamic(
+  () => import("@/components/verify-pin-modal").then(mod => mod.VerifyPinModal),
+  { ssr: false }
+);
 
 // Data type labels for display
 const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> = {
@@ -90,8 +106,11 @@ export default function BuyDataPage() {
     setIsProcessing(true);
 
     try {
-      // Use serviceID if available (from Inlomax), otherwise use id
-      const planIdForPurchase = selectedPlanDetails.serviceID || selectedPlanDetails.id.split('-')[0];
+      // For Inlomax, the ID in useDataPlans is 'serviceID-type'. For SMEPlug it's just 'id'.
+      // The API endpoint handles both if the provider is specified.
+      const planIdForPurchase = selectedPlanDetails.id.includes('-')
+        ? selectedPlanDetails.id.split('-')[0]
+        : selectedPlanDetails.id;
 
       const response = await fetch("/api/inlomax/data", {
         method: "POST",
@@ -227,26 +246,38 @@ export default function BuyDataPage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Select Network</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {NETWORKS.map((network) => (
-                    <button
-                      key={network.value}
-                      type="button"
-                      onClick={() => {
-                        setSelectedNetwork(network.value);
-                        setSelectedPlan("");
-                      }}
-                      className={`p-3 rounded-xl border-2 transition-smooth ${selectedNetwork === network.value
-                        ? "border-green-500 bg-green-500/10"
-                        : "border-border hover:border-green-500/50"
-                        }`}
-                    >
-                      <div className="text-center">
-                        <div className="font-semibold text-sm text-foreground">
-                          {network.label}
+                  {NETWORKS.map((network) => {
+                    const isSelected = selectedNetwork === network.value;
+                    let activeStyles = "border-green-500 bg-green-500/10";
+
+                    if (isSelected) {
+                      if (network.value === "MTN") activeStyles = "border-yellow-500 bg-yellow-500/10";
+                      if (network.value === "AIRTEL") activeStyles = "border-red-500 bg-red-500/10";
+                      if (network.value === "GLO") activeStyles = "border-green-500 bg-green-500/10";
+                      if (network.value === "9MOBILE") activeStyles = "border-emerald-400 bg-emerald-400/10";
+                    }
+
+                    return (
+                      <button
+                        key={network.value}
+                        type="button"
+                        onClick={() => {
+                          setSelectedNetwork(network.value);
+                          setSelectedPlan("");
+                        }}
+                        className={`p-3 rounded-xl border-2 transition-smooth ${isSelected
+                          ? activeStyles
+                          : "border-border hover:border-green-500/50"
+                          }`}
+                      >
+                        <div className="text-center">
+                          <div className={`font-semibold text-sm ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            {network.label}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -311,16 +342,16 @@ export default function BuyDataPage() {
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">
                     Select Data Plan
-                    {availablePlans.length > 0 && (
+                    {!loadingPlans && availablePlans.length > 0 && (
                       <span className="text-muted-foreground font-normal ml-2">
                         ({availablePlans.length} {selectedType ? `${selectedType.toUpperCase()} ` : ''}plans)
                       </span>
                     )}
                   </Label>
                   {loadingPlans ? (
-                    <div className="text-center py-8">
-                      <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-muted-foreground">Loading plans...</p>
+                    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                      <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-muted-foreground font-medium animate-pulse">Fetching best plans for you...</p>
                     </div>
                   ) : availablePlans.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
@@ -375,7 +406,7 @@ export default function BuyDataPage() {
 
 
               {/* Summary */}
-              {selectedNetwork && selectedPlanDetails && phoneNumber && (
+              {selectedNetwork && selectedPlanDetails && phoneNumber && !loadingPlans && (
                 <div className="bg-muted/50 p-4 rounded-xl space-y-3">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <IonIcon

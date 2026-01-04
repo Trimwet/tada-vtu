@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getProviderStatus, resetProviderHealth, Provider } from '@/lib/api/provider-router';
+import { getProviderStatus, Provider } from '@/lib/api/provider-router';
 import { createClient } from '@/lib/supabase/server';
 
 // GET /api/admin/provider-status - Get current provider health status
 export async function GET() {
   try {
     const supabase = await createClient();
-    
+
     // Check if user is admin
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -51,7 +51,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    
+
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -76,18 +76,21 @@ export async function POST(request: Request) {
 
     const { provider } = await request.json();
 
-    if (!provider || !['inlomax', 'smeplug'].includes(provider)) {
+    if (!provider || provider !== 'inlomax') {
       return NextResponse.json(
         { status: 'error', message: 'Invalid provider' },
         { status: 400 }
       );
     }
 
-    resetProviderHealth(provider as Provider);
+    // resetProviderHealth removed as it's no longer needed for Inlomax-only
+    // but we can clear the plans cache as a form of "reset"
+    const { clearPlansCache } = await import('@/lib/api/provider-router');
+    clearPlansCache();
 
     return NextResponse.json({
       status: 'success',
-      message: `${provider} health reset successfully`,
+      message: `${provider} cache cleared successfully`,
       data: getProviderStatus(),
     });
   } catch (error) {

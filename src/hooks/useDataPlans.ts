@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-export type Provider = 'inlomax' | 'smeplug';
+export type Provider = 'inlomax';
 
 export interface DataPlan {
   id: string;
@@ -15,25 +15,12 @@ export interface DataPlan {
   type: string;
   validity: string;
   pricePerGB: number;
-  isCheapest?: boolean;
-  alternativeProvider?: Provider;
-  alternativePrice?: number;
-  savings?: number;
-}
-
-export interface ProviderStatus {
-  healthy: boolean;
-  planCount: number;
-  lastSuccess: number;
-  consecutiveFailures: number;
-  circuitOpen: boolean;
 }
 
 export interface DataPlansMeta {
   cachedAt: number;
   isFresh: boolean;
   isStale: boolean;
-  providers: Record<Provider, ProviderStatus>;
   totalPlans: number;
 }
 
@@ -59,14 +46,14 @@ const LOCAL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Load from localStorage
 function loadFromStorage(network: string): DataPlansState | null {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const stored = localStorage.getItem(`${STORAGE_KEY}_${network}`);
     if (!stored) return null;
-    
+
     const data = JSON.parse(stored);
     const age = Date.now() - data.lastFetch;
-    
+
     // Return cached data if not too old
     if (age < LOCAL_CACHE_TTL * 6) { // 30 min max local cache
       return data;
@@ -74,14 +61,14 @@ function loadFromStorage(network: string): DataPlansState | null {
   } catch {
     // Ignore storage errors
   }
-  
+
   return null;
 }
 
 // Save to localStorage
 function saveToStorage(network: string, state: DataPlansState) {
   if (typeof window === 'undefined') return;
-  
+
   try {
     localStorage.setItem(`${STORAGE_KEY}_${network}`, JSON.stringify(state));
   } catch {
@@ -134,7 +121,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       if (data.success) {
         // Ensure plans is always an array
         const plansArray = Array.isArray(data.plans) ? data.plans : [];
-        
+
         const newState: DataPlansState = {
           plans: plansArray,
           plansByType: data.byType || {},
@@ -144,7 +131,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
           error: null,
           lastFetch: Date.now(),
         };
-        
+
         setState(newState);
         saveToStorage(network, newState);
       } else {
@@ -156,7 +143,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       }
     } catch (error) {
       if (!mountedRef.current) return;
-      
+
       setState(prev => ({
         ...prev,
         loading: false,
@@ -170,7 +157,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
   // Initial fetch
   useEffect(() => {
     mountedRef.current = true;
-    
+
     // Don't fetch if no network selected
     if (!network) {
       setState({
@@ -184,7 +171,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       });
       return;
     }
-    
+
     // If we have cached data, show it immediately but still fetch fresh
     const cached = loadFromStorage(network);
     if (cached && cached.plans.length > 0) {
@@ -242,8 +229,8 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       .slice(0, limit);
   }, [state.plans]);
 
-  const findPlanById = useCallback((id: string, provider: Provider) => {
-    return state.plans.find(p => p.id === id && p.provider === provider) || null;
+  const findPlanById = useCallback((id: string) => {
+    return state.plans.find(p => p.id === id) || null;
   }, [state.plans]);
 
   return {
