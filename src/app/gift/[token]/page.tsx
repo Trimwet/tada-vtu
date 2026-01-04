@@ -41,6 +41,11 @@ export default function GiftRoomPage() {
   const [claiming, setClaiming] = useState(false);
   const [roomData, setRoomData] = useState<GiftRoomPageData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Hydration fix: time-dependent state
+  const [isMounted, setIsMounted] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
 
   // Load gift room data
   useEffect(() => {
@@ -60,6 +65,23 @@ export default function GiftRoomPage() {
 
     loadGiftRoom();
   }, [token]);
+
+  // Hydration fix: Update time-dependent calculations after mount
+  useEffect(() => {
+    if (!roomData?.room?.expires_at) return;
+    
+    setIsMounted(true);
+    setIsExpired(isGiftRoomExpired(roomData.room.expires_at));
+    setTimeLeft(getTimeUntilExpiration(roomData.room.expires_at));
+
+    // Update time left every minute
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeUntilExpiration(roomData.room.expires_at));
+      setIsExpired(isGiftRoomExpired(roomData.room.expires_at));
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [roomData?.room?.expires_at]);
 
 
   // SIMPLIFIED: Join requires login - no more orphaned reservations
@@ -183,25 +205,6 @@ export default function GiftRoomPage() {
   }
 
   const { room, sender = { full_name: "Someone", referral_code: "" }, user_reservation, can_join, spots_remaining } = roomData;
-
-  // Hydration fix: Move time-dependent calculations to useEffect
-  const [isMounted, setIsMounted] = useState(false);
-  const [isExpired, setIsExpired] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    setIsMounted(true);
-    setIsExpired(isGiftRoomExpired(room.expires_at));
-    setTimeLeft(getTimeUntilExpiration(room.expires_at));
-
-    // Optional: Update time left every minute
-    const timer = setInterval(() => {
-      setTimeLeft(getTimeUntilExpiration(room.expires_at));
-      setIsExpired(isGiftRoomExpired(room.expires_at));
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, [room.expires_at]);
 
 
   return (

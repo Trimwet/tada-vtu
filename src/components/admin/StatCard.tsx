@@ -17,7 +17,6 @@ interface StatCardProps {
     description?: string;
     tooltip?: string;
     className?: string;
-    color?: 'default' | 'green' | 'blue' | 'purple' | 'orange' | 'red';
 }
 
 export function StatCard({
@@ -28,7 +27,6 @@ export function StatCard({
     description,
     tooltip,
     className,
-    color = 'default',
 }: StatCardProps) {
     const [showTooltip, setShowTooltip] = useState(false);
 
