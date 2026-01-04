@@ -11,34 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { IonIcon } from "@/components/ion-icon";
-import Link from "next/link";
-import { toast } from "@/lib/toast";
-import { NETWORKS } from "@/lib/constants";
-import { useSupabaseUser } from "@/hooks/useSupabaseUser";
-import { useTransactionPin } from "@/hooks/useTransactionPin";
-import dynamic from "next/dynamic";
-
-const CreatePinModal = dynamic(
-  () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
-  { ssr: false }
-);
-const VerifyPinModal = dynamic(
-  () => import("@/components/verify-pin-modal").then(mod => mod.VerifyPinModal),
-  { ssr: false }
-);
-
-
-interface DataPlan {
-  id: string;
-  serviceID?: string; // Original Inlomax serviceID for purchase
-  name: string;
-  size: string;
-  price: number;
-  validity: string;
-  type: string;
-  dataType?: string; // Original Inlomax data type
-}
+import { useDataPlans, DataPlan as MergedDataPlan, Provider } from "@/hooks/useDataPlans";
 
 // Data type labels for display
 const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> = {
@@ -67,65 +40,44 @@ export default function BuyDataPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [dataPlans, setDataPlans] = useState<DataPlan[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
 
+  const {
+    plans: dataPlans,
+    loading: loadingPlans,
+    error: plansError
+  } = useDataPlans({
+    network: selectedNetwork,
+    autoRefresh: true
+  });
+
+  // Reset selections when network changes
+  useEffect(() => {
+    setSelectedType("");
+    setSelectedPlan("");
+  }, [selectedNetwork]);
 
   // Extract unique data types from fetched plans
   const availableTypes = useMemo(() => {
-    const types = [...new Set(dataPlans.map((plan) => plan.type))];
-    return types.map((type) => ({
-      value: type,
-      label: DATA_TYPE_LABELS[type]?.label || type.toUpperCase(),
-      description: DATA_TYPE_LABELS[type]?.description || "",
-      count: dataPlans.filter((p) => p.type === type).length,
-    }));
-  }, [dataPlans]);
+    if (!dataPlans || dataPlans.length === 0) return [];
 
-  // Fetch data plans when network changes
-  useEffect(() => {
-    if (!selectedNetwork) {
-      setDataPlans([]);
-      setSelectedType("");
-      return;
+    const types = [...new Set(dataPlans.map((plan) => plan.type))];
+
+    // Auto-select first available type if none selected
+    if (types.length > 0 && !selectedType) {
+      setTimeout(() => setSelectedType(types[0]), 0);
     }
 
-    const fetchPlans = async () => {
-      setLoadingPlans(true);
-      setSelectedType("");
-      setSelectedPlan("");
-
-      try {
-        const response = await fetch(`/api/inlomax/data-plans?network=${selectedNetwork}`);
-        const result = await response.json();
-
-        if (result.status === 'success' && result.data) {
-          setDataPlans(result.data);
-
-          // Auto-select first available type
-          const types = [...new Set(result.data.map((p: DataPlan) => p.type))];
-          if (types.length > 0) {
-            setSelectedType(types[0] as string);
-          }
-        } else {
-          setDataPlans([]);
-          toast.error("Failed to load data plans");
-        }
-      } catch (error) {
-        console.error('Error fetching data plans:', error);
-        setDataPlans([]);
-        toast.error("Network error loading plans");
-      } finally {
-        setLoadingPlans(false);
-      }
-    };
-
-    fetchPlans();
-  }, [selectedNetwork]);
+    return types.map((type) => ({
+      value: type,
+      label: DATA_TYPE_LABELS[type.toLowerCase()]?.label || type.toUpperCase(),
+      description: DATA_TYPE_LABELS[type.toLowerCase()]?.description || "",
+      count: dataPlans.filter((p) => p.type === type).length,
+    }));
+  }, [dataPlans, selectedType]);
 
   // Filter plans by selected type
   const availablePlans = useMemo(() => {
-    if (!selectedType) return [];
+    if (!selectedType || !dataPlans) return [];
     return dataPlans.filter((plan) => plan.type === selectedType);
   }, [dataPlans, selectedType]);
 

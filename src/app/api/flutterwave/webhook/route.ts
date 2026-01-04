@@ -13,6 +13,29 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey);
 }
 
+// Log webhook for debugging
+async function logWebhook(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  source: string,
+  eventType: string,
+  payload: unknown,
+  status: 'received' | 'processed' | 'failed',
+  errorMessage?: string
+) {
+  try {
+    await supabase.from('webhook_logs').insert({
+      source,
+      event_type: eventType,
+      payload: payload as object,
+      status,
+      error_message: errorMessage || null,
+      processed_at: status !== 'received' ? new Date().toISOString() : null
+    } as never);
+  } catch (e) {
+    console.error('Failed to log webhook:', e);
+  }
+}
+
 // GET endpoint for testing webhook URL accessibility
 export async function GET() {
   return NextResponse.json({
@@ -26,23 +49,26 @@ import { processDeposit } from '@/lib/api/deposit-processor';
 export async function POST(request: NextRequest) {
   // Always return 200 to Flutterwave unless it's a critical infrastructure failure
   const responseOk = NextResponse.json({ status: 'success' });
+  const supabase = getSupabaseAdmin();
 
   try {
     const signature = request.headers.get('verif-hash');
     const secretHash = process.env.FLUTTERWAVE_WEBHOOK_SECRET;
 
-    // 1. Signature Verification
-    if (secretHash && signature !== secretHash) {
-      console.error('❌ Webhook: Invalid signature');
-      // We still return 200 to stop retry attacks, but log the error
-      return responseOk;
-    }
-
     const payload = await request.json();
     const { event, data } = payload;
 
+    // Log all incoming webhooks
+    await logWebhook(supabase, 'flutterwave', event, payload, 'received');
+
+    // 1. Signature Verification
+    if (secretHash && signature !== secretHash) {
+      console.error('❌ Webhook: Invalid signature');
+      await logWebhook(supabase, 'flutterwave', event, payload, 'failed', 'Invalid signature');
+      return responseOk;
+    }
+
     console.log(`🔔 Webhook received: ${event}`, data?.tx_ref || data?.reference);
-    const supabase = getSupabaseAdmin();
 
     // 2. Handle Deposits (charge.completed)
     if (event === 'charge.completed' && data.status === 'successful') {
@@ -92,6 +118,16 @@ export async function POST(request: NextRequest) {
 
       if (!userId) {
         console.error('⚠️ Webhook: Could not identify user', { txRef, flwRef });
+        await logWebhook(supabase, 'flutterwave', event, payload, 'failed', 'Could not identify user');
+        
+        // Store as pending payment for manual review or later verification
+        await supabase.from('pending_payments').upsert({
+          flutterwave_ref: flwRef,
+          tx_ref: txRef,
+          amount: amount,
+          status: 'pending'
+        }, { onConflict: 'flutterwave_ref' });
+        
         return responseOk;
       }
 
@@ -111,6 +147,8 @@ export async function POST(request: NextRequest) {
         description: isBankTransfer ? `Bank transfer (₦${fee} fee deducted)` : `Wallet funding via ${data.payment_type}`,
         metadata: { ...data.meta, flw_id: data.id }
       });
+      
+      await logWebhook(supabase, 'flutterwave', event, payload, 'processed');
     }
 
     // 3. Handle Withdrawals (transfer.completed)
@@ -143,6 +181,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ Webhook Critical Error:', error);
+    try {
+      await logWebhook(supabase, 'flutterwave', 'unknown', { error: String(error) }, 'failed', String(error));
+    } catch {}
     // Return 200 anyway to prevent Flutterwave disabling the webhook
     return responseOk;
   }
