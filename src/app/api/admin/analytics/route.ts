@@ -85,8 +85,9 @@ export async function GET(request: NextRequest) {
         .gte('created_at', start.toISOString())
         .lte('created_at', end.toISOString());
 
-      let revenue = 0;
+      let estimatedEarnings = 0; // Renamed
       let deposits = 0;
+      let purchaseVolume = 0; // NEW
       const transactions = txns?.length || 0;
       const users = newUsers?.length || 0;
 
@@ -94,13 +95,22 @@ export async function GET(request: NextRequest) {
         const amount = Math.abs(txn.amount);
         if (txn.type === 'deposit') {
           deposits += amount;
-          revenue += Math.max(50, Math.ceil(amount * 0.01));
-        } else if (txn.type === 'airtime') revenue += Math.round(amount * 0.025);
-        else if (txn.type === 'data') revenue += Math.round(amount * 0.05);
-        else revenue += Math.round(amount * 0.005);
+          estimatedEarnings += Math.max(50, Math.ceil(amount * 0.01));
+        } else if (txn.type === 'airtime') {
+          estimatedEarnings += Math.round(amount * 0.025);
+          purchaseVolume += amount;
+        } else if (txn.type === 'data') {
+          estimatedEarnings += Math.round(amount * 0.05);
+          purchaseVolume += amount;
+        } else {
+          estimatedEarnings += Math.round(amount * 0.005);
+          purchaseVolume += amount;
+        }
       });
 
-      return { revenue, deposits, transactions, users, txns };
+      const grossVolume = deposits + purchaseVolume;
+
+      return { estimatedEarnings, deposits, grossVolume, transactions, users, txns };
     }
 
     const [currentStats, previousStats] = await Promise.all([
@@ -115,8 +125,9 @@ export async function GET(request: NextRequest) {
     };
 
     const trends = {
-      revenue: calculateTrend(currentStats.revenue, previousStats.revenue),
+      estimatedEarnings: calculateTrend(currentStats.estimatedEarnings, previousStats.estimatedEarnings),
       deposits: calculateTrend(currentStats.deposits, previousStats.deposits),
+      grossVolume: calculateTrend(currentStats.grossVolume, previousStats.grossVolume),
       transactions: calculateTrend(currentStats.transactions, previousStats.transactions),
       users: calculateTrend(currentStats.users, previousStats.users),
     };
@@ -130,7 +141,7 @@ export async function GET(request: NextRequest) {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
       const key = d.toISOString().split('T')[0];
-      dailyData.set(key, { date: key, revenue: 0, deposits: 0, airtime: 0, data: 0, bills: 0, transactions: 0, users: 0 });
+      dailyData.set(key, { date: key, estimatedEarnings: 0, deposits: 0, grossVolume: 0, airtime: 0, data: 0, bills: 0, transactions: 0, users: 0 });
     }
 
     currentStats.txns?.forEach(txn => {
@@ -142,17 +153,18 @@ export async function GET(request: NextRequest) {
 
       if (txn.type === 'deposit') {
         entry.deposits += amount;
-        entry.revenue += Math.max(50, Math.ceil(amount * 0.01));
+        entry.estimatedEarnings += Math.max(50, Math.ceil(amount * 0.01));
       } else if (txn.type === 'airtime') {
         entry.airtime += amount;
-        entry.revenue += Math.round(amount * 0.025);
+        entry.estimatedEarnings += Math.round(amount * 0.025);
       } else if (txn.type === 'data') {
         entry.data += amount;
-        entry.revenue += Math.round(amount * 0.05);
+        entry.estimatedEarnings += Math.round(amount * 0.05);
       } else {
         entry.bills += amount;
-        entry.revenue += Math.round(amount * 0.005);
+        entry.estimatedEarnings += Math.round(amount * 0.005);
       }
+      entry.grossVolume = entry.deposits + entry.airtime + entry.data + entry.bills;
     });
 
     // Re-query users just to map them to days (optimized: we could have done this in getPeriodData but keeping it simple)
@@ -183,8 +195,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       summary: {
-        totalRevenue: currentStats.revenue,
+        totalEstimatedEarnings: currentStats.estimatedEarnings,
         totalDeposits: currentStats.deposits,
+        totalGrossVolume: currentStats.grossVolume,
         totalTransactions: currentStats.transactions,
         newUsers: currentStats.users,
         trends

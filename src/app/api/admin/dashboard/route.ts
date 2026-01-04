@@ -19,7 +19,7 @@ async function getFlutterwaveBalance(): Promise<number> {
   try {
     const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
     if (!secretKey) return 0;
-    
+
     const response = await fetch('https://api.flutterwave.com/v3/balances/NGN', {
       headers: { Authorization: `Bearer ${secretKey}` },
     });
@@ -35,7 +35,7 @@ async function getInlomaxBalance(): Promise<number> {
   try {
     const apiKey = process.env.INLOMAX_API_KEY;
     if (!apiKey) return 0;
-    
+
     const response = await fetch('https://inlomax.com.ng/api/balance', {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
@@ -142,18 +142,18 @@ export async function GET(request: NextRequest) {
       .eq('status', 'success');
 
     const totalPurchases = purchaseData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    
+
     // Estimate margins (roughly 2.5% on airtime, 5% on data)
     const airtimePurchases = purchaseData?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const dataPurchases = purchaseData?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const otherPurchases = purchaseData?.filter(t => !['airtime', 'data'].includes(t.type)).reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    
+
     const airtimeMargin = Math.round(airtimePurchases * 0.025); // ~2.5% margin
     const dataMargin = Math.round(dataPurchases * 0.05); // ~5% margin
     const otherMargin = Math.round(otherPurchases * 0.005); // ~0.5% margin
-    
+
     const totalMargins = airtimeMargin + dataMargin + otherMargin;
-    const totalEarnings = serviceFees + totalMargins;
+    const estimatedEarnings = serviceFees + totalMargins; // Renamed for clarity
 
     // Today's earnings
     const { data: todayDeposits } = await supabase
@@ -178,13 +178,13 @@ export async function GET(request: NextRequest) {
     const todayAirtime = todayPurchases?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const todayData = todayPurchases?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const todayMargins = Math.round(todayAirtime * 0.025) + Math.round(todayData * 0.05);
-    const todayEarnings = todayServiceFees + todayMargins;
+    const todayEstimatedEarnings = todayServiceFees + todayMargins;
 
     // Total user balances (your liability)
     const { data: balanceData } = await supabase
       .from('profiles')
       .select('balance');
-    
+
     const totalUserBalances = balanceData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
     // Get API balances
@@ -193,25 +193,25 @@ export async function GET(request: NextRequest) {
       getInlomaxBalance(),
     ]);
 
-    // Calculate Flutterwave fees paid (estimate ~1.4% of deposits for card, less for bank transfer)
-    // Average ~1% considering mix of payment methods
+    // Calculate Flutterwave fees paid (estimate ~1% of deposits)
     const flutterwaveFeesPaid = Math.round(totalDeposits * 0.01);
 
     // Calculate actual costs
-    // Inlomax costs: airtime ~97.5% of face value, data ~95% of face value
     const airtimeCost = Math.round(airtimePurchases * 0.975);
     const dataCost = Math.round(dataPurchases * 0.95);
     const otherCost = Math.round(otherPurchases * 0.995);
     const totalVTUCosts = airtimeCost + dataCost + otherCost;
 
-    // Actual profit calculation
-    const grossRevenue = totalDeposits + serviceFees; // What customers paid
-    const totalCosts = totalVTUCosts + flutterwaveFeesPaid; // What you spent
-    const netProfit = serviceFees + totalMargins - flutterwaveFeesPaid;
+    // Actual volume and profit calculation
+    const grossVolume = totalDeposits + totalPurchases; // Total money flowing through platform
+    const grossRevenue = totalDeposits + serviceFees; // Platform inflow
+    const totalCosts = totalVTUCosts + flutterwaveFeesPaid;
+    const netProfit = estimatedEarnings - flutterwaveFeesPaid;
 
-    // Today's costs
+    // Today's metrics
+    const todayGrossVolume = (todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0) + (todayPurchases?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0);
     const todayFlutterwaveFees = Math.round((todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0) * 0.01);
-    const todayNetProfit = todayEarnings - todayFlutterwaveFees;
+    const todayNetProfit = todayEstimatedEarnings - todayFlutterwaveFees;
 
     // Fetch users (last 100)
     const { data: users } = await supabase
@@ -243,8 +243,10 @@ export async function GET(request: NextRequest) {
         dataMargin,
         otherMargin,
         totalMargins,
-        totalEarnings,
-        todayEarnings,
+        estimatedEarnings, // Renamed
+        todayEstimatedEarnings, // Renamed
+        grossVolume, // NEW
+        todayGrossVolume, // NEW
         // NEW: Costs & Net Profit
         flutterwaveFeesPaid,
         totalVTUCosts,

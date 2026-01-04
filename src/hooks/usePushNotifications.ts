@@ -22,18 +22,50 @@ export function usePushNotifications(userId: string | undefined) {
   // Check if push notifications are supported
   useEffect(() => {
     const checkSupport = async () => {
-      const isSupported = 
-        'serviceWorker' in navigator && 
-        'PushManager' in window &&
-        'Notification' in window;
+      // 1. Basic API check
+      const hasWorker = 'serviceWorker' in navigator;
+      const hasPush = 'PushManager' in window;
+      const hasNotify = 'Notification' in window;
 
-      if (!isSupported) {
-        setState(prev => ({ ...prev, isSupported: false, loading: false }));
+      // 2. Check for insecure context (HTTP)
+      if (!window.isSecureContext) {
+        setState(prev => ({
+          ...prev,
+          isSupported: false,
+          loading: false,
+          error: 'Push notifications require a secure (HTTPS) connection'
+        }));
+        return;
+      }
+
+      if (!hasWorker || !hasPush || !hasNotify) {
+        setState(prev => ({
+          ...prev,
+          isSupported: false,
+          loading: false,
+          error: 'Browser does not support push notifications'
+        }));
+        return;
+      }
+
+      try {
+        // 3. Try a tiny PushManager check to catch Private Mode (where property exists but fails)
+        const registration = await navigator.serviceWorker.ready;
+        if (!registration.pushManager) {
+          throw new Error('PushManager not available (Private Mode?)');
+        }
+      } catch (err) {
+        setState(prev => ({
+          ...prev,
+          isSupported: false,
+          loading: false,
+          error: 'Unsupported or Private Browsing mode'
+        }));
         return;
       }
 
       const permission = Notification.permission;
-      
+
       // Check if already subscribed
       let isSubscribed = false;
       try {
@@ -65,11 +97,11 @@ export function usePushNotifications(userId: string | undefined) {
     try {
       // Request permission
       const permission = await Notification.requestPermission();
-      
+
       if (permission !== 'granted') {
-        setState(prev => ({ 
-          ...prev, 
-          permission, 
+        setState(prev => ({
+          ...prev,
+          permission,
           loading: false,
           error: 'Notification permission denied',
         }));
@@ -81,7 +113,7 @@ export function usePushNotifications(userId: string | undefined) {
 
       // Get VAPID public key
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      
+
       if (!vapidPublicKey) {
         throw new Error('VAPID public key not configured');
       }

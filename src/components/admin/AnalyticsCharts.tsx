@@ -22,8 +22,9 @@ import { useState } from 'react';
 // --- Types ---
 interface ChartDataPoint {
     date: string;
-    revenue: number;
+    estimatedEarnings: number;
     deposits: number;
+    grossVolume: number;
     transactions: number;
     users: number;
     [key: string]: string | number;
@@ -33,7 +34,7 @@ interface AnalyticsChartsProps {
     data: ChartDataPoint[];
     serviceBreakdown?: { name: string; value: number; color?: string }[];
     loading?: boolean;
-    trends?: { revenue: number;[key: string]: number };
+    trends?: { estimatedEarnings: number;[key: string]: number };
 }
 
 // --- Constants ---
@@ -82,8 +83,8 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
         </div>;
     }
 
-    const revenueTrend = trends?.revenue || 0;
-    const isPositive = revenueTrend >= 0;
+    const earningsTrend = trends?.estimatedEarnings || 0;
+    const isPositive = earningsTrend >= 0;
 
     return (
         <div className="space-y-6">
@@ -93,12 +94,12 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                     <div className="flex justify-between items-center">
                         <CardTitle className="text-white text-lg flex items-center gap-2">
                             <CurrencyNgn className="text-green-500 w-5 h-5" weight="bold" />
-                            Revenue & Deposits Trend
+                            Earnings & Deposits Trend
                         </CardTitle>
                         <div className="flex gap-2">
                             <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isPositive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
                                 {isPositive ? <TrendUp weight="bold" /> : <TrendDown weight="bold" />}
-                                {revenueTrend > 0 ? '+' : ''}{revenueTrend}% vs last period
+                                {earningsTrend > 0 ? '+' : ''}{earningsTrend}% vs last period
                             </span>
                         </div>
                     </div>
@@ -138,8 +139,8 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                                 <Tooltip content={<CustomTooltip formatter={formatCurrency} />} cursor={{ stroke: '#4b5563', strokeDasharray: '4 4' }} />
                                 <Area
                                     type="monotone"
-                                    dataKey="revenue"
-                                    name="Revenue"
+                                    dataKey="estimatedEarnings"
+                                    name="Est. Earnings"
                                     stroke="#22c55e"
                                     strokeWidth={3}
                                     fillOpacity={1}
@@ -153,6 +154,15 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                                     strokeWidth={3}
                                     fillOpacity={1}
                                     fill="url(#colorDeposits)"
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="grossVolume"
+                                    name="Gross Volume"
+                                    stroke="#f59e0b"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    fill="none"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -201,54 +211,50 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                     </CardContent>
                 </Card>
 
-                {/* Service Breakdown Donut Chart */}
+                {/* Service Breakdown - Horizontal Bar Chart */}
                 <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <Broadcast className="text-orange-500 w-5 h-5" weight="bold" />
+                            <Broadcast className="text-green-500 w-5 h-5" weight="bold" />
                             Service Distribution
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] w-full flex items-center justify-center relative">
+                        <div className="h-[300px] w-full">
                             {(!serviceBreakdown || serviceBreakdown.length === 0) ? (
-                                <div className="text-gray-500 text-sm">No data available</div>
+                                <div className="h-full flex items-center justify-center text-gray-500 text-sm">No data available</div>
                             ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={serviceBreakdown}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={100}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {serviceBreakdown.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            content={<CustomTooltip formatter={formatCurrency} />}
-                                        />
-                                        <Legend
-                                            verticalAlign="bottom"
-                                            height={36}
-                                            iconType="circle"
-                                            formatter={(value, entry: any) => <span className="text-gray-300 ml-1">{value}</span>}
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            )}
-                            {/* Center Text */}
-                            {serviceBreakdown && serviceBreakdown.length > 0 && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <p className="text-gray-400 text-xs">Total</p>
-                                    <p className="text-white font-bold text-lg">
-                                        ₦{(serviceBreakdown.reduce((sum, item) => sum + item.value, 0) / 1000000).toFixed(1)}M
-                                    </p>
+                                <div className="space-y-4">
+                                    {serviceBreakdown.map((item, index) => {
+                                        const total = serviceBreakdown.reduce((sum, i) => sum + i.value, 0);
+                                        const percentage = total > 0 ? (item.value / total) * 100 : 0;
+                                        return (
+                                            <div key={item.name} className="space-y-2">
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-gray-300 capitalize">{item.name}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-gray-500 text-xs">{percentage.toFixed(1)}%</span>
+                                                        <span className="text-white font-medium">₦{item.value.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-3 bg-gray-700/50 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${percentage}%`,
+                                                            backgroundColor: COLORS[index % COLORS.length]
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="pt-4 border-t border-gray-700/50 flex justify-between items-center">
+                                        <span className="text-gray-400 text-sm">Total Volume</span>
+                                        <span className="text-white font-bold text-lg">
+                                            ₦{serviceBreakdown.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
                             )}
                         </div>

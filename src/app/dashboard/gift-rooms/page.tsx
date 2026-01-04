@@ -162,91 +162,78 @@ export default function GiftRoomsPage() {
           </div>
         ) : (
           <>
-            {/* Overview Stats - Green/White/Black theme */}
+            {/* Overview Stats - Premium Minimalist theme */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="gift" size="24px" color="#22c55e" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {totalStats.totalRooms}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
+              <Card className="bg-card border-border/50 hover:border-green-500/30 transition-colors">
+                <CardContent className="p-4 flex flex-col items-center justify-center space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Total Rooms
                   </div>
+                  <div className="text-3xl font-bold text-foreground">
+                    {totalStats.totalRooms}
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="pulse" size="24px" color="#22c55e" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {totalStats.activeRooms}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
+              <Card className="bg-card border-border/50 hover:border-green-500/30 transition-colors">
+                <CardContent className="p-4 flex flex-col items-center justify-center space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Active
                   </div>
+                  <div className="text-3xl font-bold text-green-500">
+                    {totalStats.activeRooms}
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="trending-up" size="24px" color="#22c55e" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">
-                    ₦{totalStats.totalSent.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
+              <Card className="bg-card border-border/50 hover:border-green-500/30 transition-colors">
+                <CardContent className="p-4 flex flex-col items-center justify-center space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Total Sent
                   </div>
+                  <div className="text-3xl font-bold text-foreground">
+                    ₦{totalStats.totalSent.toLocaleString()}
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <IonIcon name="checkmark-done" size="24px" color="#22c55e" />
-                  </div>
-                  <div className="text-2xl font-bold text-foreground">
-                    ₦{totalStats.totalClaimed.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
+              <Card className="bg-card border-border/50 hover:border-green-500/30 transition-colors">
+                <CardContent className="p-4 flex flex-col items-center justify-center space-y-1">
+                  <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     Claimed
+                  </div>
+                  <div className="text-3xl font-bold text-foreground">
+                    ₦{totalStats.totalClaimed.toLocaleString()}
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Filters */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 overflow-x-auto">
-                  {STATUS_FILTERS.map((filter) => (
-                    <button
-                      key={filter.value}
-                      onClick={() => setStatusFilter(filter.value)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all whitespace-nowrap ${statusFilter === filter.value
-                        ? 'border-green-500 bg-green-500/10 text-green-500'
-                        : 'border-border hover:border-green-500/50 text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                      <IonIcon name={filter.icon} size="16px" />
-                      <span className="text-sm font-medium">{filter.label}</span>
-                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                        {filter.value === 'all'
-                          ? giftRooms.length
-                          : giftRooms.filter(r => r.status === filter.value).length
-                        }
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Filters - Minimalist row */}
+            <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
+              {STATUS_FILTERS.map((filter) => {
+                const count = filter.value === 'all'
+                  ? giftRooms.length
+                  : giftRooms.filter(r => r.status === filter.value).length;
+
+                return (
+                  <button
+                    key={filter.value}
+                    onClick={() => setStatusFilter(filter.value)}
+                    className={`group flex items-center gap-2 px-1 py-2 border-b-2 transition-all whitespace-nowrap ${statusFilter === filter.value
+                      ? 'border-green-500 text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                      }`}
+                  >
+                    <IonIcon name={filter.icon} size="16px" className={statusFilter === filter.value ? 'text-green-500' : 'text-muted-foreground group-hover:text-foreground'} />
+                    <span className="text-sm font-semibold">{filter.label}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${statusFilter === filter.value ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
             {/* Gift Rooms Grid */}
             <div className="grid lg:grid-cols-4 gap-6">
@@ -285,25 +272,22 @@ export default function GiftRoomsPage() {
                 )}
               </div>
 
-              {/* Room Details Sidebar */}
+              {/* Room Details Sidebar - Cleaner placeholder */}
               <div className="lg:col-span-1">
                 {selectedRoom ? (
                   <GiftRoomStats room={selectedRoom} />
                 ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Room Details</CardTitle>
-                      <CardDescription>
-                        Click on a gift room to see detailed statistics
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 text-center">
-                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                        <IonIcon name="analytics" size="32px" className="text-muted-foreground" />
+                  <Card className="border-dashed bg-muted/20">
+                    <CardContent className="p-8 text-center space-y-4">
+                      <div className="w-12 h-12 bg-background border rounded-2xl flex items-center justify-center mx-auto rotate-12 group-hover:rotate-0 transition-transform">
+                        <IonIcon name="analytics-outline" size="24px" className="text-muted-foreground" />
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Select a gift room to view detailed analytics and statistics.
-                      </p>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-semibold text-foreground">Room Details</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Select a gift room from the list to view detailed analytics and performance.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 )}

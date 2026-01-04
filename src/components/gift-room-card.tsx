@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,23 +36,39 @@ export function GiftRoomCard({
   className = "",
   showActions = true
 }: GiftRoomCardProps) {
-  const isExpired = isGiftRoomExpired(room.expires_at);
-  const timeLeft = getTimeUntilExpiration(room.expires_at);
+  // Hydration fix: Move time-dependent calculations to useEffect
+  const [isMounted, setIsMounted] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+  const [createdDate, setCreatedDate] = useState("");
+
+  useEffect(() => {
+    setIsMounted(true);
+    setIsExpired(isGiftRoomExpired(room.expires_at));
+    setTimeLeft(getTimeUntilExpiration(room.expires_at));
+    setCreatedDate(new Date(room.created_at).toLocaleDateString('en-NG', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }));
+  }, [room.expires_at, room.created_at]);
+
   const shareUrl = formatGiftRoomUrl(room.token);
   const spotsRemaining = room.capacity - room.joined_count;
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'text-green-500 bg-green-500/10';
+        return 'text-green-500 bg-green-500/10 border-green-500/20';
       case 'full':
-        return 'text-blue-500 bg-blue-500/10';
+        return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
       case 'expired':
-        return 'text-red-500 bg-red-500/10';
+        return 'text-muted-foreground bg-muted/30 border-border/50';
       case 'completed':
-        return 'text-purple-500 bg-purple-500/10';
+        return 'text-muted-foreground bg-muted/30 border-border/50';
       default:
-        return 'text-muted-foreground bg-muted';
+        return 'text-muted-foreground bg-muted border-border/50';
     }
   };
 
@@ -90,64 +107,50 @@ export function GiftRoomCard({
           </div>
         </div>
 
-        {/* Gift Amount */}
-        <div className="text-center py-3 mb-3 bg-muted/30 rounded-lg">
-          <div className="text-2xl font-bold text-green-500">
+        {/* Gift Amount - Clean and Bold */}
+        <div className="flex flex-col items-center justify-center pt-2 pb-4">
+          <div className="text-3xl font-bold text-foreground">
             ₦{room.amount.toLocaleString()}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
             per person
-          </div>
+          </p>
         </div>
 
-        {/* Message Preview */}
+        {/* Message Preview - Simplified */}
         {room.message && (
-          <div className="mb-3 p-2 bg-background/50 rounded-lg border border-border/50">
-            <p className="text-sm text-muted-foreground italic line-clamp-2">
-              "{room.message}"
+          <div className="mb-4 text-center">
+            <p className="text-sm text-muted-foreground line-clamp-2 px-2">
+              <span className="text-green-500/50 mr-1">"</span>
+              {room.message}
+              <span className="text-green-500/50 ml-1">"</span>
             </p>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-          <div className="p-2 bg-background/50 rounded-lg">
-            <div className="text-sm font-bold text-foreground">
-              {room.joined_count}
+        {/* Stats & Time - Single Line Info */}
+        <div className="flex items-center justify-between py-3 border-t border-border/50 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-muted-foreground font-medium">Joined</span>
+              <span className="text-sm font-semibold text-foreground">{room.joined_count}/{room.capacity}</span>
             </div>
-            <div className="text-xs text-muted-foreground">
-              Joined
-            </div>
-          </div>
-          <div className="p-2 bg-background/50 rounded-lg">
-            <div className="text-sm font-bold text-foreground">
-              {room.claimed_count}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Claimed
+            <div className="w-px h-6 bg-border/50" />
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase text-muted-foreground font-medium">Claimed</span>
+              <span className="text-sm font-semibold text-foreground">{room.claimed_count}</span>
             </div>
           </div>
-          <div className="p-2 bg-background/50 rounded-lg">
-            <div className="text-sm font-bold text-foreground">
-              {spotsRemaining}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Left
-            </div>
-          </div>
-        </div>
 
-        {/* Time Left */}
-        {!isExpired && (
-          <div className="mb-3 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <div className="flex items-center gap-2">
-              <IonIcon name="time" size="14px" color="#3b82f6" />
-              <span className="text-xs font-medium text-blue-600">
-                {timeLeft}
+          {isMounted && !isExpired && (
+            <div className="flex items-center gap-1 text-green-500 bg-green-500/5 px-2 py-1 rounded">
+              <IonIcon name="time-outline" size="12px" />
+              <span className="text-[10px] font-bold whitespace-nowrap">
+                {timeLeft.split(' ')[0]} LEFT
               </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Actions */}
         {showActions && (
@@ -179,12 +182,7 @@ export function GiftRoomCard({
         {/* Created Date */}
         <div className="mt-3 pt-3 border-t border-border/50">
           <p className="text-xs text-muted-foreground">
-            Created {new Date(room.created_at).toLocaleDateString('en-NG', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            {isMounted && `Created ${createdDate}`}
           </p>
         </div>
       </CardContent>

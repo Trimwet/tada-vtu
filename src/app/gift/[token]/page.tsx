@@ -183,8 +183,25 @@ export default function GiftRoomPage() {
   }
 
   const { room, sender = { full_name: "Someone", referral_code: "" }, user_reservation, can_join, spots_remaining } = roomData;
-  const isExpired = isGiftRoomExpired(room.expires_at);
-  const timeLeft = getTimeUntilExpiration(room.expires_at);
+
+  // Hydration fix: Move time-dependent calculations to useEffect
+  const [isMounted, setIsMounted] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    setIsMounted(true);
+    setIsExpired(isGiftRoomExpired(room.expires_at));
+    setTimeLeft(getTimeUntilExpiration(room.expires_at));
+
+    // Optional: Update time left every minute
+    const timer = setInterval(() => {
+      setTimeLeft(getTimeUntilExpiration(room.expires_at));
+      setIsExpired(isGiftRoomExpired(room.expires_at));
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [room.expires_at]);
 
 
   return (
@@ -258,7 +275,7 @@ export default function GiftRoomPage() {
             </div>
 
             {/* Status and Actions */}
-            {isExpired ? (
+            {isMounted && isExpired ? (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <IonIcon name="time" size="32px" className="text-red-500" />
@@ -320,14 +337,16 @@ export default function GiftRoomPage() {
                 </div>
 
                 {/* Expiration Warning */}
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <IonIcon name="time" size="16px" color="#f59e0b" />
-                    <span className="text-sm font-medium text-amber-600">
-                      {timeLeft}
-                    </span>
+                {isMounted && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <IonIcon name="time" size="16px" color="#f59e0b" />
+                      <span className="text-sm font-medium text-amber-600">
+                        {timeLeft}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : room.status === 'full' ? (
               <div className="text-center py-6">
@@ -392,14 +411,16 @@ export default function GiftRoomPage() {
                 )}
 
                 {/* Time Left */}
-                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <IonIcon name="time" size="16px" color="#22c55e" />
-                    <span className="text-sm font-medium text-green-600">
-                      {timeLeft}
-                    </span>
+                {isMounted && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <IonIcon name="time" size="16px" color="#22c55e" />
+                      <span className="text-sm font-medium text-green-600">
+                        {timeLeft}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-6">

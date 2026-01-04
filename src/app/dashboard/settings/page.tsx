@@ -19,7 +19,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 export default function SettingsPage() {
   const { user } = useAuth();
   const push = usePushNotifications(user?.id);
-  
+
   const [notifications, setNotifications] = useState({
     email: true,
     sms: false,
@@ -61,14 +61,12 @@ export default function SettingsPage() {
   }) => (
     <button
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${
-        enabled ? "bg-green-500" : "bg-zinc-600"
-      }`}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 ${enabled ? "bg-green-500" : "bg-zinc-600"
+        }`}
     >
       <span
-        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-          enabled ? "translate-x-5" : "translate-x-0"
-        }`}
+        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${enabled ? "translate-x-5" : "translate-x-0"
+          }`}
       />
     </button>
   );
@@ -319,9 +317,9 @@ export default function SettingsPage() {
                   Push Notifications
                 </p>
                 <p className="text-muted-foreground text-sm">
-                  {push.isSupported 
-                    ? push.isSubscribed 
-                      ? "You'll receive alerts on this device" 
+                  {push.isSupported
+                    ? push.isSubscribed
+                      ? "You'll receive alerts on this device"
                       : "Enable to receive alerts on this device"
                     : "Not supported on this browser"}
                 </p>

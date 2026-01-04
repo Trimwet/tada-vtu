@@ -25,8 +25,10 @@ interface Stats {
   dataMargin: number;
   otherMargin: number;
   totalMargins: number;
-  totalEarnings: number;
-  todayEarnings: number;
+  estimatedEarnings: number;
+  todayEstimatedEarnings: number;
+  grossVolume: number;
+  todayGrossVolume: number;
   // New fields
   flutterwaveFeesPaid: number;
   totalVTUCosts: number;
@@ -172,7 +174,8 @@ export default function AdminDashboard() {
     totalUsers: 0, totalTransactions: 0, todayTransactions: 0, activeUsers: 0,
     pendingTransactions: 0, totalDeposits: 0, totalPurchases: 0, totalUserBalances: 0,
     serviceFees: 0, airtimeMargin: 0, dataMargin: 0, otherMargin: 0,
-    totalMargins: 0, totalEarnings: 0, todayEarnings: 0,
+    totalMargins: 0, estimatedEarnings: 0, todayEstimatedEarnings: 0,
+    grossVolume: 0, todayGrossVolume: 0,
     flutterwaveFeesPaid: 0, totalVTUCosts: 0, grossRevenue: 0, totalCosts: 0,
     netProfit: 0, todayNetProfit: 0, flutterwaveBalance: 0, inlomaxBalance: 0,
   });
@@ -255,22 +258,35 @@ export default function AdminDashboard() {
             {/* 1. Hero Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                title="Total Revenue"
-                value={`₦${stats.totalEarnings.toLocaleString()}`}
+                title="Gross Volume"
+                value={`₦${stats.grossVolume.toLocaleString()}`}
                 icon={<CurrencyNgn weight="bold" className="w-5 h-5" />}
                 trend={{
-                  value: analytics?.summary?.trends?.revenue || 0,
-                  direction: (analytics?.summary?.trends?.revenue || 0) >= 0 ? 'up' : 'down',
+                  value: analytics?.summary?.trends?.grossVolume || 0,
+                  direction: (analytics?.summary?.trends?.grossVolume || 0) >= 0 ? 'up' : 'down',
                   label: 'vs last period'
                 }}
-                color="green"
+                tooltip="Total money flowing through the platform including all deposits from users and VTU purchases made."
+                description="Total flow (Deposits + VTU)"
+              />
+              <StatCard
+                title="Estimated Earnings"
+                value={`₦${stats.estimatedEarnings.toLocaleString()}`}
+                icon={<TrendUp weight="bold" className="w-5 h-5" />}
+                trend={{
+                  value: analytics?.summary?.trends?.estimatedEarnings || 0,
+                  direction: (analytics?.summary?.trends?.estimatedEarnings || 0) >= 0 ? 'up' : 'down',
+                  label: 'vs last period'
+                }}
+                tooltip="Your estimated profit from service margins (2.5% airtime, 5% data) plus service fees charged on deposits."
+                description="Margins + Fees (Est.)"
               />
               <StatCard
                 title="Net Profit"
                 value={`₦${stats.netProfit.toLocaleString()}`}
                 icon={<ChartLineUp weight="bold" className="w-5 h-5" />}
-                color={stats.netProfit >= 0 ? "blue" : "red"}
-                description="Actual profit after costs"
+                tooltip="Your actual profit after deducting Flutterwave gateway fees (~1%) from estimated earnings."
+                description="Earnings minus Gateway fees"
               />
               <StatCard
                 title="Active Users"
@@ -281,7 +297,7 @@ export default function AdminDashboard() {
                   direction: (analytics?.summary?.trends?.users || 0) >= 0 ? 'up' : 'down',
                   label: 'vs last period'
                 }}
-                color="orange"
+                tooltip="Users with wallet balance greater than ₦0. These are users who have funded their wallets."
               />
               <StatCard
                 title="Total Transactions"
@@ -292,7 +308,7 @@ export default function AdminDashboard() {
                   direction: (analytics?.summary?.trends?.transactions || 0) >= 0 ? 'up' : 'down',
                   label: 'vs last period'
                 }}
-                color="purple"
+                tooltip="Total number of all transactions including deposits, airtime, data, cable TV, and electricity purchases."
               />
             </div>
 
@@ -318,7 +334,8 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center p-3 rounded-lg bg-gray-900/50 border border-gray-700/50">
                     <div>
                       <p className="text-gray-400 text-xs">Flutterwave (Deposits)</p>
-                      <p className="text-xl font-bold text-white">₦{stats.flutterwaveBalance.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-white">₦{Number(stats.flutterwaveBalance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
+                      {(stats.flutterwaveBalance || 0) < 5000 && <p className="text-red-500 text-[10px] mt-1">⚠️ Low Balance</p>}
                     </div>
                     <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
                       <span className="text-orange-500 font-bold">F</span>
@@ -327,7 +344,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center p-3 rounded-lg bg-gray-900/50 border border-gray-700/50">
                     <div>
                       <p className="text-gray-400 text-xs">Inlomax (VTU Provider)</p>
-                      <p className="text-xl font-bold text-white">₦{(inlomaxBalance || stats.inlomaxBalance || 0).toLocaleString()}</p>
+                      <p className="text-xl font-bold text-white">₦{Number(inlomaxBalance || stats.inlomaxBalance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
                       {(inlomaxBalance || stats.inlomaxBalance || 0) < 5000 && <p className="text-red-500 text-[10px] mt-1">⚠️ Low Balance</p>}
                     </div>
                     <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -357,8 +374,8 @@ export default function AdminDashboard() {
                     <span className="text-green-400">+₦{stats.serviceFees.toLocaleString()}</span>
                   </div>
                   <div className="border-t border-gray-700 my-2 pt-2 flex justify-between font-medium">
-                    <span className="text-white">Gross Revenue</span>
-                    <span className="text-green-400">₦{stats.totalEarnings.toLocaleString()}</span>
+                    <span className="text-white">Estimated Earnings</span>
+                    <span className="text-green-400">₦{stats.estimatedEarnings.toLocaleString()}</span>
                   </div>
                 </CardContent>
               </Card>
