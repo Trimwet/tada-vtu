@@ -220,10 +220,10 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    // Fetch transactions (last 100) - simplified query
+    // Fetch transactions (last 100) - with user full name
     const { data: transactions } = await supabase
       .from('transactions')
-      .select('id, user_id, type, amount, status, description, created_at')
+      .select('id, user_id, type, amount, status, description, created_at, profiles(full_name)')
       .order('created_at', { ascending: false })
       .limit(100);
 

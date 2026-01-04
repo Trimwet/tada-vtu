@@ -58,6 +58,9 @@ interface Transaction {
   status: string;
   description: string;
   created_at: string;
+  profiles?: {
+    full_name: string;
+  };
 }
 
 interface UserModalState {
@@ -194,7 +197,8 @@ export default function AdminDashboard() {
 
   const filteredTransactions = transactions.filter(txn =>
     txn.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    txn.type?.toLowerCase().includes(searchQuery.toLowerCase())
+    txn.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    txn.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -391,18 +395,22 @@ export default function AdminDashboard() {
                   <table className="w-full text-sm text-left">
                     <thead>
                       <tr className="text-gray-400 border-b border-gray-700">
-                        <th className="py-2">Description</th>
-                        <th className="py-2">Date</th>
+                        <th className="py-2 text-left">User</th>
+                        <th className="py-2 text-left">Description</th>
+                        <th className="py-2 text-left">Date</th>
                         <th className="py-2 text-right">Amount</th>
                         <th className="py-2 text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
-                      {transactions.slice(0, 8).map((txn) => (
+                      {transactions.slice(0, 10).map((txn) => (
                         <tr key={txn.id} className="hover:bg-gray-700/30">
-                          <td className="py-3 px-1 text-white">{txn.description || txn.type}</td>
-                          <td className="py-3 px-1 text-gray-500 text-xs">{new Date(txn.created_at).toLocaleString()}</td>
-                          <td className={`py-3 px-1 text-right font-medium ${txn.amount > 0 ? 'text-green-400' : 'text-gray-300'}`}>
+                          <td className="py-3 px-1">
+                            <p className="text-white font-medium text-xs truncate max-w-[120px]">{txn.profiles?.full_name || 'System'}</p>
+                          </td>
+                          <td className="py-3 px-1 text-white text-xs">{txn.description || txn.type}</td>
+                          <td className="py-3 px-1 text-gray-500 text-[10px]">{new Date(txn.created_at).toLocaleString()}</td>
+                          <td className={`py-3 px-1 text-right font-medium text-xs ${txn.amount > 0 ? 'text-green-400' : 'text-gray-300'}`}>
                             {txn.amount > 0 ? '+' : ''}₦{Math.abs(txn.amount).toLocaleString()}
                           </td>
                           <td className="py-3 px-1 text-center">
@@ -504,6 +512,7 @@ export default function AdminDashboard() {
                   <table className="w-full">
                     <thead className="bg-gray-700">
                       <tr>
+                        <th className="text-left p-3 text-gray-300 text-sm">User</th>
                         <th className="text-left p-3 text-gray-300 text-sm">Description</th>
                         <th className="text-left p-3 text-gray-300 text-sm">Type</th>
                         <th className="text-right p-3 text-gray-300 text-sm">Amount</th>
@@ -513,12 +522,16 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody>
                       {filteredTransactions.length === 0 ? (
-                        <tr><td colSpan={5} className="p-8 text-center text-gray-400">No transactions found</td></tr>
+                        <tr><td colSpan={6} className="p-8 text-center text-gray-400">No transactions found</td></tr>
                       ) : filteredTransactions.map((txn) => (
                         <tr key={txn.id} className="border-t border-gray-700 hover:bg-gray-700/50">
                           <td className="p-3">
+                            <p className="text-white font-medium">{txn.profiles?.full_name || 'System'}</p>
+                            <p className="text-gray-500 text-[10px] font-mono">{txn.user_id.slice(0, 8)}...</p>
+                          </td>
+                          <td className="p-3">
                             <p className="text-white text-sm">{txn.description || txn.type}</p>
-                            <p className="text-gray-500 text-xs">ID: {txn.id.slice(0, 8)}...</p>
+                            <p className="text-gray-500 text-[10px] font-mono">Ref: {txn.id.slice(0, 8)}...</p>
                           </td>
                           <td className="p-3">
                             <span className={`px-2 py-1 rounded text-xs capitalize ${txn.type === 'deposit' ? 'bg-green-500/20 text-green-400' :
