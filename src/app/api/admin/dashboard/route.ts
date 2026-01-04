@@ -15,18 +15,21 @@ function verifyToken(token: string): { valid: boolean; adminId?: string } {
 }
 
 // Get Flutterwave balance
-async function getFlutterwaveBalance(): Promise<number> {
+async function getFlutterwaveBalance(): Promise<{ available: number; ledger: number }> {
   try {
     const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
-    if (!secretKey) return 0;
+    if (!secretKey) return { available: 0, ledger: 0 };
 
     const response = await fetch('https://api.flutterwave.com/v3/balances/NGN', {
       headers: { Authorization: `Bearer ${secretKey}` },
     });
     const result = await response.json();
-    return result.data?.[0]?.available_balance || 0;
+    return {
+      available: result.data?.[0]?.available_balance || 0,
+      ledger: result.data?.[0]?.ledger_balance || 0
+    };
   } catch {
-    return 0;
+    return { available: 0, ledger: 0 };
   }
 }
 
@@ -188,10 +191,13 @@ export async function GET(request: NextRequest) {
     const totalUserBalances = balanceData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
     // Get API balances
-    const [flutterwaveBalance, inlomaxBalance] = await Promise.all([
+    const [fwBalances, inlomaxBalance] = await Promise.all([
       getFlutterwaveBalance(),
       getInlomaxBalance(),
     ]);
+
+    const flutterwaveBalance = fwBalances.available;
+    const flutterwaveLedgerBalance = fwBalances.ledger;
 
     // Calculate Flutterwave fees paid (estimate ~1% of deposits)
     const flutterwaveFeesPaid = Math.round(totalDeposits * 0.01);
@@ -256,6 +262,7 @@ export async function GET(request: NextRequest) {
         todayNetProfit,
         // API Balances
         flutterwaveBalance,
+        flutterwaveLedgerBalance,
         inlomaxBalance,
       },
       users: users || [],

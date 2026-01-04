@@ -37,6 +37,7 @@ interface Stats {
   netProfit: number;
   todayNetProfit: number;
   flutterwaveBalance: number;
+  flutterwaveLedgerBalance: number;
   inlomaxBalance: number;
 }
 
@@ -182,7 +183,7 @@ export default function AdminDashboard() {
     totalMargins: 0, estimatedEarnings: 0, todayEstimatedEarnings: 0,
     grossVolume: 0, todayGrossVolume: 0,
     flutterwaveFeesPaid: 0, totalVTUCosts: 0, grossRevenue: 0, totalCosts: 0,
-    netProfit: 0, todayNetProfit: 0, flutterwaveBalance: 0, inlomaxBalance: 0,
+    netProfit: 0, todayNetProfit: 0, flutterwaveBalance: 0, flutterwaveLedgerBalance: 0, inlomaxBalance: 0,
   });
 
   const handleLogout = () => {
@@ -341,12 +342,18 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center p-3 rounded-lg bg-gray-900/50 border border-gray-700/50">
-                    <div>
-                      <p className="text-gray-400 text-xs">Flutterwave (Deposits)</p>
+                    <div className="flex-1">
+                      <p className="text-gray-400 text-xs">Flutterwave (Available)</p>
                       <p className="text-xl font-bold text-white">₦{Number(stats.flutterwaveBalance || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
                       {(stats.flutterwaveBalance || 0) < 5000 && <p className="text-red-500 text-[10px] mt-1">⚠️ Low Balance</p>}
                     </div>
-                    <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                    <div className="flex-1 text-right pr-4 border-r border-gray-700 mx-4">
+                      <p className="text-gray-400 text-[10px]">Unsettled Balance</p>
+                      <p className="text-sm font-medium text-orange-400">
+                        ₦{Number((stats.flutterwaveLedgerBalance || 0) - (stats.flutterwaveBalance || 0)).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </p>
+                    </div>
+                    <div className="h-8 w-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
                       <span className="text-orange-500 font-bold">F</span>
                     </div>
                   </div>
