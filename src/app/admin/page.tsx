@@ -58,6 +58,8 @@ interface Transaction {
   status: string;
   description: string;
   created_at: string;
+  reference?: string;
+  external_reference?: string;
   profiles?: {
     full_name: string;
   };
@@ -198,6 +200,9 @@ export default function AdminDashboard() {
   const filteredTransactions = transactions.filter(txn =>
     txn.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     txn.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    txn.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    txn.reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    txn.external_reference?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     txn.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -407,8 +412,12 @@ export default function AdminDashboard() {
                         <tr key={txn.id} className="hover:bg-gray-700/30">
                           <td className="py-3 px-1">
                             <p className="text-white font-medium text-xs truncate max-w-[120px]">{txn.profiles?.full_name || 'System'}</p>
+                            <p className="text-[9px] text-gray-500 font-mono truncate max-w-[120px]">{txn.reference || txn.id}</p>
                           </td>
-                          <td className="py-3 px-1 text-white text-xs">{txn.description || txn.type}</td>
+                          <td className="py-3 px-1 text-white text-xs">
+                            {txn.description || txn.type}
+                            {txn.external_reference && <p className="text-[9px] text-gray-500 font-mono">{txn.external_reference}</p>}
+                          </td>
                           <td className="py-3 px-1 text-gray-500 text-[10px]">{new Date(txn.created_at).toLocaleString()}</td>
                           <td className={`py-3 px-1 text-right font-medium text-xs ${txn.amount > 0 ? 'text-green-400' : 'text-gray-300'}`}>
                             {txn.amount > 0 ? '+' : ''}₦{Math.abs(txn.amount).toLocaleString()}
@@ -531,7 +540,10 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-3">
                             <p className="text-white text-sm">{txn.description || txn.type}</p>
-                            <p className="text-gray-500 text-[10px] font-mono">Ref: {txn.id.slice(0, 8)}...</p>
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              {txn.reference && <p className="text-gray-500 text-[9px] font-mono">Ref: {txn.reference}</p>}
+                              {txn.external_reference && <p className="text-gray-500 text-[9px] font-mono">Ext: {txn.external_reference}</p>}
+                            </div>
                           </td>
                           <td className="p-3">
                             <span className={`px-2 py-1 rounded text-xs capitalize ${txn.type === 'deposit' ? 'bg-green-500/20 text-green-400' :

@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       // Identify user for Bank Transfers
       if (!userId && data.payment_type === 'bank_transfer') {
         const virtualAccountNumber = data.virtual_account_number || data.account_number;
+        const customerEmail = data.customer?.email;
 
         // Lookup by virtual account
         if (virtualAccountNumber) {
@@ -67,12 +68,23 @@ export async function POST(request: NextRequest) {
           if (vaRecord) userId = vaRecord.user_id;
         }
 
-        // Fallback: Pattern matching on tx_ref
+        // Fallback 1: Lookup by email if available (highly reliable)
+        if (!userId && customerEmail) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', customerEmail)
+            .single();
+          if (profile) userId = profile.id;
+        }
+
+        // Fallback 2: Pattern matching on tx_ref
         if (!userId && txRef) {
           if (txRef.startsWith('TADA-VA-') || txRef.startsWith('TADA-TEMP-')) {
             const parts = txRef.split('-');
             const prefix = parts[2];
-            const { data: profiles } = await supabase.from('profiles').select('id').ilike('id', `${prefix}%`).limit(1);
+            // Use like with prefix for UUID column
+            const { data: profiles } = await supabase.from('profiles').select('id').filter('id', 'like', `${prefix}%`).limit(1);
             if (profiles?.[0]) userId = profiles[0].id;
           }
         }

@@ -30,9 +30,9 @@ async function flutterwaveRequest(endpoint: string) {
 export async function GET(request: NextRequest) {
   try {
     console.log('🔄 Starting transfer polling process...');
-    
+
     const supabase = getSupabaseAdmin();
-    
+
     // Get the last processed timestamp (or default to 1 hour ago)
     const { data: lastRun } = await supabase
       .from('system_settings')
@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
 
     const lastProcessed = lastRun?.value || new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const now = new Date().toISOString();
-    
+
     console.log('📅 Checking transfers since:', lastProcessed);
 
     // Get transactions from Flutterwave
     const fromDate = new Date(lastProcessed).toISOString().split('T')[0];
     const toDate = new Date().toISOString().split('T')[0];
-    
+
     const flwResponse = await flutterwaveRequest(
       `/transactions?from=${fromDate}&to=${toDate}&payment_type=bank_transfer&status=successful`
     );
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           const { data: profiles } = await supabase
             .from('profiles')
             .select('id')
-            .ilike('id', `${userIdPrefix}%`)
+            .filter('id', 'like', `${userIdPrefix}%`)
             .limit(1);
 
           if (profiles && profiles.length > 0) {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Method 2: Find by customer email
+      // Method 2: Find by customer email (Highly reliable fallback)
       if (!userId && tx.customer?.email) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -132,7 +132,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Calculate wallet credit (deduct platform fee)
-      const walletCredit = Math.max(tx.amount - BANK_TRANSFER_FEE, tx.amount);
+      // FIX: Dedcut fee correctly. Use Math.max(amount - fee, 0) to avoid negative credits
+      const walletCredit = Math.max(tx.amount - BANK_TRANSFER_FEE, 0);
       const newBalance = (profile.balance || 0) + walletCredit;
 
       // Update balance

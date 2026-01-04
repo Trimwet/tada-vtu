@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // Production optimizations
   poweredByHeader: false,
   compress: true,
-  
+
   // Enable React Compiler for automatic optimizations
   experimental: {
     reactCompiler: true,
@@ -78,6 +78,7 @@ const nextConfig: NextConfig = {
     // Bundle analyzer in development
     if (process.env.ANALYZE === 'true') {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
         config.plugins.push(
           new BundleAnalyzerPlugin({
@@ -93,7 +94,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-  
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],

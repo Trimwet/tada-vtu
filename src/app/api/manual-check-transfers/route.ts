@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'error', message: 'Payment configuration error' }, { status: 500 });
     }
 
-    // Get today's date for the query
-    const today = new Date().toISOString().split('T')[0];
+    // Get date range for the query (last 7 days to catch missed weekends)
+    const toDate = new Date().toISOString().split('T')[0];
+    const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const flwResponse = await fetch(
-      `https://api.flutterwave.com/v3/transactions?from=${today}&to=${today}&payment_type=bank_transfer&status=successful`,
+      `https://api.flutterwave.com/v3/transactions?from=${fromDate}&to=${toDate}&payment_type=bank_transfer&status=successful`,
       {
         headers: {
           'Authorization': `Bearer ${secretKey}`,
@@ -55,15 +56,17 @@ export async function POST(request: NextRequest) {
       // Find user by tx_ref or email
       let userId = null;
 
-      // Logic to resolve userId from tx_ref
+      // Method 1: Logic to resolve userId from tx_ref
       if (tx.tx_ref?.startsWith('TADA-VA-') || tx.tx_ref?.startsWith('TADA-TEMP-')) {
         const parts = tx.tx_ref.split('-');
-        const prefix = parts[2];
-        const { data: profiles } = await adminSupabase.from('profiles').select('id').ilike('id', `${prefix}%`).limit(1);
-        if (profiles?.[0]) userId = profiles[0].id;
+        if (parts.length >= 3) {
+          const prefix = parts[2];
+          const { data: profiles } = await adminSupabase.from('profiles').select('id').filter('id', 'like', `${prefix}%`).limit(1);
+          if (profiles?.[0]) userId = profiles[0].id;
+        }
       }
 
-      // Fallback: Check customer email
+      // Method 2: Check customer email (Very reliable fallback)
       if (!userId && tx.customer?.email) {
         const { data: profile } = await adminSupabase.from('profiles').select('id').eq('email', tx.customer.email).single();
         if (profile) userId = profile.id;

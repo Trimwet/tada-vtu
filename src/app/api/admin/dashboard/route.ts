@@ -223,7 +223,7 @@ export async function GET(request: NextRequest) {
     // Fetch transactions (last 100) - with user full name
     const { data: transactions } = await supabase
       .from('transactions')
-      .select('id, user_id, type, amount, status, description, created_at, profiles(full_name)')
+      .select('id, user_id, type, amount, status, description, created_at, reference, external_reference, profiles(full_name)')
       .order('created_at', { ascending: false })
       .limit(100);
 
