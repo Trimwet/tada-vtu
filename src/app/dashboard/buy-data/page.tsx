@@ -283,34 +283,51 @@ export default function BuyDataPage() {
 
 
               {/* Data Type Selection - Dynamic based on available plans */}
-              {selectedNetwork && !loadingPlans && availableTypes.length > 0 && (
+              {selectedNetwork && (
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Select Data Type</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {availableTypes.map((type) => (
-                      <button
-                        key={type.value}
-                        type="button"
-                        onClick={() => {
-                          setSelectedType(type.value);
-                          setSelectedPlan("");
-                        }}
-                        className={`p-3 rounded-xl border-2 transition-smooth ${selectedType === type.value
-                          ? "border-green-500 bg-green-500/10"
-                          : "border-border hover:border-green-500/50"
-                          }`}
-                      >
-                        <div className="text-center">
-                          <div className="font-semibold text-sm text-foreground">
-                            {type.label}
+                  {loadingPlans ? (
+                    <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                      <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-muted-foreground text-sm animate-pulse">Loading data types for {selectedNetwork}...</p>
+                    </div>
+                  ) : availableTypes.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {availableTypes.map((type) => (
+                        <button
+                          key={type.value}
+                          type="button"
+                          onClick={() => {
+                            setSelectedType(type.value);
+                            setSelectedPlan("");
+                          }}
+                          className={`p-3 rounded-xl border-2 transition-smooth ${selectedType === type.value
+                            ? "border-green-500 bg-green-500/10"
+                            : "border-border hover:border-green-500/50"
+                            }`}
+                        >
+                          <div className="text-center">
+                            <div className="font-semibold text-sm text-foreground">
+                              {type.label}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {type.count} plan{type.count !== 1 ? 's' : ''}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {type.count} plan{type.count !== 1 ? 's' : ''}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <IonIcon
+                        name="cloud-offline-outline"
+                        size="28px"
+                        className="mx-auto mb-2"
+                      />
+                      <p>No data plans available for {selectedNetwork}</p>
+                      <p className="text-xs mt-1">Please try another network or refresh the page</p>
+                    </div>
+                  )}
                 </div>
               )}
 
