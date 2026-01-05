@@ -128,11 +128,22 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
     }
 
     const seenIds = new Set<string>();
+    console.log('[DEBUG] Processing Inlomax data plans:', result.data.dataPlans.length, 'total plans');
 
     for (const plan of result.data.dataPlans) {
       const network = plan.network.toUpperCase();
       const targetNetwork = network === 'ETISALAT' ? '9MOBILE' : network;
       if (!plans[targetNetwork]) continue;
+
+      // Debug log for first few plans of each network
+      if (plans[targetNetwork].length < 3) {
+        console.log(`[DEBUG] ${targetNetwork} plan:`, {
+          dataPlan: plan.dataPlan,
+          dataType: plan.dataType,
+          amount: plan.amount,
+          serviceID: plan.serviceID
+        });
+      }
 
       const price = parseFloat(plan.amount.replace(/,/g, ''));
       if (isNaN(price) || price <= 0) continue;
@@ -153,7 +164,7 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
         size: extractSizeString(plan.dataPlan),
         sizeInMB,
         price,
-        type: plan.dataType || extractType(plan.dataPlan),
+        type: plan.dataType || extractType(plan.dataPlan), // Use Inlomax dataType directly
         validity: plan.validity || '30 Days',
         pricePerGB,
       });
@@ -257,6 +268,7 @@ export async function findCheapestPlan(
 
 export function clearPlansCache() {
   cache = { data: null, timestamp: 0, refreshing: false };
+  console.log('[DEBUG] Plans cache cleared');
 }
 
 export function getProviderHealthStatus() {
