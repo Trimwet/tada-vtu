@@ -11,6 +11,7 @@ export interface MergedDataPlan {
   provider: Provider;
   network: string;
   name: string;
+  description?: string;
   size: string;
   sizeInMB: number;
   price: number;
@@ -51,70 +52,111 @@ let cache: CacheState = {
   refreshing: false,
 };
 
-function extractSizeInMB(name: string): number {
-  const match = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)/i);
+interface PlanSizeInfo {
+  size: string;
+  sizeInMB: number;
+}
+
+function extractPlanSize(name: string): PlanSizeInfo {
+  const upperName = name.toUpperCase();
+
+  // Handle UNLIMITED plans
+  if (upperName.includes("UNLIMITED")) {
+    return { size: "UNLIMITED", sizeInMB: 999999 }; // Arbitrary large number for sorting
+  }
+
+  // Handle Airtime/Talkmore plans (avoid parsing price as size)
+  if (upperName.includes("TALKMORE") ||
+    upperName.includes("AIRTIME") ||
+    /₦\s*\d/.test(name) ||
+    /N\s*\d/.test(upperName)) {
+    // If it has airtime keywords, only accept explicit size units
+    const strictMatch = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)(?!PS)/i);
+    if (strictMatch) {
+      const value = parseFloat(strictMatch[1]);
+      const unit = strictMatch[2].toUpperCase();
+      let sizeInMB = value;
+      if (unit === 'GB') sizeInMB = value * 1024;
+      if (unit === 'TB') sizeInMB = value * 1024 * 1024;
+      return { size: `${value}${unit}`, sizeInMB };
+    }
+    return { size: name, sizeInMB: 0 }; // Return original name if no clear data size
+  }
+
+  // Standard extraction with unit (ignoring MBPS)
+  const match = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)(?!PS)/i);
   if (match) {
     const value = parseFloat(match[1]);
     const unit = match[2].toUpperCase();
-    if (unit === 'GB') return value * 1024;
-    if (unit === 'TB') return value * 1024 * 1024;
-    return value;
+    let sizeInMB = value;
+    if (unit === 'GB') sizeInMB = value * 1024;
+    if (unit === 'TB') sizeInMB = value * 1024 * 1024;
+    return { size: `${value}${unit}`, sizeInMB };
   }
 
-  const simpleMatch = name.match(/(\d+(?:\.\d+)?)/);
-  if (simpleMatch) {
-    const value = parseFloat(simpleMatch[1]);
-    return value < 50 ? value * 1024 : value;
-  }
+  // Fallback: Number extraction (conservative)
+  // Only assume GB if we are SURE it's a data plan name and not a price
+  // We've already filtered out "N400" style strings above roughly, but let's be careful.
+  const simpleMatch = name.match(/^(\d+(?:\.\d+)?)\s*$/); // Only if the WHOLE string is a number? No usually "500 Data"
 
-  return 0;
-}
-
-function extractSizeString(name: string): string {
-  // Try to extract size with unit (e.g., "1.5GB", "500MB")
-  const sizeMatch = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)/i);
-  if (sizeMatch) return `${sizeMatch[1]}${sizeMatch[2].toUpperCase()}`;
-
-  // Try to extract just numbers if no unit found
+  // If no unit is found, and it's not clearly airtime, we used to default to GB.
+  // But that caused "400" to be "400GB".
+  // Let's only default to GB if it's a small typically GB number (1-100) AND doesn't look like money.
   const numberMatch = name.match(/(\d+(?:\.\d+)?)/);
   if (numberMatch) {
     const value = parseFloat(numberMatch[1]);
-    // Assume it's GB if it's a reasonable data plan size (1-1000)
-    if (value >= 1 && value <= 1000) {
-      return `${value}GB`;
+
+    // Safety check: Is this likely a price? (Values > 100 often meant MB before, but now could be price)
+    // If value matches the price exactly, it's probably the price in the name "N1000 1GB" -> 1000 is price.
+    // This is hard to distinguish without more context.
+
+    // Let's rely on the fact that most VALID plans have GB/MB.
+    // If implied, it's usually small integers for GB.
+    if (value >= 1 && value <= 100 && !name.includes('₦')) {
+      return { size: `${value}GB`, sizeInMB: value * 1024 };
     }
-    return numberMatch[1];
   }
 
-  // Clean up the name by removing brackets and extra info
-  const cleanName = name.split('[')[0].trim();
-  if (cleanName.length < 30) return cleanName;
+  return { size: name, sizeInMB: 0 };
+}
 
-  return name;
+function extractSizeInMB(name: string): number {
+  return extractPlanSize(name).sizeInMB;
+}
+
+function extractSizeString(name: string): string {
+  const { size, sizeInMB } = extractPlanSize(name);
+  if (sizeInMB === 0 && size === name) {
+    // If we couldn't extract a size, and just returned the name,
+    // try to clean it up a bit if it's very long
+    const cleanName = name.split('[')[0].trim();
+    return cleanName.length < 30 ? cleanName : "Special Plan";
+  }
+  return size;
 }
 
 function normalizeDataType(dataType: string, planName: string): string {
   const type = (dataType || '').toUpperCase().trim();
   const name = planName.toUpperCase();
-  
+
   // Check for specific plan types based on dataType first, then plan name
   if (type.includes('SME') && type.includes('SHARE')) return 'SME SHARE';
   if (name.includes('SME') && name.includes('SHARE')) return 'SME SHARE';
   if (type.includes('SME') || name.includes('SME')) return 'SME';
-  
+
   if (type.includes('CORPORATE') && type.includes('GIFTING')) return 'CORPORATE GIFTING';
   if (type === 'CG' || name.includes('CG')) return 'CORPORATE GIFTING';
   if (type.includes('CORPORATE') || name.includes('CORPORATE')) return 'CORPORATE';
-  
+
   if (type.includes('GIFTING') || name.includes('GIFTING')) return 'GIFTING';
   if (type.includes('AWOOF') || name.includes('AWOOF')) return 'AWOOF'; // Distinct from gifting now
-  
+
   if (type.includes('DIRECT') || name.includes('DIRECT')) return 'DIRECT';
   if (type.includes('SOCIAL') || name.includes('SOCIAL')) return 'SOCIAL';
-  
+
   // If dataType is provided and not empty, use it as is (normalized)
   if (type) return type;
-  
+
   // Default to STANDARD if no type is detected
   return 'STANDARD';
 }
@@ -128,7 +170,7 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
   try {
     // Dynamic import to prevent module-level API calls during compilation
     const inlomax = await import('./inlomax');
-    
+
     const result = await withRetry(
       () => inlomax.getServices(),
       {
@@ -162,8 +204,11 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
         });
       }
 
-      const price = parseFloat(plan.amount.replace(/,/g, ''));
-      if (isNaN(price) || price <= 0) continue;
+      const costPrice = parseFloat(plan.amount.replace(/,/g, ''));
+      if (isNaN(costPrice) || costPrice <= 0) continue;
+
+      // Apply 5% markup for profitability
+      const price = Math.ceil(costPrice * 1.05);
 
       // Create unique ID
       const uniqueId = `${plan.serviceID}-${plan.dataType || 'default'}`;
@@ -176,12 +221,13 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       // Format the plan name to show both dataPlan and dataType clearly
       const planType = plan.dataType || normalizeDataType(plan.dataType || '', plan.dataPlan);
       const displayName = plan.dataPlan.trim();
-      
+
       plans[targetNetwork].push({
         id: uniqueId,
         provider: 'inlomax',
         network: targetNetwork,
         name: displayName,
+        description: plan.dataPlan, // Full name as description
         size: extractSizeString(plan.dataPlan),
         sizeInMB,
         price,
