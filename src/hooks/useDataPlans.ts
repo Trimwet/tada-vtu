@@ -80,12 +80,16 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
   const [state, setState] = useState<DataPlansState>(() => {
     // Try to load from localStorage for instant initial render
     const cached = loadFromStorage(network);
-    return cached || {
+    if (cached && cached.plans.length > 0) {
+      return { ...cached, loading: false };
+    }
+    // Only show loading state if we have no cached data AND a network is selected
+    return {
       plans: [],
       plansByType: {},
       types: [],
       meta: null,
-      loading: true,
+      loading: !!network, // Only show loading if network is selected
       error: null,
       lastFetch: 0,
     };
@@ -165,7 +169,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
         plansByType: {},
         types: [],
         meta: null,
-        loading: false,
+        loading: false, // Keep loading false when no network selected
         error: null,
         lastFetch: 0,
       });
@@ -179,6 +183,8 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       // Fetch fresh data in background
       fetchPlans(false);
     } else {
+      // Keep loading true while fetching for the first time
+      setState(prev => ({ ...prev, loading: true }));
       fetchPlans(false);
     }
 

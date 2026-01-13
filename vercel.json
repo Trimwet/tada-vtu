@@ -1,12 +1,1 @@
-{
-    "crons": [
-        {
-            "path": "/api/cron/cleanup-gifts",
-            "schedule": "0 0 * * *"
-        },
-        {
-            "path": "/api/cron/verify-payments",
-            "schedule": "*/5 * * * *"
-        }
-    ]
-}
+{}

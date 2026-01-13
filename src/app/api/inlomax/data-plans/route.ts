@@ -3,20 +3,24 @@ import { getServices, ServiceDataPlan } from '@/lib/api/inlomax';
 
 // Map Inlomax data types to our internal types
 function mapDataType(inlomaxType: string): string {
-  const typeMap: Record<string, string> = {
-    'SME': 'sme',
-    'SME SHARE': 'sme',
-    'SHARE': 'sme',
-    'CORPORATE GIFTING': 'corporate',
-    'CORPORATE': 'corporate',
-    'CG': 'corporate',
-    'GIFTING': 'awoof',
-    'AWOOF': 'awoof',
-    'AWOOF/GIFTING': 'awoof',
-    'DIRECT': 'direct',
-    'SOCIAL': 'social',
-  };
-  return typeMap[inlomaxType.toUpperCase()] || 'sme';
+  const type = inlomaxType.toUpperCase();
+
+  if (type.includes('SME') && type.includes('SHARE')) return 'sme_share';
+  if (type === 'SME') return 'sme';
+
+  if (type.includes('CORPORATE') && type.includes('GIFTING')) return 'corporate_gifting';
+  if (type === 'CG') return 'corporate_gifting';
+  if (type === 'CORPORATE') return 'corporate';
+
+  if (type === 'GIFTING') return 'gifting';
+  if (type === 'AWOOF') return 'awoof';
+  if (type === 'AWOOF/GIFTING') return 'gifting';
+
+  if (type === 'DIRECT') return 'direct';
+  if (type === 'SOCIAL') return 'social';
+
+  // Fallback: use lowercased original type if not matched
+  return type.toLowerCase().replace(/\s+/g, '_');
 }
 
 // Parse amount string to number (handles "205.00" format)
@@ -57,21 +61,21 @@ export async function GET(request: NextRequest) {
     // Fetch real plans from Inlomax API
     try {
       const result = await getServices();
-      
+
       if (result.status === 'success' && result.data?.dataPlans) {
         // Filter plans by network and transform to our format
         const networkPlans = result.data.dataPlans
           .filter((plan) => {
             const planNetwork = plan.network.toUpperCase();
-            return planNetwork === normalizedNetwork || 
-                   (planNetwork === 'ETISALAT' && normalizedNetwork === '9MOBILE');
+            return planNetwork === normalizedNetwork ||
+              (planNetwork === 'ETISALAT' && normalizedNetwork === '9MOBILE');
           })
           .map((plan, index) => transformPlan(plan, index))
           .filter((plan) => plan.price > 0) // Filter out zero-price plans
           .sort((a, b) => a.price - b.price); // Sort by price
 
         console.log(`[DATA-PLANS] Found ${networkPlans.length} plans for ${normalizedNetwork}`);
-        
+
         // Get unique types for this network
         const types = [...new Set(networkPlans.map(p => p.type))];
         console.log(`[DATA-PLANS] Types available: ${types.join(', ')}`);
@@ -89,7 +93,7 @@ export async function GET(request: NextRequest) {
           },
         });
       }
-      
+
       throw new Error('Invalid response from Inlomax');
     } catch (apiError) {
       console.error('Inlomax API error:', apiError);

@@ -31,10 +31,13 @@ const VerifyPinModal = dynamic(
 
 // Data type labels for display
 const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> = {
-  sme: { label: "SME/Share", description: "Cheapest rates" },
-  corporate: { label: "Corporate/CG", description: "Corporate gifting" },
+  sme: { label: "SME", description: "Cheapest rates" },
+  sme_share: { label: "SME Share", description: "Shareable plans" },
+  corporate: { label: "Corporate", description: "Business plans" },
+  corporate_gifting: { label: "CG", description: "Corporate Gifting" },
   direct: { label: "Direct", description: "Standard plans" },
-  awoof: { label: "Awoof/Gifting", description: "Special offers" },
+  gifting: { label: "Gifting", description: "Gift data" },
+  awoof: { label: "Awoof", description: "Special offers" },
   social: { label: "Social", description: "Social bundles" },
 };
 
@@ -85,8 +88,8 @@ export default function BuyDataPage() {
 
     return types.map((type) => ({
       value: type,
-      label: DATA_TYPE_LABELS[type.toLowerCase()]?.label || type.toUpperCase(),
-      description: DATA_TYPE_LABELS[type.toLowerCase()]?.description || "",
+      label: DATA_TYPE_LABELS[type.toLowerCase()]?.label || type.replace(/_/g, ' ').toUpperCase(),
+      description: DATA_TYPE_LABELS[type.toLowerCase()]?.description || "Data Plan",
       count: dataPlans.filter((p) => p.type === type).length,
     }));
   }, [dataPlans, selectedType]);

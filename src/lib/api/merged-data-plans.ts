@@ -51,7 +51,6 @@ let cache: CacheState = {
   refreshing: false,
 };
 
-// Extract size in MB from plan name
 function extractSizeInMB(name: string): number {
   const match = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)/i);
   if (match) {
@@ -62,11 +61,9 @@ function extractSizeInMB(name: string): number {
     return value;
   }
 
-  // For Talk More plans or other plans without explicit units, try to get the first number
   const simpleMatch = name.match(/(\d+(?:\.\d+)?)/);
   if (simpleMatch) {
     const value = parseFloat(simpleMatch[1]);
-    // If it's a large number, it might be MB or a code, but we use it as a heuristic
     return value < 50 ? value * 1024 : value;
   }
 
@@ -74,32 +71,52 @@ function extractSizeInMB(name: string): number {
 }
 
 function extractSizeString(name: string): string {
-  const match = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)/i);
-  if (match) return `${match[1]}${match[2].toUpperCase()}`;
+  // Try to extract size with unit (e.g., "1.5GB", "500MB")
+  const sizeMatch = name.match(/(\d+(?:\.\d+)?)\s*(GB|MB|TB)/i);
+  if (sizeMatch) return `${sizeMatch[1]}${sizeMatch[2].toUpperCase()}`;
 
-  // Handle plans without units like "MTN Talk More ₦200"
+  // Try to extract just numbers if no unit found
+  const numberMatch = name.match(/(\d+(?:\.\d+)?)/);
+  if (numberMatch) {
+    const value = parseFloat(numberMatch[1]);
+    // Assume it's GB if it's a reasonable data plan size (1-1000)
+    if (value >= 1 && value <= 1000) {
+      return `${value}GB`;
+    }
+    return numberMatch[1];
+  }
+
+  // Clean up the name by removing brackets and extra info
   const cleanName = name.split('[')[0].trim();
-  // If it's short, use it as the size label
-  if (cleanName.length < 20) return cleanName;
-
-  // Otherwise try to find the price/value
-  const valueMatch = name.match(/(\d+(?:\.\d+)?)/);
-  if (valueMatch) return valueMatch[0];
+  if (cleanName.length < 30) return cleanName;
 
   return name;
 }
 
-function extractType(name: string, dataType?: string): string {
-  if (dataType) return dataType;
-  const upper = name.toUpperCase();
-  if (upper.includes('SME')) return 'SME';
-  if (upper.includes('CORPORATE') || upper.includes('CG')) return 'CORPORATE';
-  if (upper.includes('GIFTING')) return 'GIFTING';
-  if (upper.includes('DIRECT')) return 'DIRECT';
-  if (upper.includes('AWOOF')) return 'AWOOF';
-  if (upper.includes('SOCIAL')) return 'SOCIAL';
-  if (upper.includes('SHARE')) return 'DATA SHARE';
-  return 'OTHER';
+function normalizeDataType(dataType: string, planName: string): string {
+  const type = (dataType || '').toUpperCase().trim();
+  const name = planName.toUpperCase();
+  
+  // Check for specific plan types based on dataType first, then plan name
+  if (type.includes('SME') && type.includes('SHARE')) return 'SME SHARE';
+  if (name.includes('SME') && name.includes('SHARE')) return 'SME SHARE';
+  if (type.includes('SME') || name.includes('SME')) return 'SME';
+  
+  if (type.includes('CORPORATE') && type.includes('GIFTING')) return 'CORPORATE GIFTING';
+  if (type === 'CG' || name.includes('CG')) return 'CORPORATE GIFTING';
+  if (type.includes('CORPORATE') || name.includes('CORPORATE')) return 'CORPORATE';
+  
+  if (type.includes('GIFTING') || name.includes('GIFTING')) return 'GIFTING';
+  if (type.includes('AWOOF') || name.includes('AWOOF')) return 'AWOOF'; // Distinct from gifting now
+  
+  if (type.includes('DIRECT') || name.includes('DIRECT')) return 'DIRECT';
+  if (type.includes('SOCIAL') || name.includes('SOCIAL')) return 'SOCIAL';
+  
+  // If dataType is provided and not empty, use it as is (normalized)
+  if (type) return type;
+  
+  // Default to STANDARD if no type is detected
+  return 'STANDARD';
 }
 
 // Fetch Inlomax plans - LAZY: only imports inlomax module when called
@@ -156,15 +173,19 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       const sizeInMB = extractSizeInMB(plan.dataPlan);
       const pricePerGB = sizeInMB > 0 ? Math.round((price / sizeInMB) * 1024) : 0;
 
+      // Format the plan name to show both dataPlan and dataType clearly
+      const planType = plan.dataType || normalizeDataType(plan.dataType || '', plan.dataPlan);
+      const displayName = plan.dataPlan.trim();
+      
       plans[targetNetwork].push({
         id: uniqueId,
         provider: 'inlomax',
         network: targetNetwork,
-        name: `${plan.dataPlan} [${plan.dataType || 'Standard'}]`,
+        name: displayName,
         size: extractSizeString(plan.dataPlan),
         sizeInMB,
         price,
-        type: plan.dataType || extractType(plan.dataPlan), // Use Inlomax dataType directly
+        type: planType,
         validity: plan.validity || '30 Days',
         pricePerGB,
       });
