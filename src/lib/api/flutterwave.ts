@@ -313,33 +313,35 @@ export function calculateWithdrawalFee(amount: number): number {
 export const BANK_TRANSFER_FEE = 30;
 
 // Calculate what user should transfer to get desired wallet amount
-// Includes platform fee (₦30) + Flutterwave fee (2%)
+// Platform fee (₦30) only - TADA absorbs processing fee
 export function calculateBankTransferTotal(walletAmount: number): {
   walletCredit: number;
   platformFee: number;
   processingFee: number;
   totalToTransfer: number;
 } {
-  const subtotal = walletAmount + BANK_TRANSFER_FEE;
-  const processingFee = calculateFlutterwaveFee(subtotal);
+  const platformFee = BANK_TRANSFER_FEE;
+  // We still calculate processing fee for internal tracking, but don't charge user
+  const processingFee = calculateFlutterwaveFee(walletAmount + platformFee);
+  const totalToTransfer = walletAmount + platformFee;
+
   return {
     walletCredit: walletAmount,
-    platformFee: BANK_TRANSFER_FEE,
-    processingFee,
-    totalToTransfer: subtotal + processingFee,
+    platformFee,
+    processingFee, // This is what TADA pays, not user
+    totalToTransfer,
   };
 }
 
 // Calculate wallet credit from transfer amount (reverse calculation)
-// transferAmount = 1.02 * (walletCredit + platformFee)
+// transferAmount = walletCredit + platformFee
 export function calculateWalletCreditFromTransfer(transferAmount: number): {
   walletCredit: number;
   platformFee: number;
   processingFee: number;
 } {
-  const subtotal = transferAmount / 1.02;
-  const walletCredit = Math.floor(subtotal - BANK_TRANSFER_FEE);
-  const processingFee = transferAmount - Math.floor(subtotal);
+  const walletCredit = Math.max(0, transferAmount - BANK_TRANSFER_FEE);
+  const processingFee = calculateFlutterwaveFee(transferAmount);
 
   return {
     walletCredit,

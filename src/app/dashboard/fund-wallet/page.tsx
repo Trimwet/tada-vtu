@@ -645,7 +645,7 @@ export default function FundWalletPage() {
                               )}
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              Fee includes: <span className="text-blue-500 font-medium">₦30 TADA fee</span> + <span className="text-blue-500 font-medium">2% bank charge</span>.
+                              Fee includes: <span className="text-blue-500 font-medium">₦30 TADA fee</span> (we absorb the bank charges!).
                             </p>
                           </div>
                         </div>
