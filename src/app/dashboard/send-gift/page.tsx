@@ -18,8 +18,8 @@ import Link from "next/link";
 import { toast } from "@/lib/toast";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { giftRoomService } from "@/lib/gift-room-service";
-import { 
-  GiftRoomType, 
+import {
+  GiftRoomType,
   CreateGiftRoomRequest,
   GIFT_ROOM_LIMITS,
   validateGiftRoomCapacity,
@@ -32,8 +32,8 @@ const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function SendGiftPage() {
   const router = useRouter();
-  const { user } = useSupabaseUser();
-  
+  const { user, isProfileLoaded } = useSupabaseUser();
+
   const [giftType, setGiftType] = useState<GiftRoomType>('personal');
   const [capacity, setCapacity] = useState(1);
   const [amount, setAmount] = useState('');
@@ -60,7 +60,7 @@ export default function SendGiftPage() {
     }
 
     const giftAmount = parseFloat(amount);
-    
+
     // Validation
     if (!giftAmount || giftAmount < 50) {
       toast.error("Minimum gift amount is ₦50");
@@ -121,7 +121,7 @@ export default function SendGiftPage() {
   const handleShare = async () => {
     if (!shareUrl) return;
 
-    const shareMessage = message 
+    const shareMessage = message
       ? `I sent you a gift: "${message}"`
       : "I sent you a gift!";
 
@@ -154,7 +154,7 @@ export default function SendGiftPage() {
               <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <IonIcon name="checkmark-circle" size="40px" color="#22c55e" />
               </div>
-              
+
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 Gift Room Created!
               </h2>
@@ -208,7 +208,7 @@ export default function SendGiftPage() {
                 </div>
               </div>
 
-              <div className="mt-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="mt-6 p-3 bg-muted/50 border border-border rounded-lg">
                 <p className="text-sm text-muted-foreground">
                   <IonIcon name="information-circle" size="16px" className="inline mr-1" />
                   Recipients have {expirationHours} hours to claim their gifts
@@ -234,7 +234,7 @@ export default function SendGiftPage() {
 
       <main className="container mx-auto px-4 lg:px-8 py-6 max-w-2xl space-y-6">
         {/* Balance Card */}
-        <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0">
+        <Card className="bg-green-500 border-0">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -243,7 +243,11 @@ export default function SendGiftPage() {
               <div>
                 <p className="text-green-100 text-sm">Available Balance</p>
                 <h2 className="text-2xl font-bold text-white">
-                  ₦{(user?.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                  {!isProfileLoaded ? (
+                    <div className="h-8 w-32 bg-white/20 animate-pulse rounded" />
+                  ) : (
+                    `₦${(user?.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
+                  )}
                 </h2>
               </div>
             </div>
@@ -262,16 +266,14 @@ export default function SendGiftPage() {
           <CardContent className="space-y-3">
             <button
               onClick={() => setGiftType('personal')}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                giftType === 'personal'
-                  ? 'border-green-500 bg-green-500/10'
-                  : 'border-border hover:border-green-500/50'
-              }`}
+              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${giftType === 'personal'
+                ? 'border-green-500 bg-green-500/10'
+                : 'border-border hover:border-green-500/50'
+                }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  giftType === 'personal' ? 'bg-green-500/20' : 'bg-muted'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${giftType === 'personal' ? 'bg-green-500/20' : 'bg-muted'
+                  }`}>
                   <IonIcon name="person" size="20px" color={giftType === 'personal' ? '#22c55e' : '#888'} />
                 </div>
                 <div>
@@ -283,16 +285,14 @@ export default function SendGiftPage() {
 
             <button
               onClick={() => setGiftType('group')}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                giftType === 'group'
-                  ? 'border-green-500 bg-green-500/10'
-                  : 'border-border hover:border-green-500/50'
-              }`}
+              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${giftType === 'group'
+                ? 'border-green-500 bg-green-500/10'
+                : 'border-border hover:border-green-500/50'
+                }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  giftType === 'group' ? 'bg-green-500/20' : 'bg-muted'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${giftType === 'group' ? 'bg-green-500/20' : 'bg-muted'
+                  }`}>
                   <IonIcon name="people" size="20px" color={giftType === 'group' ? '#22c55e' : '#888'} />
                 </div>
                 <div>
@@ -304,16 +304,14 @@ export default function SendGiftPage() {
 
             <button
               onClick={() => setGiftType('public')}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                giftType === 'public'
-                  ? 'border-green-500 bg-green-500/10'
-                  : 'border-border hover:border-green-500/50'
-              }`}
+              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${giftType === 'public'
+                ? 'border-green-500 bg-green-500/10'
+                : 'border-border hover:border-green-500/50'
+                }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  giftType === 'public' ? 'bg-green-500/20' : 'bg-muted'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${giftType === 'public' ? 'bg-green-500/20' : 'bg-muted'
+                  }`}>
                   <IonIcon name="megaphone" size="20px" color={giftType === 'public' ? '#22c55e' : '#888'} />
                 </div>
                 <div>
@@ -364,11 +362,10 @@ export default function SendGiftPage() {
                   <button
                     key={value}
                     onClick={() => handleQuickAmount(value)}
-                    className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${
-                      amount === value.toString()
-                        ? "border-green-500 bg-green-500/10 text-green-500"
-                        : "border-border hover:border-green-500/50 text-foreground"
-                    }`}
+                    className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${amount === value.toString()
+                      ? "border-green-500 bg-green-500/10 text-green-500"
+                      : "border-border hover:border-green-500/50 text-foreground"
+                      }`}
                   >
                     ₦{value.toLocaleString()}
                   </button>
@@ -460,10 +457,10 @@ export default function SendGiftPage() {
         </Button>
 
         {/* Info Card */}
-        <Card className="border-blue-500/20 bg-blue-500/5">
+        <Card className="border-border bg-muted/30">
           <CardContent className="p-4">
             <div className="flex gap-3">
-              <IonIcon name="information-circle" size="20px" color="#3b82f6" className="shrink-0 mt-0.5" />
+              <IonIcon name="information-circle" size="20px" className="shrink-0 mt-0.5 text-green-500" />
               <div className="text-sm">
                 <p className="font-medium text-foreground mb-1">How it works</p>
                 <ul className="text-muted-foreground space-y-1">

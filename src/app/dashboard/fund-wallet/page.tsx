@@ -43,7 +43,7 @@ type PaymentMethod = "card" | "bank";
 
 export default function FundWalletPage() {
   const searchParams = useSearchParams();
-  const { user } = useSupabaseUser();
+  const { user, isProfileLoaded } = useSupabaseUser();
   const { transactions } = useSupabaseTransactions(10);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -271,7 +271,11 @@ export default function FundWalletPage() {
               <div>
                 <p className="text-green-100 text-sm">Current Balance</p>
                 <h2 className="text-2xl font-bold text-white">
-                  ₦{(user?.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                  {!isProfileLoaded ? (
+                    <div className="h-8 w-32 bg-white/20 animate-pulse rounded" />
+                  ) : (
+                    `₦${(user?.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
+                  )}
                 </h2>
               </div>
             </div>

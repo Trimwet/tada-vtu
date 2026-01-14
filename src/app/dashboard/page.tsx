@@ -38,7 +38,7 @@ const BankWithdrawalModal = dynamic(
 
 
 export default function DashboardPage() {
-  const { user, loading: userLoading } = useSupabaseUser();
+  const { user, loading: userLoading, isProfileLoaded } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
 
@@ -256,7 +256,10 @@ export default function DashboardPage() {
                   <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
                     {hideBalance
                       ? "₦••••••"
-                      : `₦${(user.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`}
+                      : !isProfileLoaded
+                        ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded my-1" />
+                        : `₦${(user.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
+                    }
                   </h2>
                 </div>
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">

@@ -42,7 +42,7 @@ const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> =
 };
 
 export default function BuyDataPage() {
-  const { user, refreshUser } = useSupabaseUser();
+  const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
   const {
     userPin,
     showCreatePin,
@@ -200,7 +200,11 @@ export default function BuyDataPage() {
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Balance</p>
                 <p className="font-bold text-green-500">
-                  ₦{(user?.balance || 0).toLocaleString()}
+                  {!isProfileLoaded ? (
+                    <span className="inline-block h-5 w-24 bg-green-500/20 animate-pulse rounded" />
+                  ) : (
+                    `₦${(user?.balance || 0).toLocaleString()}`
+                  )}
                 </p>
               </div>
             </div>
@@ -408,9 +412,14 @@ export default function BuyDataPage() {
                               />
                             </div>
                           )}
-                          <div className="font-bold text-foreground">
+                          <div className="font-bold text-foreground truncate" title={plan.description || plan.name}>
                             {plan.size}
                           </div>
+                          {(plan.description && plan.description !== plan.size && !plan.description.startsWith(plan.size)) && (
+                            <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
+                              {plan.description}
+                            </div>
+                          )}
                           <div className="text-xs text-muted-foreground">
                             {plan.validity}
                           </div>

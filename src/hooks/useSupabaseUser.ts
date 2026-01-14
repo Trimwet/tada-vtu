@@ -129,6 +129,7 @@ export function useSupabaseUser() {
   return {
     user: memoizedUser,
     loading: authLoading,
+    isProfileLoaded: !!profile,
     creditWallet,
     debitWallet,
     refreshUser: refreshProfile,
