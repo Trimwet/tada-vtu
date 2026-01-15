@@ -278,7 +278,7 @@ export default function BuyDataPage() {
                           }`}
                       >
                         <div className="text-center">
-                          <div className={`font-semibold text-sm ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <div className={`font-semibold text-xs truncate ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {network.label}
                           </div>
                         </div>

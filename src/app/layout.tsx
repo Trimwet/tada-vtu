@@ -6,6 +6,7 @@ import { NetworkStatusBar } from "@/components/network-status-bar";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -137,6 +138,7 @@ export default function RootLayout({
           closeButton
         />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
