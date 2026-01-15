@@ -1,139 +1,65 @@
 'use client';
 
-import { Component, type ReactNode } from 'react';
+import { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { IonIcon } from '@/components/ion-icon';
-import { TrustIndicators } from '@/components/trust-indicators';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorId?: string;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    const errorId = Date.now().toString(36);
-    return { hasError: true, error, errorId };
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error with context
-    console.error('Error caught by boundary:', {
-      error: error.message,
-      stack: error.stack,
-      errorInfo,
-      timestamp: new Date().toISOString(),
-      url: typeof window !== 'undefined' ? window.location.href : 'unknown'
-    });
-
-    // Detect RSC/chunk loading errors and auto-refresh
-    const isChunkError = error.message.includes('is not a function') ||
-                         error.message.includes('Loading chunk') ||
-                         error.message.includes('Failed to fetch RSC') ||
-                         error.message.includes('ChunkLoadError');
-    
-    if (isChunkError && typeof window !== 'undefined') {
-      // Clear service worker caches and reload
-      if (typeof caches !== 'undefined') {
-        caches.keys().then(names => {
-          Promise.all(names.map(name => caches.delete(name))).then(() => {
-            console.log('[ErrorBoundary] Cleared caches, reloading...');
-            window.location.reload();
-          });
-        });
-      } else {
-        window.location.reload();
-      }
-    }
+  componentDidCatch(error: Error, errorInfo: unknown) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      const isNetworkError = this.state.error?.message.includes('fetch') || 
-                            this.state.error?.message.includes('network');
-
       return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md border-border">
-            <CardContent className="pt-8 pb-8 text-center space-y-4">
-              <div className="w-20 h-20 bg-red-50 dark:bg-red-950/20 rounded-full flex items-center justify-center mx-auto">
-                <IonIcon 
-                  name={isNetworkError ? "wifi-outline" : "alert-circle-outline"} 
-                  size="40px" 
-                  className="text-red-500" 
-                />
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-md w-full border-red-500/20 bg-red-500/5">
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+                <IonIcon name="alert-circle" size="32px" color="#ef4444" />
               </div>
-              
-              <h2 className="text-2xl font-bold text-foreground">
-                {isNetworkError ? 'Connection Problem' : 'Oops! Something went wrong'}
+              <h2 className="text-xl font-bold text-foreground">
+                Something went wrong
               </h2>
-              
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {isNetworkError 
-                  ? 'Please check your internet connection and try again.'
-                  : "We encountered an unexpected error. Don't worry, your data is safe."
-                }
+              <p className="text-muted-foreground text-sm">
+                {this.state.error?.message || 'An unexpected error occurred'}
               </p>
-              
-              {this.state.errorId && (
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground">
-                    Error ID: <code className="font-mono">{this.state.errorId}</code>
-                  </p>
-                </div>
-              )}
-              
-              <div className="space-y-3">
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                  size="lg"
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => window.location.href = '/dashboard'}
+                  variant="outline"
+                  className="flex-1"
                 >
-                  <IonIcon name="refresh-outline" size="18px" className="mr-2" />
-                  Try Again
+                  <IonIcon name="home" size="18px" className="mr-2" />
+                  Go Home
                 </Button>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => (window.location.href = '/dashboard')}
-                    size="sm"
-                  >
-                    <IonIcon name="home-outline" size="16px" className="mr-1" />
-                    Dashboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => window.history.back()}
-                    size="sm"
-                  >
-                    <IonIcon name="arrow-back-outline" size="16px" className="mr-1" />
-                    Go Back
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <IonIcon name="refresh" size="18px" className="mr-2" />
+                  Reload
+                </Button>
               </div>
-              
-              <TrustIndicators variant="inline" className="justify-center pt-2" />
-              
-              <p className="text-xs text-muted-foreground">
-                Need help? Contact us on WhatsApp
-              </p>
             </CardContent>
           </Card>
         </div>

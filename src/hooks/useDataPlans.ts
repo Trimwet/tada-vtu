@@ -9,6 +9,7 @@ export interface DataPlan {
   provider: Provider;
   network: string;
   name: string;
+  description?: string;
   size: string;
   sizeInMB: number;
   price: number;
@@ -117,7 +118,14 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
 
     try {
       const url = `/api/data-plans?network=${network}${forceRefresh ? '&refresh=true' : ''}`;
-      const response = await fetch(url);
+
+      // Create abort controller with 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       const data = await response.json();
 
       if (!mountedRef.current) return;
@@ -148,10 +156,16 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
     } catch (error) {
       if (!mountedRef.current) return;
 
+      // Check if it was a timeout
+      const isTimeout = error instanceof Error && error.name === 'AbortError';
+      const errorMessage = isTimeout
+        ? 'Request timed out. Using cached data.'
+        : error instanceof Error ? error.message : 'Network error';
+
       setState(prev => ({
         ...prev,
         loading: false,
-        error: error instanceof Error ? error.message : 'Network error',
+        error: errorMessage,
       }));
     } finally {
       fetchingRef.current = false;

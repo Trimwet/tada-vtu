@@ -34,6 +34,7 @@ function transformPlan(plan: ServiceDataPlan, index: number) {
     id: `${plan.serviceID}-${plan.dataType || 'default'}-${index}`, // Unique ID
     serviceID: plan.serviceID, // Keep original for purchase
     name: plan.dataPlan,
+    description: plan.dataPlan, // Pass full name as description for now
     size: plan.dataPlan,
     price: parseAmount(plan.amount),
     validity: plan.validity || '30 Days',
@@ -58,9 +59,17 @@ export async function GET(request: NextRequest) {
     // Normalize network name (handle 9MOBILE/ETISALAT)
     const normalizedNetwork = network === 'ETISALAT' ? '9MOBILE' : network;
 
-    // Fetch real plans from Inlomax API
+    // Fetch real plans from Inlomax API with timeout
     try {
-      const result = await getServices();
+      // Create a promise that rejects after 8 seconds
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Inlomax API timeout')), 8000)
+      );
+
+      const result = await Promise.race([
+        getServices(),
+        timeoutPromise
+      ]) as Awaited<ReturnType<typeof getServices>>;
 
       if (result.status === 'success' && result.data?.dataPlans) {
         // Filter plans by network and transform to our format

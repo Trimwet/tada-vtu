@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NetworkStatusBar } from "@/components/network-status-bar";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
@@ -110,11 +111,13 @@ export default function RootLayout({
         }} />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <AuthProvider>
-          <ServiceWorkerRegister />
-          <NetworkStatusBar />
-          {children}
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <ServiceWorkerRegister />
+            <NetworkStatusBar />
+            {children}
+          </AuthProvider>
+        </ErrorBoundary>
         <Toaster
           position="top-center"
           theme="dark"

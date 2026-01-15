@@ -23,8 +23,8 @@ interface GiftRoomShareProps {
 export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomShareProps) {
   const [copied, setCopied] = useState(false);
   const shareUrl = formatGiftRoomUrl(room.token);
-  
-  const shareMessage = room.message 
+
+  const shareMessage = room.message
     ? `🎁 I sent you a gift: "${room.message}" - Click to claim: ${shareUrl}`
     : `🎁 I sent you a gift! Click to claim: ${shareUrl}`;
 
@@ -104,7 +104,7 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
 
       <CardContent className="space-y-6">
         {/* Gift Preview */}
-        <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-xl p-4">
+        <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
               <IonIcon name="gift" size="24px" color="#22c55e" />
@@ -118,7 +118,7 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
               </p>
             </div>
           </div>
-          
+
           {room.message && (
             <div className="bg-background/80 rounded-lg p-3 border border-border/50">
               <p className="text-sm text-muted-foreground italic">
@@ -136,7 +136,7 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
               {room.joined_count}/{room.capacity} joined
             </span>
           </div>
-          
+
           <div className="flex gap-2">
             <Input
               value={shareUrl}
@@ -148,9 +148,9 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
               variant="outline"
               className="shrink-0"
             >
-              <IonIcon 
-                name={copied ? "checkmark" : "copy"} 
-                size="16px" 
+              <IonIcon
+                name={copied ? "checkmark" : "copy"}
+                size="16px"
                 className="mr-1"
               />
               {copied ? "Copied" : "Copy"}
@@ -161,7 +161,7 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
         {/* Quick Share Options */}
         <div className="space-y-3">
           <h4 className="font-medium text-foreground">Quick Share</h4>
-          
+
           <div className="grid grid-cols-2 gap-3">
             {/* WhatsApp */}
             <Button
@@ -179,10 +179,10 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
             <Button
               onClick={handleSMSShare}
               variant="outline"
-              className="h-12 border-blue-500/30 hover:bg-blue-500/10"
+              className="h-12 border-zinc-500/30 hover:bg-zinc-500/10"
             >
               <div className="flex flex-col items-center gap-1">
-                <IonIcon name="chatbubble" size="20px" color="#007AFF" />
+                <IonIcon name="chatbubble" size="20px" className="text-zinc-600 dark:text-zinc-400" />
                 <span className="text-xs">SMS</span>
               </div>
             </Button>
@@ -201,13 +201,13 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
         {/* Share Message Preview */}
         <div className="space-y-3">
           <h4 className="font-medium text-foreground">Message Preview</h4>
-          
+
           <div className="bg-muted/50 rounded-lg p-3 border border-border/50">
             <p className="text-sm text-foreground whitespace-pre-wrap">
               {shareMessage}
             </p>
           </div>
-          
+
           <Button
             onClick={handleCopyMessage}
             variant="outline"
@@ -220,11 +220,11 @@ export function GiftRoomShare({ room, onClose, className = "" }: GiftRoomSharePr
         </div>
 
         {/* Tips */}
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+        <div className="bg-muted/30 border border-border rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <IonIcon name="bulb" size="20px" color="#3b82f6" className="shrink-0 mt-0.5" />
+            <IonIcon name="bulb" size="20px" className="shrink-0 mt-0.5 text-green-500" />
             <div className="text-sm">
-              <p className="font-medium text-blue-600 mb-2">Sharing Tips</p>
+              <p className="font-medium text-foreground mb-2">Sharing Tips</p>
               <ul className="text-muted-foreground space-y-1">
                 <li>• Recipients can secure their spot before signing up</li>
                 <li>• Share on WhatsApp for best results in Nigeria</li>

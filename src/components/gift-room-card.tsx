@@ -62,7 +62,7 @@ export function GiftRoomCard({
       case 'active':
         return 'text-green-500 bg-green-500/10 border-green-500/20';
       case 'full':
-        return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+        return 'text-zinc-500 bg-zinc-500/10 border-zinc-500/20';
       case 'expired':
         return 'text-muted-foreground bg-muted/30 border-border/50';
       case 'completed':
