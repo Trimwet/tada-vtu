@@ -140,12 +140,12 @@ function normalizeDataType(dataType: string, planName: string): string {
   const name = planName.toUpperCase();
 
   // Check for specific plan types based on dataType first, then plan name
-  if (type.includes('SME') && type.includes('SHARE')) return 'SME SHARE';
-  if (name.includes('SME') && name.includes('SHARE')) return 'SME SHARE';
+  if (type.includes('SME') && type.includes('SHARE')) return 'SME_SHARE';
+  if (name.includes('SME') && name.includes('SHARE')) return 'SME_SHARE';
   if (type.includes('SME') || name.includes('SME')) return 'SME';
 
-  if (type.includes('CORPORATE') && type.includes('GIFTING')) return 'CORPORATE GIFTING';
-  if (type === 'CG' || name.includes('CG')) return 'CORPORATE GIFTING';
+  if (type.includes('CORPORATE') && type.includes('GIFTING')) return 'CORPORATE_GIFTING';
+  if (type === 'CG' || name.includes('CG')) return 'CORPORATE_GIFTING';
   if (type.includes('CORPORATE') || name.includes('CORPORATE')) return 'CORPORATE';
 
   if (type.includes('GIFTING') || name.includes('GIFTING')) return 'GIFTING';
@@ -155,7 +155,7 @@ function normalizeDataType(dataType: string, planName: string): string {
   if (type.includes('SOCIAL') || name.includes('SOCIAL')) return 'SOCIAL';
 
   // If dataType is provided and not empty, use it as is (normalized)
-  if (type) return type;
+  if (type) return type.replace(/\s+/g, '_');
 
   // Default to STANDARD if no type is detected
   return 'STANDARD';
