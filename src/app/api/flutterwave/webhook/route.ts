@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { BANK_TRANSFER_FEE } from '@/lib/api/flutterwave';
+import { calculateWalletCreditFromTransfer } from '@/lib/api/flutterwave';
 
 // Force dynamic to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -131,10 +131,21 @@ export async function POST(request: NextRequest) {
         return responseOk;
       }
 
-      // Calculate credit logic
+      // Calculate credit logic using new tiered fee structure
       const isBankTransfer = data.payment_type === 'bank_transfer';
-      const fee = isBankTransfer ? BANK_TRANSFER_FEE : (data.meta?.service_charge || 0);
-      const walletCredit = isBankTransfer ? (amount - fee) : (data.meta?.wallet_credit || amount);
+      let fee: number;
+      let walletCredit: number;
+      
+      if (isBankTransfer) {
+        // Use the new tiered fee calculation
+        const feeCalc = calculateWalletCreditFromTransfer(amount);
+        fee = feeCalc.platformFee;
+        walletCredit = feeCalc.walletCredit;
+      } else {
+        // Card payments - use meta or full amount
+        fee = data.meta?.service_charge || 0;
+        walletCredit = data.meta?.wallet_credit || amount;
+      }
 
       await processDeposit(supabase, {
         userId,

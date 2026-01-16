@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { BANK_TRANSFER_FEE } from './flutterwave';
+import { calculateWalletCreditFromTransfer } from './flutterwave';
 
 export interface DepositData {
     userId: string;
@@ -11,6 +11,18 @@ export interface DepositData {
     paymentType: string;
     description: string;
     metadata?: any;
+}
+
+// Calculate deposit amounts from transfer (used by webhook)
+export function calculateDepositFromTransfer(transferAmount: number): {
+    walletCredit: number;
+    fee: number;
+} {
+    const result = calculateWalletCreditFromTransfer(transferAmount);
+    return {
+        walletCredit: result.walletCredit,
+        fee: result.platformFee,
+    };
 }
 
 export async function processDeposit(supabase: SupabaseClient, data: DepositData) {

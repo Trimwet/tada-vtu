@@ -309,43 +309,98 @@ export function calculateWithdrawalFee(amount: number): number {
 
 // ============ BANK TRANSFER DEPOSIT FEE ============
 // TADA platform fee for bank transfer deposits
-// Flat ₦30 fee - user transfers (amount + 30) to get (amount) in wallet
-export const BANK_TRANSFER_FEE = 30;
+// Hybrid fee structure:
+// - ₦100 - ₦4,999: Flat ₦30 fee
+// - ₦5,000+: 2.5% fee
+export const BANK_TRANSFER_FEE_FLAT = 30;
+export const BANK_TRANSFER_FEE_PERCENTAGE = 0.025; // 2.5%
+export const BANK_TRANSFER_FEE_THRESHOLD = 5000;
+
+// Legacy export for backward compatibility
+export const BANK_TRANSFER_FEE = BANK_TRANSFER_FEE_FLAT;
+
+// Calculate bank transfer fee based on amount
+export function calculateBankTransferFee(amount: number): number {
+  if (amount < BANK_TRANSFER_FEE_THRESHOLD) {
+    return BANK_TRANSFER_FEE_FLAT; // ₦30 flat fee for amounts under ₦5,000
+  }
+  return Math.ceil(amount * BANK_TRANSFER_FEE_PERCENTAGE); // 2.5% for ₦5,000+
+}
+
+// Get fee tier info for display
+export function getBankTransferFeeTier(amount: number): {
+  fee: number;
+  isFlat: boolean;
+  percentage?: number;
+  tier: string;
+} {
+  if (amount < BANK_TRANSFER_FEE_THRESHOLD) {
+    return {
+      fee: BANK_TRANSFER_FEE_FLAT,
+      isFlat: true,
+      tier: '₦100 - ₦4,999',
+    };
+  }
+  return {
+    fee: Math.ceil(amount * BANK_TRANSFER_FEE_PERCENTAGE),
+    isFlat: false,
+    percentage: BANK_TRANSFER_FEE_PERCENTAGE * 100,
+    tier: '₦5,000+',
+  };
+}
 
 // Calculate what user should transfer to get desired wallet amount
-// Platform fee (₦30) only - TADA absorbs processing fee
 export function calculateBankTransferTotal(walletAmount: number): {
   walletCredit: number;
   platformFee: number;
   processingFee: number;
   totalToTransfer: number;
+  feeType: 'flat' | 'percentage';
 } {
-  const platformFee = BANK_TRANSFER_FEE;
-  // We still calculate processing fee for internal tracking, but don't charge user
+  const platformFee = calculateBankTransferFee(walletAmount);
+  // We still calculate processing fee for internal tracking
   const processingFee = calculateFlutterwaveFee(walletAmount + platformFee);
   const totalToTransfer = walletAmount + platformFee;
 
   return {
     walletCredit: walletAmount,
     platformFee,
-    processingFee, // This is what TADA pays, not user
+    processingFee, // This is what TADA pays from the fee
     totalToTransfer,
+    feeType: walletAmount < BANK_TRANSFER_FEE_THRESHOLD ? 'flat' : 'percentage',
   };
 }
 
 // Calculate wallet credit from transfer amount (reverse calculation)
-// transferAmount = walletCredit + platformFee
+// For flat fee: walletCredit = transferAmount - 30
+// For percentage: walletCredit = transferAmount / 1.025
 export function calculateWalletCreditFromTransfer(transferAmount: number): {
   walletCredit: number;
   platformFee: number;
   processingFee: number;
 } {
-  const walletCredit = Math.max(0, transferAmount - BANK_TRANSFER_FEE);
+  // First, estimate if this falls into flat or percentage tier
+  // If transfer - 30 < 5000, it's flat fee territory
+  const estimatedWalletFlat = transferAmount - BANK_TRANSFER_FEE_FLAT;
+  
+  let walletCredit: number;
+  let platformFee: number;
+  
+  if (estimatedWalletFlat < BANK_TRANSFER_FEE_THRESHOLD) {
+    // Flat fee: transferAmount = walletCredit + 30
+    walletCredit = Math.max(0, transferAmount - BANK_TRANSFER_FEE_FLAT);
+    platformFee = BANK_TRANSFER_FEE_FLAT;
+  } else {
+    // Percentage fee: transferAmount = walletCredit * 1.025
+    walletCredit = Math.floor(transferAmount / (1 + BANK_TRANSFER_FEE_PERCENTAGE));
+    platformFee = transferAmount - walletCredit;
+  }
+  
   const processingFee = calculateFlutterwaveFee(transferAmount);
 
   return {
     walletCredit,
-    platformFee: BANK_TRANSFER_FEE,
+    platformFee,
     processingFee,
   };
 }
