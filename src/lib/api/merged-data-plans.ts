@@ -34,8 +34,8 @@ const INLOMAX_NETWORK_IDS: Record<string, string> = {
 
 // Cache config
 const CACHE_CONFIG = {
-  freshTTL: 5 * 60 * 1000,      // 5 minutes - data is fresh
-  staleTTL: 60 * 60 * 1000,     // 60 minutes - max stale age
+  freshTTL: 2 * 60 * 1000,      // 2 minutes - shorter TTL for faster updates
+  staleTTL: 10 * 60 * 1000,     // 10 minutes
   fetchTimeout: 15 * 1000,      // 15 seconds
 };
 
@@ -217,6 +217,15 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
 
       const sizeInMB = extractSizeInMB(plan.dataPlan);
       const pricePerGB = sizeInMB > 0 ? Math.round((price / sizeInMB) * 1024) : 0;
+      const extractedSize = extractSizeString(plan.dataPlan);
+
+      // Clean up description: remove the size if it's already at the start
+      let cleanDescription = (plan.dataPlan || '').trim();
+      if (cleanDescription.startsWith(extractedSize)) {
+        cleanDescription = cleanDescription.substring(extractedSize.length).trim();
+        // Remove leading separators like -, :, spaces
+        cleanDescription = cleanDescription.replace(/^[:\-\s]+/, '').trim();
+      }
 
       // Format the plan name to show both dataPlan and dataType clearly
       const planType = plan.dataType || normalizeDataType(plan.dataType || '', plan.dataPlan);
@@ -227,8 +236,8 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
         provider: 'inlomax',
         network: targetNetwork,
         name: displayName,
-        description: plan.dataPlan, // Full name as description
-        size: extractSizeString(plan.dataPlan),
+        description: cleanDescription || undefined,
+        size: extractedSize,
         sizeInMB,
         price,
         type: planType,

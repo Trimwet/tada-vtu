@@ -41,8 +41,8 @@ interface UseDataPlansOptions {
   refreshInterval?: number;
 }
 
-const STORAGE_KEY = 'tada_data_plans_cache';
-const LOCAL_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const STORAGE_KEY = 'tada_data_plans_cache_v2';
+const LOCAL_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for faster updates
 
 // Load from localStorage
 function loadFromStorage(network: string): DataPlansState | null {
