@@ -412,10 +412,13 @@ export default function BuyDataPage() {
                               />
                             </div>
                           )}
-                          <div className="font-bold text-foreground truncate" title={plan.description || plan.name}>
+                          <div className="font-bold text-foreground truncate" title={plan.name}>
                             {plan.size}
                           </div>
-                          {(plan.description && plan.description !== plan.size && !plan.description.startsWith(plan.size)) && (
+                          {plan.description && 
+                           plan.description !== plan.size && 
+                           !plan.description.toLowerCase().includes(plan.size.toLowerCase()) &&
+                           plan.description.length > 0 && (
                             <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
                               {plan.description}
                             </div>

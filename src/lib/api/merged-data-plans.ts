@@ -219,12 +219,20 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       const pricePerGB = sizeInMB > 0 ? Math.round((price / sizeInMB) * 1024) : 0;
       const extractedSize = extractSizeString(plan.dataPlan);
 
-      // Clean up description: remove the size if it's already at the start
+      // Clean up description: remove ALL size references to avoid duplication
       let cleanDescription = (plan.dataPlan || '').trim();
-      if (cleanDescription.startsWith(extractedSize)) {
-        cleanDescription = cleanDescription.substring(extractedSize.length).trim();
-        // Remove leading separators like -, :, spaces
-        cleanDescription = cleanDescription.replace(/^[:\-\s]+/, '').trim();
+      
+      // Remove all size patterns (e.g., "1GB", "1.0 GB", "1.0GB", "500MB", etc.)
+      // This regex matches: number + optional decimal + optional space + GB/MB/TB
+      cleanDescription = cleanDescription.replace(/\d+(?:\.\d+)?\s*(?:GB|MB|TB)(?!PS)/gi, '').trim();
+      
+      // Remove leading/trailing separators and extra spaces
+      cleanDescription = cleanDescription.replace(/^[:\-\s]+|[:\-\s]+$/g, '').trim();
+      cleanDescription = cleanDescription.replace(/\s+/g, ' ').trim();
+      
+      // If description is now empty or just contains validity info, keep validity
+      if (!cleanDescription || cleanDescription.length < 2) {
+        cleanDescription = '';
       }
 
       // Format the plan name to show both dataPlan and dataType clearly

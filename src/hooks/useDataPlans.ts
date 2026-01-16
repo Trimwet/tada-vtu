@@ -41,7 +41,7 @@ interface UseDataPlansOptions {
   refreshInterval?: number;
 }
 
-const STORAGE_KEY = 'tada_data_plans_cache_v2';
+const STORAGE_KEY = 'tada_data_plans_cache_v3'; // v3: direct Inlomax prices, no markup
 const LOCAL_CACHE_TTL = 2 * 60 * 1000; // 2 minutes for faster updates
 
 // Load from localStorage
