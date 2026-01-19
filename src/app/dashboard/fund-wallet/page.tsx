@@ -81,16 +81,11 @@ export default function FundWalletPage() {
 
     // Simple client-side calculation for better performance
     if (fundAmount < 5000) {
-      // For temporary accounts, Flutterwave adds ~2% processing fee
-      const baseTotal = fundAmount + 30.50;
-      const flwProcessingFee = Math.ceil(baseTotal * 0.02);
-      const actualTotal = baseTotal + flwProcessingFee;
-      
       setFeeInfo({
         wallet_credit: fundAmount,
         service_fee: 30.50,
-        processing_fee: flwProcessingFee,
-        total_to_pay: actualTotal,
+        processing_fee: 0, // Don't try to predict FLW fees, they vary
+        total_to_pay: fundAmount + 30.50, // Show our fee, FLW will add theirs
         merchant_pays_fee: false,
         fee_type: 'flat',
       });
@@ -360,7 +355,7 @@ export default function FundWalletPage() {
                 Bank Transfer
               </CardTitle>
               <CardDescription>
-                Transfer to your dedicated account. ₦30.50 service fee.
+                Transfer to your dedicated account. ₦30.50 service fee + Flutterwave processing charges.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -516,7 +511,7 @@ export default function FundWalletPage() {
                         <ul className="space-y-1 text-muted-foreground">
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
-                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>. This includes the ₦30.50 service fee + bank processing charges.</span>
+                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>. This includes our ₦30.50 fee + Flutterwave's processing charges.</span>
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
