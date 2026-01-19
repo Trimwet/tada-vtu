@@ -19,9 +19,7 @@ import {
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
 import { LoadingScreen } from "@/components/loading-screen";
-import { GreetingTypewriter } from "@/components/greeting-typewriter";
 import { getSupabase } from "@/lib/supabase/client";
-import { TierBadge } from "@/components/tier-badge";
 
 import { getUserTier } from "@/lib/pricing-tiers";
 import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
