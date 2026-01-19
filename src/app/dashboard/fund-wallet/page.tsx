@@ -37,6 +37,7 @@ interface FeeInfo {
   processing_fee: number;
   total_to_pay: number;
   merchant_pays_fee: boolean;
+  fee_type?: 'flat' | 'percentage';
 }
 
 type PaymentMethod = "card" | "bank";
