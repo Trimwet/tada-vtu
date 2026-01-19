@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Check if user already has a PERMANENT virtual account (only show permanent accounts)
     const { data: existingAccount, error } = await supabase
       .from('virtual_accounts')
-      .select('*')
+      .select('account_number, bank_name, account_name, created_at')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .eq('is_temporary', false) // CRITICAL: Only return permanent accounts
@@ -71,12 +71,7 @@ export async function GET(request: NextRequest) {
       console.log('Returning permanent virtual account for user:', user.id);
       return NextResponse.json({
         status: 'success',
-        data: {
-          account_number: (existingAccount as any).account_number,
-          bank_name: (existingAccount as any).bank_name,
-          account_name: (existingAccount as any).account_name,
-          created_at: (existingAccount as any).created_at,
-        },
+        data: existingAccount,
       });
     }
 
@@ -251,21 +246,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a permanent virtual account
-    const { data: existingAccount } = await supabase
+    const { data: existingAccount, error: existingError } = await supabase
       .from('virtual_accounts')
-      .select('*')
+      .select('account_number, bank_name, account_name')
       .eq('user_id', user_id)
       .eq('is_active', true)
+      .eq('is_temporary', false) // Only check for permanent accounts
       .single();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      console.error('Error checking existing account:', existingError);
+    }
 
     if (existingAccount) {
       return NextResponse.json({
         status: 'success',
         message: 'Virtual account already exists',
         data: {
-          account_number: existingAccount.account_number,
-          bank_name: existingAccount.bank_name,
-          account_name: existingAccount.account_name,
+          ...existingAccount,
           is_temporary: false,
         },
       });
