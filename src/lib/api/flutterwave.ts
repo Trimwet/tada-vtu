@@ -310,21 +310,25 @@ export function calculateWithdrawalFee(amount: number): number {
 // ============ BANK TRANSFER DEPOSIT FEE ============
 // TADA platform fee for bank transfer deposits
 // Hybrid fee structure:
-// - ₦100 - ₦4,999: Flat ₦30 fee
-// - ₦5,000+: 2.5% fee
-export const BANK_TRANSFER_FEE_FLAT = 30;
+// - ₦100 - ₦4,999: Flat ₦30.50 fee (accounts for ₦0.50 VAT to net ₦30)
+// - ₦5,000+: 2.5% fee + VAT adjustment
+export const BANK_TRANSFER_FEE_FLAT = 30.50; // Adjusted for VAT
 export const BANK_TRANSFER_FEE_PERCENTAGE = 0.025; // 2.5%
 export const BANK_TRANSFER_FEE_THRESHOLD = 5000;
+export const FLUTTERWAVE_VAT_RATE = 0.0015; // 0.15% VAT on fees
 
 // Legacy export for backward compatibility
 export const BANK_TRANSFER_FEE = BANK_TRANSFER_FEE_FLAT;
 
-// Calculate bank transfer fee based on amount
+// Calculate bank transfer fee based on amount (includes VAT adjustment)
 export function calculateBankTransferFee(amount: number): number {
   if (amount < BANK_TRANSFER_FEE_THRESHOLD) {
-    return BANK_TRANSFER_FEE_FLAT; // ₦30 flat fee for amounts under ₦5,000
+    return BANK_TRANSFER_FEE_FLAT; // ₦30.50 flat fee (nets ₦30 after VAT)
   }
-  return Math.ceil(amount * BANK_TRANSFER_FEE_PERCENTAGE); // 2.5% for ₦5,000+
+  // For percentage fees, add VAT to ensure we get the intended amount
+  const baseFee = Math.ceil(amount * BANK_TRANSFER_FEE_PERCENTAGE);
+  const vatAdjustment = Math.ceil(baseFee * FLUTTERWAVE_VAT_RATE);
+  return baseFee + vatAdjustment;
 }
 
 // Get fee tier info for display
@@ -333,19 +337,24 @@ export function getBankTransferFeeTier(amount: number): {
   isFlat: boolean;
   percentage?: number;
   tier: string;
+  netFee: number; // What you actually receive after VAT
 } {
   if (amount < BANK_TRANSFER_FEE_THRESHOLD) {
     return {
       fee: BANK_TRANSFER_FEE_FLAT,
       isFlat: true,
       tier: '₦100 - ₦4,999',
+      netFee: 30.00, // After VAT deduction
     };
   }
+  const fee = calculateBankTransferFee(amount);
+  const netFee = fee - Math.ceil(fee * FLUTTERWAVE_VAT_RATE);
   return {
-    fee: Math.ceil(amount * BANK_TRANSFER_FEE_PERCENTAGE),
+    fee,
     isFlat: false,
     percentage: BANK_TRANSFER_FEE_PERCENTAGE * 100,
     tier: '₦5,000+',
+    netFee,
   };
 }
 
@@ -372,27 +381,29 @@ export function calculateBankTransferTotal(walletAmount: number): {
 }
 
 // Calculate wallet credit from transfer amount (reverse calculation)
-// For flat fee: walletCredit = transferAmount - 30
-// For percentage: walletCredit = transferAmount / 1.025
+// For flat fee: walletCredit = transferAmount - 30 (user gets credited as if fee was ₦30)
+// For percentage: walletCredit = transferAmount / (1 + adjustedPercentage)
 export function calculateWalletCreditFromTransfer(transferAmount: number): {
   walletCredit: number;
   platformFee: number;
   processingFee: number;
 } {
   // First, estimate if this falls into flat or percentage tier
-  // If transfer - 30 < 5000, it's flat fee territory
+  // If transfer - 30.50 < 5000, it's flat fee territory
   const estimatedWalletFlat = transferAmount - BANK_TRANSFER_FEE_FLAT;
   
   let walletCredit: number;
   let platformFee: number;
   
   if (estimatedWalletFlat < BANK_TRANSFER_FEE_THRESHOLD) {
-    // Flat fee: transferAmount = walletCredit + 30
-    walletCredit = Math.max(0, transferAmount - BANK_TRANSFER_FEE_FLAT);
-    platformFee = BANK_TRANSFER_FEE_FLAT;
+    // Flat fee: transferAmount = walletCredit + 30.50
+    // But we want to credit user as if they paid ₦30, so:
+    walletCredit = Math.max(0, transferAmount - 30); // User gets credited as if fee was ₦30
+    platformFee = transferAmount - walletCredit; // Actual fee collected
   } else {
-    // Percentage fee: transferAmount = walletCredit * 1.025
-    walletCredit = Math.floor(transferAmount / (1 + BANK_TRANSFER_FEE_PERCENTAGE));
+    // Percentage fee: transferAmount = walletCredit * (1 + adjustedPercentage)
+    const adjustedRate = BANK_TRANSFER_FEE_PERCENTAGE + (BANK_TRANSFER_FEE_PERCENTAGE * FLUTTERWAVE_VAT_RATE);
+    walletCredit = Math.floor(transferAmount / (1 + adjustedRate));
     platformFee = transferAmount - walletCredit;
   }
   

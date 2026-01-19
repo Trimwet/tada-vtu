@@ -272,7 +272,10 @@ export default function FundWalletPage() {
                 <p className="text-green-100 text-sm">Current Balance</p>
                 <h2 className="text-2xl font-bold text-white">
                   {!isProfileLoaded ? (
-                    <div className="h-8 w-32 bg-white/20 animate-pulse rounded" />
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span className="text-white/70 text-lg">Loading...</span>
+                    </div>
                   ) : (
                     `₦${(user?.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
                   )}
@@ -300,7 +303,7 @@ export default function FundWalletPage() {
                 <p className={`font-semibold text-sm ${paymentMethod === "bank" ? "text-green-500" : "text-foreground"}`}>
                   Bank Transfer
                 </p>
-                <p className="text-xs text-muted-foreground">₦30 fee</p>
+                <p className="text-xs text-muted-foreground">₦30.50 fee</p>
               </div>
             </div>
           </button>
@@ -336,7 +339,7 @@ export default function FundWalletPage() {
                 Bank Transfer
               </CardTitle>
               <CardDescription>
-                Transfer to your dedicated account. ₦30 service fee.
+                Transfer to your dedicated account. ₦30.50 service fee.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -387,7 +390,7 @@ export default function FundWalletPage() {
                           Transfer any amount from your bank app. Your wallet will be credited automatically within 1-2 minutes.
                         </p>
                         <p className="text-muted-foreground mt-1">
-                          <span className="text-green-500 font-semibold">₦30 service fee</span> - still cheaper than card payments!
+                          <span className="text-green-500 font-semibold">₦30.50 service fee</span> - still cheaper than card payments!
                         </p>
                       </div>
                     </div>
@@ -492,7 +495,7 @@ export default function FundWalletPage() {
                         <ul className="space-y-1 text-muted-foreground">
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
-                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>. This includes the ₦30 service fee + bank processing charges.</span>
+                            <span>Transfer exactly <span className="font-semibold text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>. This includes the ₦30.50 service fee + bank processing charges.</span>
                           </li>
                           <li className="flex items-start gap-2">
                             <span className="text-amber-500 mt-1">•</span>
@@ -649,7 +652,7 @@ export default function FundWalletPage() {
                               )}
                             </p>
                             <p className="text-muted-foreground mt-1">
-                              Fee includes: <span className="text-blue-500 font-medium">₦30 TADA fee</span> (we absorb the bank charges!).
+                              Fee includes: <span className="text-blue-500 font-medium">₦30.50 TADA fee</span> (we absorb the bank charges!).
                             </p>
                           </div>
                         </div>

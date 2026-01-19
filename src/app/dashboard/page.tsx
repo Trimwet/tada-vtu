@@ -257,7 +257,12 @@ export default function DashboardPage() {
                     {hideBalance
                       ? "₦••••••"
                       : !isProfileLoaded
-                        ? <div className="h-8 w-32 bg-white/20 animate-pulse rounded my-1" />
+                        ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span className="text-white/60 text-lg">Loading...</span>
+                          </div>
+                        )
                         : `₦${(user.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
                     }
                   </h2>
