@@ -29,9 +29,22 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { supabaseFetcher } from "@/lib/swr-fetcher";
 
-// Lazy load heavy components
+// Lazy load heavy components with loading states
 const BankWithdrawalModal = dynamic(
   () => import("@/components/bank-withdrawal-modal").then(mod => ({ default: mod.BankWithdrawalModal })),
+  { 
+    ssr: false,
+    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div></div>
+  }
+);
+
+const TierBadge = dynamic(
+  () => import("@/components/tier-badge").then(mod => ({ default: mod.TierBadge })),
+  { ssr: false }
+);
+
+const GreetingTypewriter = dynamic(
+  () => import("@/components/greeting-typewriter").then(mod => ({ default: mod.GreetingTypewriter })),
   { ssr: false }
 );
 
@@ -74,8 +87,21 @@ export default function DashboardPage() {
     }
   }, [user?.id, user?.phone_number]);
 
-  // Calculate monthly stats from transactions - only count successful ones
+  // Memoize expensive calculations
   const monthlyStats = useMemo(() => {
+    if (!allTransactions || allTransactions.length === 0) {
+      return {
+        totalSpent: 0,
+        airtimeSpent: 0,
+        dataSpent: 0,
+        cableSpent: 0,
+        electricitySpent: 0,
+        dataGB: 0,
+        transactionCount: 0,
+        topNetwork: "MTN",
+      };
+    }
+
     const stats = {
       totalSpent: 0,
       airtimeSpent: 0,
@@ -215,15 +241,15 @@ export default function DashboardPage() {
       <main className="px-4 lg:px-8 py-4 lg:py-6 space-y-5 lg:space-y-6 lg:max-w-7xl lg:mx-auto">
         {/* Greeting */}
         <div className="space-y-1">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
               {timeGreeting}
             </h1>
-            <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />
+            {user && <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />}
           </div>
-          <p className="text-muted-foreground h-6">
+          <div className="text-muted-foreground h-6">
             <GreetingTypewriter speed={40} />
-          </p>
+          </div>
         </div>
 
         {/* Wallet Card */}

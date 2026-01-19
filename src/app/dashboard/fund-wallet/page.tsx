@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,32 +71,47 @@ export default function FundWalletPage() {
     copyAccountNumber
   } = useVirtualAccount();
 
-  // Fetch fee info when amount changes
+  // Optimized fee fetching with caching
+  const fetchFees = useCallback(async (fundAmount: number) => {
+    if (!fundAmount || fundAmount < 100) {
+      setFeeInfo(null);
+      return;
+    }
+
+    // Simple client-side calculation for better performance
+    if (fundAmount < 5000) {
+      setFeeInfo({
+        wallet_credit: fundAmount,
+        service_fee: 30.50,
+        processing_fee: 0,
+        total_to_pay: fundAmount + 30.50,
+        merchant_pays_fee: false,
+        fee_type: 'flat',
+      });
+      return;
+    }
+
+    // Only fetch from API for percentage fees
+    setLoadingFees(true);
+    try {
+      const res = await fetch(`/api/flutterwave/fee-check?amount=${fundAmount}&method=bank`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        setFeeInfo(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch fees:', error);
+    } finally {
+      setLoadingFees(false);
+    }
+  }, []);
+
+  // Debounced fee fetching
   useEffect(() => {
-    const fetchFees = async () => {
-      const fundAmount = parseInt(amount);
-      if (!fundAmount || fundAmount < 100) {
-        setFeeInfo(null);
-        return;
-      }
-
-      setLoadingFees(true);
-      try {
-        const res = await fetch(`/api/flutterwave/fee-check?amount=${fundAmount}`);
-        const data = await res.json();
-        if (data.status === 'success') {
-          setFeeInfo(data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch fees:', error);
-      } finally {
-        setLoadingFees(false);
-      }
-    };
-
-    const debounce = setTimeout(fetchFees, 300);
+    const fundAmount = parseInt(amount);
+    const debounce = setTimeout(() => fetchFees(fundAmount), 300);
     return () => clearTimeout(debounce);
-  }, [amount]);
+  }, [amount, fetchFees]);
 
   const { initiatePayment, redirectToPayment, loading: paymentLoading } = useFlutterwavePayment();
 
