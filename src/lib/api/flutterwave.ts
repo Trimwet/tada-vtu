@@ -310,9 +310,9 @@ export function calculateWithdrawalFee(amount: number): number {
 // ============ BANK TRANSFER DEPOSIT FEE ============
 // TADA platform fee for bank transfer deposits
 // Hybrid fee structure:
-// - ₦100 - ₦4,999: Flat ₦30.50 fee (accounts for ₦0.50 VAT to net ₦30)
+// - ₦100 - ₦4,999: Flat ₦25.50 fee (accounts for ₦0.50 VAT to net ₦25)
 // - ₦5,000+: 2.5% fee + VAT adjustment
-export const BANK_TRANSFER_FEE_FLAT = 30.50; // Adjusted for VAT
+export const BANK_TRANSFER_FEE_FLAT = 25.50; // Adjusted for VAT to net ₦25
 export const BANK_TRANSFER_FEE_PERCENTAGE = 0.025; // 2.5%
 export const BANK_TRANSFER_FEE_THRESHOLD = 5000;
 export const FLUTTERWAVE_VAT_RATE = 0.0015; // 0.15% VAT on fees
@@ -344,7 +344,7 @@ export function getBankTransferFeeTier(amount: number): {
       fee: BANK_TRANSFER_FEE_FLAT,
       isFlat: true,
       tier: '₦100 - ₦4,999',
-      netFee: 30.00, // After VAT deduction
+      netFee: 25.00, // After VAT deduction
     };
   }
   const fee = calculateBankTransferFee(amount);
@@ -381,7 +381,7 @@ export function calculateBankTransferTotal(walletAmount: number): {
 }
 
 // Calculate wallet credit from transfer amount (reverse calculation)
-// For flat fee: walletCredit = transferAmount - 30 (user gets credited as if fee was ₦30)
+// For flat fee: walletCredit = transferAmount - 25 (user gets credited as if fee was ₦25)
 // For percentage: walletCredit = transferAmount / (1 + adjustedPercentage)
 export function calculateWalletCreditFromTransfer(transferAmount: number): {
   walletCredit: number;
@@ -389,16 +389,16 @@ export function calculateWalletCreditFromTransfer(transferAmount: number): {
   processingFee: number;
 } {
   // First, estimate if this falls into flat or percentage tier
-  // If transfer - 30.50 < 5000, it's flat fee territory
+  // If transfer - 25.50 < 5000, it's flat fee territory
   const estimatedWalletFlat = transferAmount - BANK_TRANSFER_FEE_FLAT;
   
   let walletCredit: number;
   let platformFee: number;
   
   if (estimatedWalletFlat < BANK_TRANSFER_FEE_THRESHOLD) {
-    // Flat fee: transferAmount = walletCredit + 30.50
-    // But we want to credit user as if they paid ₦30, so:
-    walletCredit = Math.max(0, transferAmount - 30); // User gets credited as if fee was ₦30
+    // Flat fee: transferAmount = walletCredit + 25.50
+    // But we want to credit user as if they paid ₦25, so:
+    walletCredit = Math.max(0, transferAmount - 25); // User gets credited as if fee was ₦25
     platformFee = transferAmount - walletCredit; // Actual fee collected
   } else {
     // Percentage fee: transferAmount = walletCredit * (1 + adjustedPercentage)
