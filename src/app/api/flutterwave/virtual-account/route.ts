@@ -126,13 +126,17 @@ export async function POST(request: NextRequest) {
 
       const txRef = `TADA-TEMP-${user_id.slice(0, 8)}-${Date.now()}`;
 
-      const { totalToTransfer } = calculateBankTransferTotal(amount);
+      // For temporary accounts, Flutterwave adds ~2% processing fee on top
+      // So we need to account for this in our calculation
+      const baseAmount = amount + 30.50; // Our fee
+      const flutterwaveProcessingFee = Math.ceil(baseAmount * 0.02); // ~2% FLW fee
+      const actualTotalToTransfer = baseAmount + flutterwaveProcessingFee;
 
       const flwPayload = {
         email,
         is_permanent: false,
         tx_ref: txRef,
-        amount: totalToTransfer,
+        amount: actualTotalToTransfer, // Use the actual total including FLW fees
         firstname: firstname || 'TADA',
         lastname: lastname || 'User',
         narration: 'TADA VTU Wallet Funding',

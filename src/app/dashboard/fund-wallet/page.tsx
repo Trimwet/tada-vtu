@@ -81,11 +81,16 @@ export default function FundWalletPage() {
 
     // Simple client-side calculation for better performance
     if (fundAmount < 5000) {
+      // For temporary accounts, Flutterwave adds ~2% processing fee
+      const baseTotal = fundAmount + 30.50;
+      const flwProcessingFee = Math.ceil(baseTotal * 0.02);
+      const actualTotal = baseTotal + flwProcessingFee;
+      
       setFeeInfo({
         wallet_credit: fundAmount,
         service_fee: 30.50,
-        processing_fee: 0,
-        total_to_pay: fundAmount + 30.50,
+        processing_fee: flwProcessingFee,
+        total_to_pay: actualTotal,
         merchant_pays_fee: false,
         fee_type: 'flat',
       });
