@@ -45,7 +45,7 @@ export default function ResetPinPage() {
 
       if (data.success) {
         toast.success("Verification code sent!", {
-          description: "Check your email for the code.",
+          description: "Check your email (including spam folder) for the code.",
         });
         setStep("verify");
       } else {
@@ -199,7 +199,7 @@ export default function ResetPinPage() {
               </div>
               <CardTitle>Enter Verification Code</CardTitle>
               <CardDescription>
-                Enter the 6-digit code sent to {user?.email}
+                Enter the 6-digit code sent to {user?.email}. Check your spam folder if you don't see it.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -212,6 +212,9 @@ export default function ResetPinPage() {
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                 className="text-center text-2xl tracking-widest"
               />
+              <div className="text-xs text-muted-foreground text-center">
+                💡 Can't find the email? Check your spam/junk folder
+              </div>
               <Button
                 onClick={handleVerifyOtp}
                 disabled={otp.length !== 6}
