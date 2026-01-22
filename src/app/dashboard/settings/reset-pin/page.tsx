@@ -16,6 +16,7 @@ import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
+import { useAuth } from "@/hooks/useAuth";
 
 // Optimized loading spinner component
 const LoadingSpinner = ({ size = "sm", variant = "button" }: { 
@@ -65,6 +66,7 @@ type LoadingState = "idle" | "sending" | "verifying" | "saving";
 
 export default function ResetPinPage() {
   const { user, loading: userLoading } = useSupabaseUser();
+  const { loading: authLoading } = useAuth();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   
@@ -238,29 +240,16 @@ export default function ResetPinPage() {
   const canVerify = otp.length === 6 && !isAnyLoading;
   const canSave = newPin.length === 4 && confirmPin.length === 4 && !isAnyLoading;
 
-  // Show loading spinner while user data is being fetched
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" variant="page" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+  // Don't show loading if AuthGuard is already handling it
+  // Only show loading if we have a user but are still loading profile data
+  if (authLoading || (userLoading && !user)) {
+    return null; // Let AuthGuard handle the loading screen
   }
 
-  // Redirect to login if no user found
+  // Redirect to login if no user found (but don't show loading screen)
   if (!user) {
     router.push('/login');
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" variant="page" />
-          <p className="text-muted-foreground">Redirecting to login...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
