@@ -18,15 +18,23 @@ import { toast } from "sonner";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 
 // Optimized loading spinner component
-const LoadingSpinner = ({ size = "sm" }: { size?: "sm" | "md" | "lg" }) => {
+const LoadingSpinner = ({ size = "sm", variant = "button" }: { 
+  size?: "sm" | "md" | "lg";
+  variant?: "button" | "page";
+}) => {
   const sizeClasses = {
     sm: "h-4 w-4",
     md: "h-6 w-6", 
     lg: "h-8 w-8"
   };
   
+  const colorClasses = {
+    button: "border-white border-t-transparent",
+    page: "border-muted border-t-primary"
+  };
+  
   return (
-    <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-white border-t-transparent`} />
+    <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 ${colorClasses[variant]}`} />
   );
 };
 
@@ -56,7 +64,7 @@ type Step = "request" | "verify" | "newpin";
 type LoadingState = "idle" | "sending" | "verifying" | "saving";
 
 export default function ResetPinPage() {
-  const { user } = useSupabaseUser();
+  const { user, loading: userLoading } = useSupabaseUser();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   
@@ -68,6 +76,31 @@ export default function ResetPinPage() {
 
   // Memoized user email for performance
   const userEmail = useMemo(() => user?.email, [user?.email]);
+
+  // Show loading spinner while user data is being fetched
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" variant="page" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if no user found
+  if (!user) {
+    router.push('/login');
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" variant="page" />
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Optimized API call function
   const makeApiCall = useCallback(async (payload: Record<string, any>) => {
