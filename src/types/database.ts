@@ -17,6 +17,8 @@ export interface Database {
           referral_code: string | null;
           referred_by: string | null;
           pin: string | null;
+          reset_otp: string | null;
+          reset_otp_expires: string | null;
           kyc_level: number;
           is_active: boolean;
           created_at: string;
@@ -42,6 +44,8 @@ export interface Database {
           referral_code?: string | null;
           referred_by?: string | null;
           pin?: string | null;
+          reset_otp?: string | null;
+          reset_otp_expires?: string | null;
           kyc_level?: number;
           is_active?: boolean;
           created_at?: string;
@@ -66,6 +70,8 @@ export interface Database {
           referral_code?: string | null;
           referred_by?: string | null;
           pin?: string | null;
+          reset_otp?: string | null;
+          reset_otp_expires?: string | null;
           kyc_level?: number;
           is_active?: boolean;
           created_at?: string;

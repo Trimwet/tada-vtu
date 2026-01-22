@@ -19,8 +19,57 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// In-memory OTP store (use Redis in production)
-const otpStore: Record<string, { otp: string; expires: number }> = {};
+// Store OTP in database temporarily
+async function storeOTP(supabase: any, email: string, otp: string) {
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  
+  // Use upsert to handle multiple requests for same email
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      reset_otp: otp,
+      reset_otp_expires: expiresAt.toISOString()
+    })
+    .eq('email', email.toLowerCase());
+    
+  return !error;
+}
+
+// Verify and clear OTP from database
+async function verifyOTP(supabase: any, email: string, otp: string) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('reset_otp, reset_otp_expires')
+    .eq('email', email.toLowerCase())
+    .single();
+
+  if (!profile || !profile.reset_otp) {
+    return { valid: false, message: 'OTP not requested' };
+  }
+
+  if (new Date(profile.reset_otp_expires) < new Date()) {
+    // Clear expired OTP
+    await supabase
+      .from('profiles')
+      .update({ reset_otp: null, reset_otp_expires: null })
+      .eq('email', email.toLowerCase());
+    return { valid: false, message: 'OTP expired' };
+  }
+
+  if (profile.reset_otp !== otp) {
+    return { valid: false, message: 'Invalid OTP' };
+  }
+
+  return { valid: true, message: 'OTP verified' };
+}
+
+// Clear OTP from database
+async function clearOTP(supabase: any, email: string) {
+  await supabase
+    .from('profiles')
+    .update({ reset_otp: null, reset_otp_expires: null })
+    .eq('email', email.toLowerCase());
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,8 +95,14 @@ export async function POST(request: NextRequest) {
       // Generate OTP
       const otpCode = generateOTP();
 
-      // Store OTP temporarily (10 minutes expiry)
-      otpStore[email] = { otp: otpCode, expires: Date.now() + 10 * 60 * 1000 };
+      // Store OTP in database
+      const stored = await storeOTP(supabase, email, otpCode);
+      if (!stored) {
+        return NextResponse.json(
+          { success: false, message: 'Failed to generate verification code. Please try again.' },
+          { status: 500 }
+        );
+      }
 
       // Send OTP via email
       try {
@@ -79,24 +134,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'verify') {
-      if (!otpStore[email]) {
+      const verification = await verifyOTP(supabase, email, otp);
+      
+      if (!verification.valid) {
         return NextResponse.json(
-          { success: false, message: 'OTP not requested' },
-          { status: 400 }
-        );
-      }
-
-      if (otpStore[email].expires < Date.now()) {
-        delete otpStore[email];
-        return NextResponse.json(
-          { success: false, message: 'OTP expired' },
-          { status: 400 }
-        );
-      }
-
-      if (otpStore[email].otp !== otp) {
-        return NextResponse.json(
-          { success: false, message: 'Invalid OTP' },
+          { success: false, message: verification.message },
           { status: 400 }
         );
       }
@@ -108,8 +150,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'reset') {
-      // Verify OTP was verified first
-      if (!otpStore[email] || otpStore[email].otp !== otp) {
+      // Verify OTP first
+      const verification = await verifyOTP(supabase, email, otp);
+      
+      if (!verification.valid) {
         return NextResponse.json(
           { success: false, message: 'Please verify OTP first' },
           { status: 400 }
@@ -127,10 +171,14 @@ export async function POST(request: NextRequest) {
       // Simple hash for PIN (use bcrypt in production with proper setup)
       const hashedPin = Buffer.from(newPin + 'tada_salt_2024').toString('base64');
 
-      // Update profile
+      // Update profile and clear OTP
       const { error } = await supabase
         .from('profiles')
-        .update({ pin: hashedPin })
+        .update({ 
+          pin: hashedPin,
+          reset_otp: null,
+          reset_otp_expires: null
+        })
         .eq('email', email.toLowerCase());
 
       if (error) {
@@ -140,9 +188,6 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-
-      // Clean up OTP
-      delete otpStore[email];
 
       return NextResponse.json({
         success: true,
