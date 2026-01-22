@@ -117,6 +117,8 @@ export function useSupabaseUser() {
       referral_code: null,
       referred_by: null,
       pin: null,
+      reset_otp: null,
+      reset_otp_expires: null,
       kyc_level: 0,
       is_active: true,
       created_at: user.created_at || new Date().toISOString(),
