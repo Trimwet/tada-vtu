@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,7 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 
 export default function ResetPinPage() {
   const { user } = useSupabaseUser();
+  const router = useRouter();
   const [step, setStep] = useState<"request" | "verify" | "newpin">("request");
   const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState("");
@@ -110,6 +112,7 @@ export default function ResetPinPage() {
     }
 
     setIsLoading(true);
+    
     try {
       const response = await fetch("/api/auth/forgot-pin", {
         method: "POST",
@@ -127,20 +130,18 @@ export default function ResetPinPage() {
       if (data.success) {
         toast.success("PIN reset successfully!");
         
-        // Reset loading state before redirect
-        setIsLoading(false);
-        
-        // Redirect to settings after a short delay
+        // Use router.push instead of window.location.href
         setTimeout(() => {
-          window.location.href = "/dashboard/settings";
-        }, 1000);
+          router.push("/dashboard/settings");
+        }, 1500);
       } else {
         toast.error(data.message || "Failed to reset PIN");
-        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error resetting PIN:", error);
       toast.error("Failed to reset PIN");
+    } finally {
+      // Always reset loading state
       setIsLoading(false);
     }
   };
@@ -217,14 +218,18 @@ export default function ResetPinPage() {
               </div>
               <Button
                 onClick={handleVerifyOtp}
-                disabled={otp.length !== 6}
+                disabled={isLoading || otp.length !== 6}
                 className="w-full bg-green-500 hover:bg-green-600"
               >
-                Verify Code
+                {isLoading ? "Verifying..." : "Verify Code"}
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => setStep("request")}
+                onClick={() => {
+                  setStep("request");
+                  setOtp("");
+                }}
+                disabled={isLoading}
                 className="w-full"
               >
                 Resend Code
