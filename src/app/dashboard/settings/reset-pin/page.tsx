@@ -77,31 +77,6 @@ export default function ResetPinPage() {
   // Memoized user email for performance
   const userEmail = useMemo(() => user?.email, [user?.email]);
 
-  // Show loading spinner while user data is being fetched
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" variant="page" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect to login if no user found
-  if (!user) {
-    router.push('/login');
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <LoadingSpinner size="lg" variant="page" />
-          <p className="text-muted-foreground">Redirecting to login...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Optimized API call function
   const makeApiCall = useCallback(async (payload: Record<string, any>) => {
     const response = await fetch("/api/auth/forgot-pin", {
@@ -262,6 +237,31 @@ export default function ResetPinPage() {
 
   const canVerify = otp.length === 6 && !isAnyLoading;
   const canSave = newPin.length === 4 && confirmPin.length === 4 && !isAnyLoading;
+
+  // Show loading spinner while user data is being fetched
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" variant="page" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if no user found
+  if (!user) {
+    router.push('/login');
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <LoadingSpinner size="lg" variant="page" />
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
