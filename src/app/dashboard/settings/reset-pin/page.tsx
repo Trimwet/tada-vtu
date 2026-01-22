@@ -126,11 +126,14 @@ export default function ResetPinPage() {
 
       if (data.success) {
         toast.success("PIN reset successfully!");
-
-        // Redirect to settings
+        
+        // Reset loading state before redirect
+        setIsLoading(false);
+        
+        // Redirect to settings after a short delay
         setTimeout(() => {
           window.location.href = "/dashboard/settings";
-        }, 500);
+        }, 1000);
       } else {
         toast.error(data.message || "Failed to reset PIN");
         setIsLoading(false);
