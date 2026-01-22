@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { JoinGiftRoomResponse } from '@/types/gift-room';
 
 export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftRoomResponse>> {
@@ -27,8 +28,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<JoinGiftR
       }, { status: 400 });
     }
 
-    // Get gift room details
-    const { data: room, error: roomError } = await supabase
+    // Get gift room details (using admin client to bypass RLS)
+    const adminClient = createAdminClient();
+    const { data: room, error: roomError } = await adminClient
       .from('gift_rooms')
       .select('*')
       .eq('token', room_token)

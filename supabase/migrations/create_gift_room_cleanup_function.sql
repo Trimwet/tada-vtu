@@ -111,7 +111,7 @@ BEGIN
     FOR expired_room IN 
         SELECT id, sender_id, amount, capacity, claimed_count, status
         FROM public.gift_rooms 
-        WHERE status = 'active' 
+        WHERE status IN ('active', 'full') 
         AND expires_at < NOW()
         FOR UPDATE -- Lock rows to prevent concurrent processing
     LOOP
@@ -128,11 +128,23 @@ BEGIN
         IF refund_amount > 0 THEN
             -- Refund unclaimed amount to the ORIGINAL CREATOR only
             PERFORM public.update_user_balance(
-                expired_room.sender_id,  -- ONLY the original creator gets refunds
+                expired_room.sender_id,
                 refund_amount,
                 'credit',
                 'Gift room refund - ' || unclaimed_count || ' unclaimed gifts',
                 'gift_refund_' || expired_room.id
+            );
+            
+            -- Record in transactions table for history
+            INSERT INTO public.transactions (
+                user_id, type, amount, status, reference, description
+            ) VALUES (
+                expired_room.sender_id,
+                'deposit',
+                refund_amount,
+                'success',
+                'gift_refund_' || expired_room.id,
+                'Gift room refund - ' || unclaimed_count || ' unclaimed gifts'
             );
             
             -- Log the refund activity
@@ -236,7 +248,7 @@ BEGIN
         );
     END IF;
     
-    IF room_record.status != 'active' THEN
+    IF room_record.status NOT IN ('active', 'full') THEN
         RETURN jsonb_build_object(
             'success', false,
             'error', 'Gift room is not active'
@@ -261,11 +273,23 @@ BEGIN
     
     -- Process refund to ORIGINAL CREATOR only
     PERFORM public.update_user_balance(
-        room_record.sender_id,  -- CRITICAL: Only original creator
+        room_record.sender_id,
         refund_amount,
         'credit',
         'Manual gift room refund - ' || unclaimed_count || ' unclaimed gifts',
         'manual_refund_' || room_id
+    );
+
+    -- Record in transactions table for history
+    INSERT INTO public.transactions (
+        user_id, type, amount, status, reference, description
+    ) VALUES (
+        room_record.sender_id,
+        'deposit',
+        refund_amount,
+        'success',
+        'manual_refund_' || room_id,
+        'Manual gift room refund - ' || unclaimed_count || ' unclaimed gifts'
     );
     
     -- Log the refund

@@ -38,6 +38,16 @@ export function useSupabaseUser() {
 
       if (error) throw error;
 
+      // Record transaction for history
+      await supabase.from("transactions").insert({
+        user_id: user.id,
+        type: "deposit",
+        amount: amount,
+        status: "success",
+        reference: reference || "REF" + Date.now(),
+        description: description,
+      } as never);
+
       await refreshProfile();
       refreshTransactions();
 

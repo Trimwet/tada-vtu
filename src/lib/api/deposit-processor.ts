@@ -57,12 +57,14 @@ export async function processDeposit(supabase: SupabaseClient, data: DepositData
             throw new Error(`User profile not found: ${userId}`);
         }
 
-        // 3. Update Balance (Atomic Update preferred if RPC exists, otherwise standard update)
-        const newBalance = (profile.balance || 0) + walletCredit;
-        const { error: balanceError } = await supabase
-            .from('profiles')
-            .update({ balance: newBalance })
-            .eq('id', userId);
+        // 3. Update Balance (Using atomic RPC for safety and to record wallet_transaction)
+        const { error: balanceError } = await supabase.rpc('update_user_balance', {
+            p_user_id: userId,
+            p_amount: walletCredit,
+            p_type: 'credit',
+            p_description: description,
+            p_reference: reference
+        });
 
         if (balanceError) throw balanceError;
 
@@ -94,6 +96,9 @@ export async function processDeposit(supabase: SupabaseClient, data: DepositData
         });
 
         console.log(`✅ [DEPOSIT-ENGINE] Success! User ${userId} balance updated (+₦${walletCredit})`);
+
+        const currentBalance = profile.balance || 0;
+        const newBalance = currentBalance + walletCredit;
 
         return { success: true, newBalance };
 
