@@ -18,9 +18,6 @@ import {
   useSupabaseUser,
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
-import { LoadingScreen } from "@/components/loading-screen";
-import { getSupabase } from "@/lib/supabase/client";
-
 import { getUserTier } from "@/lib/pricing-tiers";
 import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
 import dynamic from "next/dynamic";
@@ -184,24 +181,10 @@ export default function DashboardPage() {
     }
   }, [userLoading, user, router]);
 
-  // Show loading while user data is being fetched
-  // AuthGuard handles the redirect if user is not authenticated
+  // Don't show loading screen here - let AuthGuard handle it
+  // AuthGuard will redirect if user is not authenticated
   if (userLoading || !user) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <LoadingScreen message="Loading your dashboard..." />
-        {/* Escape hatch if frozen */}
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.href = '/login';
-          }}
-          className="mt-8 text-xs text-muted-foreground hover:text-red-500 underline transition-colors"
-        >
-          Stuck? Tap to reset
-        </button>
-      </div>
-    );
+    return null; // Let AuthGuard handle loading and redirects
   }
 
   return (
