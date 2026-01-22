@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendPinResetNotificationEmail } from '@/lib/email';
 
 function verifyToken(token: string): { valid: boolean; adminId?: string } {
   try {
@@ -187,14 +188,27 @@ export async function POST(request: NextRequest) {
       }
 
       case 'reset_pin': {
+        // Reset the user's PIN
         await supabase
           .from('profiles')
-          .update({ transaction_pin: null })
+          .update({ pin: null })
           .eq('id', userId);
+
+        // Send email notification to user about PIN reset
+        try {
+          await sendPinResetNotificationEmail({
+            recipientEmail: user.email!,
+            recipientName: user.full_name || 'User',
+            adminName: admin.full_name
+          });
+        } catch (emailError) {
+          console.error('Failed to send PIN reset email:', emailError);
+          // Don't fail the entire operation if email fails
+        }
 
         return NextResponse.json({
           success: true,
-          message: 'User PIN has been reset'
+          message: 'User PIN has been reset and notification email sent'
         });
       }
 

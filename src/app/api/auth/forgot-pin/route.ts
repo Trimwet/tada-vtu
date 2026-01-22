@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { sendOtpEmail } from '@/lib/email';
 
 // Create Supabase admin client
 function getSupabaseAdmin() {
@@ -48,8 +49,28 @@ export async function POST(request: NextRequest) {
       // Store OTP temporarily (10 minutes expiry)
       otpStore[email] = { otp: otpCode, expires: Date.now() + 10 * 60 * 1000 };
 
-      // In production, send OTP via email
-      console.log(`OTP for ${email}: ${otpCode}`);
+      // Send OTP via email
+      try {
+        const emailResult = await sendOtpEmail({
+          recipientEmail: email,
+          recipientName: profile.full_name || 'User',
+          otp: otpCode
+        });
+
+        if (!emailResult.success) {
+          console.error('Failed to send OTP email:', emailResult.error);
+          return NextResponse.json(
+            { success: false, message: 'Failed to send verification email. Please try again.' },
+            { status: 500 }
+          );
+        }
+      } catch (emailError) {
+        console.error('Email service error:', emailError);
+        return NextResponse.json(
+          { success: false, message: 'Failed to send verification email. Please try again.' },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         success: true,

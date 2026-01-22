@@ -17,6 +17,18 @@ interface GiftEmailData {
   expiresAt: string;
 }
 
+interface PinResetEmailData {
+  recipientEmail: string;
+  recipientName: string;
+  adminName: string;
+}
+
+interface OtpEmailData {
+  recipientEmail: string;
+  recipientName: string;
+  otp: string;
+}
+
 export async function sendGiftNotificationEmail(data: GiftEmailData) {
   const giftLink = `${APP_URL}/gift/${data.giftId}?token=${data.accessToken}`;
   const expiryDate = new Date(data.expiresAt).toLocaleDateString('en-NG', {
@@ -149,6 +161,194 @@ function generateGiftEmailHtml(data: EmailHtmlData): string {
         <p style="color: #9ca3af; font-size: 12px; margin-top: 24px; text-align: center;">
           If you didn't expect this email, you can safely ignore it.
         </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+export async function sendPinResetNotificationEmail(data: PinResetEmailData) {
+  try {
+    const { data: result, error } = await resend.emails.send({
+      from: `TADA VTU Security <${FROM_EMAIL}>`,
+      replyTo: 'support@tadavtu.com',
+      to: data.recipientEmail,
+      subject: 'Your Transaction PIN has been reset',
+      html: generatePinResetEmailHtml(data),
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: result?.id };
+  } catch (err) {
+    console.error('Email send error:', err);
+    return { success: false, error: 'Failed to send email' };
+  }
+}
+
+export async function sendOtpEmail(data: OtpEmailData) {
+  try {
+    const { data: result, error } = await resend.emails.send({
+      from: `TADA VTU Security <${FROM_EMAIL}>`,
+      replyTo: 'support@tadavtu.com',
+      to: data.recipientEmail,
+      subject: 'Your PIN Reset Verification Code',
+      html: generateOtpEmailHtml(data),
+    });
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: result?.id };
+  } catch (err) {
+    console.error('Email send error:', err);
+    return { success: false, error: 'Failed to send email' };
+  }
+}
+
+function generatePinResetEmailHtml(data: PinResetEmailData): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIN Reset Notification</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 32px 24px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 8px;">🔒</div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">PIN Reset Notification</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px 24px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Hello <strong style="color: #111827;">${data.recipientName}</strong>,
+              </p>
+              
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Your transaction PIN has been reset by our admin team member <strong>${data.adminName}</strong>.
+              </p>
+              
+              <!-- Alert Box -->
+              <div style="background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                <p style="color: #991b1b; font-size: 14px; margin: 0 0 8px; font-weight: 600;">⚠️ Security Notice</p>
+                <p style="color: #7f1d1d; font-size: 14px; margin: 0; line-height: 1.5;">
+                  You will need to create a new transaction PIN when you next log in to your account.
+                </p>
+              </div>
+              
+              <!-- CTA Button -->
+              <a href="${APP_URL}/dashboard" style="display: block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 24px;">
+                🔐 Set New PIN
+              </a>
+              
+              <!-- Security Notice -->
+              <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                If you didn't request this change, please contact our support team immediately.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">
+                <strong style="color: #22c55e;">TADA VTU</strong> Security Team
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Fast & Secure VTU Services
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+function generateOtpEmailHtml(data: OtpEmailData): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIN Reset Verification Code</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 32px 24px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 8px;">🔐</div>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Verification Code</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px 24px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Hello <strong style="color: #111827;">${data.recipientName}</strong>,
+              </p>
+              
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+                Use this verification code to reset your transaction PIN:
+              </p>
+              
+              <!-- OTP Box -->
+              <div style="background-color: #f0f9ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                <p style="color: #1e40af; font-size: 14px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Verification Code</p>
+                <p style="color: #1d4ed8; font-size: 36px; font-weight: 700; margin: 0; letter-spacing: 4px;">${data.otp}</p>
+              </div>
+              
+              <!-- Expiry Notice -->
+              <p style="color: #ef4444; font-size: 14px; text-align: center; margin: 0 0 24px; font-weight: 500;">
+                ⏰ This code expires in 10 minutes
+              </p>
+              
+              <!-- Security Notice -->
+              <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                Never share this code with anyone. TADA VTU will never ask for your verification code.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">
+                <strong style="color: #22c55e;">TADA VTU</strong> Security Team
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                Fast & Secure VTU Services
+              </p>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>
