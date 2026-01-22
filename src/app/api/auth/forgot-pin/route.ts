@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       // Find user by email
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, full_name')
         .eq('email', email.toLowerCase())
         .single();
 
