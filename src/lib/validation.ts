@@ -88,7 +88,8 @@ export const dataRequestSchema = z.object({
   planId: z.string().min(1, 'Plan ID required'),
   amount: amountSchema,
   planName: z.string().min(1, 'Plan name required'),
-  userId: z.string().uuid('Invalid user ID')
+  userId: z.string().uuid('Invalid user ID'),
+  pin: pinSchema
 });
 
 export const cableRequestSchema = z.object({

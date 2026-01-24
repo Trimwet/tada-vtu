@@ -12,7 +12,7 @@ interface VerifyPinModalProps {
   userPin: string | null;
   isOpen: boolean;
   onClose: () => void;
-  onVerified: () => void;
+  onVerified: (pin: string) => void; // Pass the verified PIN
   title?: string;
   description?: string;
 }
@@ -72,9 +72,10 @@ export function VerifyPinModal({
     const hashedInput = btoa(pin + 'tada_salt_2024');
     
     if (hashedInput === userPin) {
+      const verifiedPin = pin; // Store the actual PIN before clearing
       setPin('');
       setAttempts(0);
-      onVerified();
+      onVerified(verifiedPin); // Pass the actual PIN to the callback
       onClose();
     } else {
       const newAttempts = attempts + 1;

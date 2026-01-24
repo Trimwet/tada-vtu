@@ -14,6 +14,15 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey);
 }
 
+// PIN verification utility
+function hashPin(pin: string): string {
+  return Buffer.from(pin + 'tada_salt_2024').toString('base64');
+}
+
+function verifyPin(pin: string, hash: string): boolean {
+  return hashPin(pin) === hash;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -29,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { network, phone, planId, amount, planName, userId } = validation.data!;
+    const { network, phone, planId, amount, planName, userId, pin } = validation.data!;
 
     // Rate limiting
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
@@ -48,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Get user profile and balance
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('balance')
+      .select('balance, pin')
       .eq('id', userId)
       .single();
 
@@ -57,6 +66,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { status: false, message: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    // Verify transaction PIN
+    if (!profile.pin) {
+      return NextResponse.json(
+        { status: false, message: 'Please set up your transaction PIN first' },
+        { status: 400 }
+      );
+    }
+
+    if (!pin) {
+      return NextResponse.json(
+        { status: false, message: 'Transaction PIN is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!verifyPin(pin, profile.pin)) {
+      return NextResponse.json(
+        { status: false, message: 'Incorrect transaction PIN' },
+        { status: 400 }
       );
     }
 

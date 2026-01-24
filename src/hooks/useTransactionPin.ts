@@ -8,14 +8,14 @@ export function useTransactionPin() {
   const [showCreatePin, setShowCreatePin] = useState(false);
   const [showVerifyPin, setShowVerifyPin] = useState(false);
   const [localPin, setLocalPin] = useState<string | null>(null);
-  const pendingActionRef = useRef<(() => void) | null>(null);
+  const pendingActionRef = useRef<((pin: string) => void) | null>(null);
 
   // Use local pin state if available (just created), otherwise use profile
   const userPin = localPin || profile?.pin || null;
   const hasPin = !!userPin;
 
   // Require PIN verification before an action
-  const requirePin = useCallback((action: () => void) => {
+  const requirePin = useCallback((action: (pin: string) => void) => {
     if (!hasPin) {
       // User needs to create PIN first - store action for after creation
       pendingActionRef.current = action;
@@ -29,12 +29,12 @@ export function useTransactionPin() {
   }, [hasPin]);
 
   // Called when PIN is verified successfully
-  const onPinVerified = useCallback(() => {
+  const onPinVerified = useCallback((pin: string) => {
     setShowVerifyPin(false);
     if (pendingActionRef.current) {
       const action = pendingActionRef.current;
       pendingActionRef.current = null;
-      action();
+      action(pin); // Pass the verified PIN to the action
     }
   }, []);
 

@@ -103,7 +103,7 @@ export default function BuyDataPage() {
   const selectedPlanDetails = dataPlans.find((plan) => plan.id === selectedPlan);
 
   // Execute the actual purchase after PIN verification
-  const executePurchase = async () => {
+  const executePurchase = async (verifiedPin: string) => {
     if (!selectedPlanDetails) return;
 
     setIsProcessing(true);
@@ -125,6 +125,7 @@ export default function BuyDataPage() {
           amount: selectedPlanDetails.price,
           planName: selectedPlanDetails.size,
           userId: user?.id,
+          pin: verifiedPin, // Send the actual PIN to backend for verification
         }),
       });
 
