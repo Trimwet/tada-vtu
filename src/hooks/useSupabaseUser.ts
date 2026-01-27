@@ -151,24 +151,84 @@ export function useSupabaseUser() {
 export function useSupabaseTransactions(limit = 10) {
   const { user } = useSupabaseUser();
 
-  const swrKey = user?.id
+  // Query both transactions and wallet_transactions tables
+  const transactionsKey = user?.id
     ? ["transactions", {
       select: "id, type, amount, status, reference, description, created_at, phone_number, network",
       eq: { user_id: user.id },
       order: { column: "created_at", ascending: false },
-      limit
+      limit: limit * 2 // Get more to account for merging
     }]
     : null;
 
-  const { data, error, isLoading, mutate } = useSWR<Transaction[]>(swrKey, supabaseFetcher, {
-    revalidateOnFocus: true,
-    dedupingInterval: 5000,
-  });
+  const walletTransactionsKey = user?.id
+    ? ["wallet_transactions", {
+      select: "id, type, amount, description, reference, created_at",
+      eq: { user_id: user.id },
+      order: { column: "created_at", ascending: false },
+      limit: limit * 2 // Get more to account for merging
+    }]
+    : null;
+
+  const { data: transactions, error: transactionsError, isLoading: transactionsLoading, mutate: mutateTransactions } = 
+    useSWR<Transaction[]>(transactionsKey, supabaseFetcher, {
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    });
+
+  const { data: walletTransactions, error: walletError, isLoading: walletLoading, mutate: mutateWallet } = 
+    useSWR<any[]>(walletTransactionsKey, supabaseFetcher, {
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    });
+
+  // Merge and format transactions
+  const mergedTransactions = useMemo(() => {
+    if (!transactions && !walletTransactions) return [];
+
+    const allTransactions: Transaction[] = [];
+
+    // Add regular transactions
+    if (transactions) {
+      allTransactions.push(...transactions);
+    }
+
+    // Add wallet transactions (deposits, withdrawals, etc.)
+    if (walletTransactions) {
+      const formattedWalletTransactions: Transaction[] = walletTransactions.map(wt => ({
+        id: wt.id,
+        user_id: user?.id || '',
+        type: wt.type === 'credit' ? 'deposit' : 'withdrawal',
+        amount: wt.type === 'credit' ? wt.amount : -Math.abs(wt.amount),
+        status: 'success' as const,
+        reference: wt.reference || '',
+        description: wt.description || '',
+        created_at: wt.created_at,
+        updated_at: wt.created_at,
+        phone_number: null,
+        network: null,
+        service_id: null,
+        external_reference: null,
+        response_data: null
+      }));
+      allTransactions.push(...formattedWalletTransactions);
+    }
+
+    // Sort by created_at and limit
+    return allTransactions
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit);
+  }, [transactions, walletTransactions, limit, user?.id]);
+
+  const refreshTransactions = useCallback(() => {
+    mutateTransactions();
+    mutateWallet();
+  }, [mutateTransactions, mutateWallet]);
 
   return {
-    transactions: data || [],
-    loading: isLoading,
-    error,
-    refreshTransactions: mutate,
+    transactions: mergedTransactions,
+    loading: transactionsLoading || walletLoading,
+    error: transactionsError || walletError,
+    refreshTransactions,
   };
 }
