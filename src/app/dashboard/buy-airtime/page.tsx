@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +18,7 @@ import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 
 const CreatePinModal = dynamic(
   () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -36,6 +37,7 @@ const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
   const { user, refreshUser } = useSupabaseUser();
+  const searchParams = useSearchParams();
   const {
     userPin,
     showCreatePin,
@@ -47,10 +49,22 @@ export default function BuyAirtimePage() {
     onPinCreated,
   } = useTransactionPin();
 
-  const [selectedNetwork, setSelectedNetwork] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [selectedNetwork, setSelectedNetwork] = useState(searchParams.get('network') || "");
+  const [phoneNumber, setPhoneNumber] = useState(searchParams.get('phone') || "");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Auto-fill and notification for repeat purchases
+  useEffect(() => {
+    const net = searchParams.get('network');
+    const ph = searchParams.get('phone');
+    if (net) setSelectedNetwork(net);
+    if (ph) setPhoneNumber(ph);
+
+    if (searchParams.get('repeat') === 'true') {
+      toast.info("Repeating your previous airtime purchase", "Enter amount to continue");
+    }
+  }, [searchParams]);
 
   const handleQuickAmount = (value: number) => {
     setAmount(value.toString());

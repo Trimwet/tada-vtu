@@ -19,6 +19,7 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
 import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
+import { useSearchParams } from "next/navigation";
 
 const CreatePinModal = dynamic(
   () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -43,6 +44,7 @@ const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> =
 
 export default function BuyDataPage() {
   const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
+  const searchParams = useSearchParams();
   const {
     userPin,
     showCreatePin,
@@ -54,11 +56,23 @@ export default function BuyDataPage() {
     onPinVerified,
   } = useTransactionPin();
 
-  const [selectedNetwork, setSelectedNetwork] = useState("");
+  const [selectedNetwork, setSelectedNetwork] = useState(searchParams.get('network') || "");
   const [selectedType, setSelectedType] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(searchParams.get('phone') || "");
   const [selectedPlan, setSelectedPlan] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Auto-fill and notification for repeat purchases
+  useEffect(() => {
+    const net = searchParams.get('network');
+    const ph = searchParams.get('phone');
+    if (net) setSelectedNetwork(net);
+    if (ph) setPhoneNumber(ph);
+
+    if (searchParams.get('repeat') === 'true') {
+      toast.info("Repeating your previous data purchase", "Just select your preferred plan to continue");
+    }
+  }, [searchParams]);
 
   const {
     plans: dataPlans,
@@ -69,11 +83,13 @@ export default function BuyDataPage() {
     autoRefresh: true
   });
 
-  // Reset selections when network changes
+  // Reset selections when network changes (unless it's the initial load from searchParams)
   useEffect(() => {
-    setSelectedType("");
-    setSelectedPlan("");
-  }, [selectedNetwork]);
+    if (!searchParams.get('repeat')) {
+      setSelectedType("");
+      setSelectedPlan("");
+    }
+  }, [selectedNetwork, searchParams]);
 
   // Extract unique data types from fetched plans
   const availableTypes = useMemo(() => {
@@ -109,8 +125,6 @@ export default function BuyDataPage() {
     setIsProcessing(true);
 
     try {
-      // For Inlomax, the ID in useDataPlans is 'serviceID-type'. For SMEPlug it's just 'id'.
-      // The API endpoint handles both if the provider is specified.
       const planIdForPurchase = selectedPlanDetails.id.includes('-')
         ? selectedPlanDetails.id.split('-')[0]
         : selectedPlanDetails.id;
@@ -125,7 +139,7 @@ export default function BuyDataPage() {
           amount: selectedPlanDetails.price,
           planName: selectedPlanDetails.size,
           userId: user?.id,
-          pin: verifiedPin, // Send the actual PIN to backend for verification
+          pin: verifiedPin,
         }),
       });
 
@@ -416,14 +430,14 @@ export default function BuyDataPage() {
                           <div className="font-bold text-foreground truncate" title={plan.name}>
                             {plan.size}
                           </div>
-                          {plan.description && 
-                           plan.description !== plan.size && 
-                           !plan.description.toLowerCase().includes(plan.size.toLowerCase()) &&
-                           plan.description.length > 0 && (
-                            <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
-                              {plan.description}
-                            </div>
-                          )}
+                          {plan.description &&
+                            plan.description !== plan.size &&
+                            !plan.description.toLowerCase().includes(plan.size.toLowerCase()) &&
+                            plan.description.length > 0 && (
+                              <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
+                                {plan.description}
+                              </div>
+                            )}
                           <div className="text-xs text-muted-foreground">
                             {plan.validity}
                           </div>
