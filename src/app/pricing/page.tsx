@@ -9,9 +9,7 @@ import {
   Lightning,
   MagnifyingGlass,
   Crown,
-  CheckCircle,
   WifiHigh,
-  ArrowRight,
   Info
 } from "@phosphor-icons/react"
 import Link from "next/link"

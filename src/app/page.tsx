@@ -1,4 +1,6 @@
-﻿import { Button } from "@/components/ui/button";
+﻿"use client";
+
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogoInline } from "@/components/logo";
 import { LiveTransactionTicker } from "@/components/stats-counter";

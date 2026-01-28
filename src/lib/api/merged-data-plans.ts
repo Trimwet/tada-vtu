@@ -27,10 +27,12 @@ export interface CacheMeta {
   totalPlans: number;
 }
 
-// Network ID mapping for Inlomax
+// Network ID mapping for Inlomax (reserved for future use)
+/*
 const INLOMAX_NETWORK_IDS: Record<string, string> = {
   MTN: '1', AIRTEL: '2', GLO: '3', '9MOBILE': '4',
 };
+*/
 
 // Cache config
 const CACHE_CONFIG = {
@@ -96,8 +98,6 @@ function extractPlanSize(name: string): PlanSizeInfo {
 
   // Fallback: Number extraction (conservative)
   // Only assume GB if we are SURE it's a data plan name and not a price
-  // We've already filtered out "N400" style strings above roughly, but let's be careful.
-  const simpleMatch = name.match(/^(\d+(?:\.\d+)?)\s*$/); // Only if the WHOLE string is a number? No usually "500 Data"
 
   // If no unit is found, and it's not clearly airtime, we used to default to GB.
   // But that caused "400" to be "400GB".
@@ -221,15 +221,15 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
 
       // Clean up description: remove ALL size references to avoid duplication
       let cleanDescription = (plan.dataPlan || '').trim();
-      
+
       // Remove all size patterns (e.g., "1GB", "1.0 GB", "1.0GB", "500MB", etc.)
       // This regex matches: number + optional decimal + optional space + GB/MB/TB
       cleanDescription = cleanDescription.replace(/\d+(?:\.\d+)?\s*(?:GB|MB|TB)(?!PS)/gi, '').trim();
-      
+
       // Remove leading/trailing separators and extra spaces
       cleanDescription = cleanDescription.replace(/^[:\-\s]+|[:\-\s]+$/g, '').trim();
       cleanDescription = cleanDescription.replace(/\s+/g, ' ').trim();
-      
+
       // If description is now empty or just contains validity info, keep validity
       if (!cleanDescription || cleanDescription.length < 2) {
         cleanDescription = '';
