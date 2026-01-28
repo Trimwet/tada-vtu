@@ -101,14 +101,14 @@ export default function PricingPage() {
             <div className="bg-white/[0.02] border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm">
               {/* Toolbar */}
               <div className="p-6 border-b border-white/10 bg-white/5 flex flex-col md:flex-row gap-6 items-center justify-between">
-                <div className="flex bg-black/50 p-1 rounded-xl border border-white/10 w-full md:w-auto">
+                <div className="flex bg-black/50 p-1 rounded-xl border border-white/10 w-full md:w-auto overflow-x-auto no-scrollbar">
                   {networks.map((net) => (
                     <button
                       key={net}
                       onClick={() => setActiveNetwork(net)}
-                      className={`flex-1 md:flex-none py-2 px-6 rounded-lg text-sm font-semibold transition-all ${activeNetwork === net
-                          ? 'bg-green-500 text-black shadow-lg shadow-green-500/20'
-                          : 'text-gray-400 hover:text-white'
+                      className={`flex-1 md:flex-none py-2 px-2 md:px-6 rounded-lg text-[11px] md:text-sm font-bold whitespace-nowrap transition-all ${activeNetwork === net
+                        ? 'bg-green-500 text-black shadow-lg shadow-green-500/20'
+                        : 'text-gray-400 hover:text-white'
                         }`}
                     >
                       {net}
