@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { LogoInline } from "@/components/logo";
 import { LiveTransactionTicker } from "@/components/stats-counter";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { AnimatedBackgroundWrapper } from "@/components/animated-background-wrapper";
 
 export default function Home() {
@@ -38,7 +39,7 @@ export default function Home() {
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[128px] animate-float" />
         <div className="absolute top-40 right-1/4 w-64 h-64 bg-green-400/10 rounded-full blur-[100px] animate-float-delayed" />
         <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow" />
-        
+
         <div className="container mx-auto relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
@@ -52,9 +53,9 @@ export default function Home() {
                 Buy Airtime & Data
               </span>
             </h1>
-            
+
             <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Experience lightning-fast VTU services with unbeatable rates. 
+              Experience lightning-fast VTU services with unbeatable rates.
               Recharge any network, pay bills, and earn rewards.
             </p>
 
@@ -89,7 +90,7 @@ export default function Home() {
                 <p className="text-xs md:text-sm text-gray-500">Transactions</p>
               </div>
             </div>
-            
+
             {/* Live Transaction Ticker */}
             <div className="flex justify-center">
               <LiveTransactionTicker />
@@ -224,56 +225,88 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-24 px-6">
-        <div className="container mx-auto">
+      <section id="pricing" className="py-24 px-6 relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-green-500/5 blur-[120px] pointer-events-none" />
+        <div className="container mx-auto relative">
           <div className="text-center mb-16">
-            <p className="text-green-500 text-sm font-medium mb-3">PRICING</p>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-gray-400 max-w-xl mx-auto">No hidden fees. What you see is what you pay.</p>
+            <p className="text-green-500 text-sm font-medium mb-3 uppercase tracking-widest">LIVE RATES</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">Unbeatable Data Pricing</h2>
+            <p className="text-gray-400 max-w-xl mx-auto">Get more for less. Our rates are calculated in real-time to ensure you always get the best deal in Nigeria.</p>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border border-green-500/20 rounded-3xl p-8 md:p-12">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-4">Free to Use</h3>
-                  <p className="text-gray-400 mb-6">Create your account for free and start making transactions immediately. Only pay for what you buy.</p>
-                  <ul className="space-y-3">
-                    <li className="flex items-center gap-3 text-gray-300">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      No registration fee
-                    </li>
-                    <li className="flex items-center gap-3 text-gray-300">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Best market rates
-                    </li>
-                    <li className="flex items-center gap-3 text-gray-300">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Earn ₦100 per referral
-                    </li>
-                    <li className="flex items-center gap-3 text-gray-300">
-                      <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Instant delivery
-                    </li>
-                  </ul>
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-8 md:p-16 backdrop-blur-sm">
+            <div>
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-yellow-500 border-2 border-black flex items-center justify-center text-[10px] font-bold text-black">MTN</div>
+                  <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-black flex items-center justify-center text-[10px] font-bold text-white">Air</div>
+                  <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-black flex items-center justify-center text-[10px] font-bold text-black">Glo</div>
+                  <div className="w-8 h-8 rounded-full bg-green-400 border-2 border-black flex items-center justify-center text-[10px] font-bold text-black">9m</div>
                 </div>
-                <div className="text-center md:text-right">
-                  <div className="inline-block bg-black/30 rounded-2xl p-8">
-                    <p className="text-gray-400 text-sm mb-2">Starting from</p>
-                    <p className="text-5xl font-bold text-white mb-2">₦50</p>
-                    <p className="text-gray-400 text-sm mb-6">minimum transaction</p>
-                    <Button size="lg" className="bg-green-500 hover:bg-green-400 text-black font-semibold px-8" asChild>
-                      <Link href="/register">Get Started Free</Link>
-                    </Button>
-                  </div>
+                <span className="text-sm text-gray-500">All local networks supported</span>
+              </div>
+
+              <h3 className="text-3xl font-bold text-white mb-6">Explore Our Full <br /><span className="text-green-500">Price Catalogue</span></h3>
+
+              <ul className="space-y-4 mb-10">
+                {[
+                  "Real-time data plan updates",
+                  "4 Loyalty tiers with custom discounts",
+                  "No hidden delivery charges",
+                  "Auto-purchase triggers enabled"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-gray-400">
+                    <div className="w-5 h-5 bg-green-500/10 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <Button size="lg" className="bg-green-500 hover:bg-green-400 text-black font-bold px-10 h-14 rounded-2xl group" asChild>
+                <Link href="/pricing">
+                  View Live Price List
+                  <ArrowRight weight="bold" className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-4 bg-green-500/20 rounded-[2rem] blur-2xl opacity-50" />
+              <div className="relative bg-black border border-white/10 rounded-[2rem] p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-xs font-mono text-gray-500">POPULAR BUNDLES</span>
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    { net: "MTN", plan: "1GB (SME)", price: "280" },
+                    { net: "Airtel", plan: "2GB (Direct)", price: "550" },
+                    { net: "Glo", plan: "5GB (Gift)", price: "1,200" },
+                    { net: "9mobile", plan: "3GB (SME)", price: "450" },
+                  ].map((p, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${p.net === 'MTN' ? 'bg-yellow-500 text-black' :
+                          p.net === 'Airtel' ? 'bg-red-500 text-white' :
+                            'bg-green-500 text-black'
+                          }`}>
+                          {p.net[0]}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-white">{p.plan}</p>
+                          <p className="text-[10px] text-gray-500">{p.net}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-green-400">₦{p.price}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                  <p className="text-[10px] text-gray-600 font-mono italic">Prices are subject to market conditions</p>
                 </div>
               </div>
             </div>
@@ -405,7 +438,7 @@ export default function Home() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
               © {new Date().getFullYear()} TADA VTU. All rights reserved.
