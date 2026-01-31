@@ -1,35 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { generatePersonalDataQR } from '@/lib/qr-generator';
+
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error('Missing Supabase configuration');
+  }
+
+  return createClient(url, serviceKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { vaultId } = await request.json();
+    const { vaultId, userId } = await request.json();
 
-    if (!vaultId) {
+    if (!vaultId || !userId) {
       return NextResponse.json(
-        { status: false, message: 'Vault ID is required' },
+        { status: false, message: 'Vault ID and User ID are required' },
         { status: 400 }
       );
     }
 
-    const supabase = createClient();
-    
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { status: false, message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    const supabase = getSupabaseAdmin();
 
     // Get vault details
     const { data: vault, error: vaultError } = await supabase
       .from('data_vault')
       .select('*')
       .eq('id', vaultId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('status', 'parked')
       .single();
 
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Generate QR code
     const { qrCode, qrData } = await generatePersonalDataQR({
       vaultId: vault.id,
-      userId: user.id,
+      userId: userId,
       network: vault.network,
       planSize: vault.plan_name,
       planName: vault.plan_name,
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
       .insert({
         id: qrData.id,
         vault_id: vault.id,
-        user_id: user.id,
+        user_id: userId,
         qr_data: qrData,
         expires_at: qrData.validUntil,
         created_at: new Date().toISOString(),

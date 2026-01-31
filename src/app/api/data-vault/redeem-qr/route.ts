@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { parsePersonalQRData } from '@/lib/qr-generator';
+
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    throw new Error('Missing Supabase configuration');
+  }
+
+  return createClient(url, serviceKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    const supabase = getSupabaseAdmin();
     
     // Check if QR has already been used
     const { data: existingQR } = await supabase

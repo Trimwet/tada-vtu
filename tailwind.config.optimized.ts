@@ -30,13 +30,6 @@ const config: Config = {
   plugins: [
     require("tailwindcss-animate"),
   ],
-  // Production optimizations
-  corePlugins: {
-    // Disable unused features for smaller bundle
-    preflight: true,
-    container: false, // We use custom containers
-    accessibility: true,
-  },
 };
 
 export default config;
