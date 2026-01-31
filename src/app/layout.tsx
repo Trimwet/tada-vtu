@@ -7,14 +7,7 @@ import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import dynamic from "next/dynamic";
 import "./globals.css";
-
-// Lazy load cache invalidation (runs once on app load)
-const CacheInvalidation = dynamic(
-  () => import("@/lib/cache-invalidation").then(() => ({ default: () => null })),
-  { ssr: false }
-);
 
 const inter = Inter({
   subsets: ["latin"],
@@ -121,7 +114,6 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <AuthProvider>
-            <CacheInvalidation />
             <ServiceWorkerRegister />
             <NetworkStatusBar />
             {children}
