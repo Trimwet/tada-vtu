@@ -5,6 +5,7 @@ import { memo } from "react";
 import {
   Phone,
   PhoneCall,
+  Archive,
   Envelope,
   EnvelopeSimple,
   Lock,
@@ -164,6 +165,7 @@ import {
   ShoppingCart,
   ShoppingCartSimple,
   Calculator,
+  Package,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -208,6 +210,12 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
   "person-add-outline": UserPlus,
   people: Users,
   "people-outline": Users,
+
+  // Archive/Vault
+  archive: Archive,
+  "archive-outline": Archive,
+  package: Package,
+  "package-outline": Package,
 
   // Gift
   gift: Gift,
@@ -699,7 +707,8 @@ export const IonIcon = memo(function IonIcon({
   className = "",
   weight = "regular",
 }: IonIconProps) {
-  const IconComponent = iconMap[name] || FallbackIcon;
+  const iconName = name.trim();
+  const IconComponent = iconMap[iconName] || FallbackIcon;
   const sizeNum = parseInt(size.replace("px", ""), 10) || 20;
 
   return (

@@ -163,7 +163,7 @@ export function useSupabaseTransactions(limit = 10) {
 
   const walletTransactionsKey = user?.id
     ? ["wallet_transactions", {
-      select: "id, type, amount, description, reference, created_at",
+      select: "id, type, amount, description, reference, balance_before, balance_after, created_at",
       eq: { user_id: user.id },
       order: { column: "created_at", ascending: false },
       limit: limit * 2 // Get more to account for merging
@@ -209,7 +209,9 @@ export function useSupabaseTransactions(limit = 10) {
         network: null,
         service_id: null,
         external_reference: null,
-        response_data: null
+        response_data: null,
+        balance_before: wt.balance_before,
+        balance_after: wt.balance_after
       }));
       allTransactions.push(...formattedWalletTransactions);
     }

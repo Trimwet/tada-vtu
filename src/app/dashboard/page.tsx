@@ -24,7 +24,16 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { supabaseFetcher } from "@/lib/swr-fetcher";
 
-// Lazy load heavy components with loading states
+// Clear old feature caches on app load
+import "@/lib/cache-invalidation";
+
+// Lazy load Data Vault widget
+const DataVaultWidget = dynamic(
+  () => import("@/components/data-vault-widget").then(mod => ({ default: mod.DataVaultWidget })),
+  { ssr: false }
+);
+
+// Lazy load heavy components with loading states - optimized for core services
 const BankWithdrawalModal = dynamic(
   () => import("@/components/bank-withdrawal-modal").then(mod => ({ default: mod.BankWithdrawalModal })),
   { 
@@ -89,8 +98,6 @@ export default function DashboardPage() {
         totalSpent: 0,
         airtimeSpent: 0,
         dataSpent: 0,
-        cableSpent: 0,
-        electricitySpent: 0,
         dataGB: 0,
         transactionCount: 0,
         topNetwork: "MTN",
@@ -101,8 +108,6 @@ export default function DashboardPage() {
       totalSpent: 0,
       airtimeSpent: 0,
       dataSpent: 0,
-      cableSpent: 0,
-      electricitySpent: 0,
       dataGB: 0,
       transactionCount: 0,
       topNetwork: "",
@@ -129,10 +134,6 @@ export default function DashboardPage() {
           if (gbMatch) {
             stats.dataGB += parseFloat(gbMatch[1]);
           }
-        } else if (txn.type === "cable") {
-          stats.cableSpent += amount;
-        } else if (txn.type === "electricity") {
-          stats.electricitySpent += amount;
         }
 
         // Track network usage
@@ -161,11 +162,7 @@ export default function DashboardPage() {
   const services = useMemo(() => [
     { name: "Airtime", icon: "call-outline", href: "/dashboard/buy-airtime" },
     { name: "Data", icon: "wifi-outline", href: "/dashboard/buy-data" },
-    { name: "Cable TV", icon: "tv-outline", href: "/dashboard/cable-tv" },
-    { name: "Electricity", icon: "flash-outline", href: "/dashboard/electricity" },
-    { name: "Betting", icon: "football-outline", href: "/dashboard/betting" },
-    { name: "Send Gift", icon: "send-outline", href: "/dashboard/send-gift", badge: "NEW" },
-    { name: "Gift Rooms", icon: "bag-outline", href: "/dashboard/gift-rooms" },
+    { name: "Data Vault", icon: "wallet-outline", href: "/dashboard/data-vault", badge: "NEW" },
   ], []);
 
   const timeGreeting = user
@@ -311,7 +308,7 @@ export default function DashboardPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
             {services.map((service, index) => (
               <Link key={service.name} href={service.href}>
                 <Card
@@ -324,16 +321,17 @@ export default function DashboardPage() {
                   )}
                   <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
                     <div
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${"badge" in service
-                        ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
-                        : "bg-green-500/10 group-hover:bg-green-500"
-                        }`}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${
+                        "badge" in service && service.badge
+                          ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
+                          : "bg-green-500/10 group-hover:bg-green-500"
+                      }`}
                     >
                       <IonIcon
                         name={service.icon}
                         size="22px"
-                        color={"badge" in service ? "#f59e0b" : "#22c55e"}
-                        className="group-hover:!text-white"
+                        color={("badge" in service && service.badge) ? "#f59e0b" : "#22c55e"}
+                        className="group-hover:!text-white transition-smooth"
                       />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-foreground">
@@ -438,9 +436,11 @@ export default function DashboardPage() {
                             <p className="font-medium text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
                               {transaction.description}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formattedDate}
-                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{formattedDate}</span>
+                              <span>•</span>
+                              <span className="capitalize">{transaction.status}</span>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right shrink-0 ml-2">
@@ -479,6 +479,9 @@ export default function DashboardPage() {
 
           {/* Right Sidebar - Takes 2 columns */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Data Vault Widget */}
+            <DataVaultWidget userId={user.id} />
+
             {/* Monthly Stats */}
             <Card
               className="border-border animate-slide-up"
@@ -550,7 +553,7 @@ export default function DashboardPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                    <IonIcon name="gift-outline" size="16px" className="text-muted-foreground" />
+                    <IonIcon name="people-outline" size="16px" className="text-muted-foreground" />
                   </div>
                   Refer & Earn
                 </CardTitle>

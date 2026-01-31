@@ -14,8 +14,7 @@ const navItems = [
   { name: "Home", href: "/dashboard", icon: "home", exact: true },
   { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
   { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
-  { name: "Send Gift", href: "/dashboard/send-gift", icon: "send" },
-  { name: "Gift Rooms", href: "/dashboard/gift-rooms", icon: "bag" },
+  { name: "Data Vault", href: "/dashboard/data-vault", icon: "wallet" },
   { name: "Transactions", href: "/dashboard/transactions", icon: "time" },
   { name: "Profile", href: "/dashboard/profile", icon: "person" },
 ];
@@ -184,8 +183,8 @@ export function DashboardBottomNav() {
     { name: "Home", href: "/dashboard", icon: "home", exact: true },
     { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
     { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
+    { name: "Vault", href: "/dashboard/data-vault", icon: "wallet" },
     { name: "History", href: "/dashboard/transactions", icon: "time" },
-    { name: "Profile", href: "/dashboard/profile", icon: "person" },
   ];
 
   return (

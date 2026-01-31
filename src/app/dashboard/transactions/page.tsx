@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,323 +9,316 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
-import { useSupabaseTransactions } from "@/hooks/useSupabaseUser";
+import { useSupabaseUser, useSupabaseTransactions } from "@/hooks/useSupabaseUser";
 import { TransactionReceipt } from "@/components/transaction-receipt";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+
+type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal';
 
 export default function TransactionsPage() {
-  const router = useRouter();
-  const { transactions, loading } = useSupabaseTransactions();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [selectedTransaction, setSelectedTransaction] = useState<typeof transactions[0] | null>(null);
+  const { user } = useSupabaseUser();
+  const { transactions, loading } = useSupabaseTransactions(50); // Get more transactions
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  const filteredTransactions = transactions.filter((txn) => {
-    const matchesSearch =
-      txn.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (txn.description || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      txn.type.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === "all" || txn.status === filterStatus;
-    const matchesType = filterType === "all" || txn.type === filterType;
-    return matchesSearch && matchesFilter && matchesType;
-  });
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    if (filter === 'all') return transactions;
+    return transactions.filter(txn => txn.type === filter);
+  }, [transactions, filter]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-NG", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "success": return "text-green-500 bg-green-500/10";
-      case "failed": return "text-red-500 bg-red-500/10";
-      case "pending":
-      case "processing": return "text-amber-500 bg-amber-500/10 animate-pulse";
-      default: return "text-muted-foreground bg-muted";
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "deposit": return "arrow-down-circle";
-      case "withdrawal": return "arrow-up-circle";
-      case "airtime": return "call";
-      case "data": return "wifi";
-      case "cable": return "tv";
-      case "electricity": return "flash";
-      case "referral": return "people";
-      case "cashback": return "gift";
-      default: return "receipt";
-    }
-  };
-
-  const handleRepeat = (e: React.MouseEvent, txn: typeof transactions[0]) => {
-    e.stopPropagation();
-    if (txn.type === 'data') {
-      const params = new URLSearchParams({
-        network: txn.network || '',
-        phone: txn.phone_number || '',
-        repeat: 'true'
-      });
-      router.push(`/dashboard/buy-data?${params.toString()}`);
-      toast.success("Redirecting to repeat data purchase...");
-    } else if (txn.type === 'airtime') {
-      const params = new URLSearchParams({
-        network: txn.network || '',
-        phone: txn.phone_number || '',
-        repeat: 'true'
-      });
-      router.push(`/dashboard/buy-airtime?${params.toString()}`);
-      toast.success("Redirecting to repeat airtime purchase...");
+    if (diffDays === 0) {
+      return `Today, ${date.toLocaleTimeString('en-NG', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`;
+    } else if (diffDays === 1) {
+      return `Yesterday, ${date.toLocaleTimeString('en-NG', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })}`;
     } else {
-      toast.info("Repeat not available for this transaction type");
+      return date.toLocaleDateString('en-NG', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     }
   };
+
+  const getTransactionIcon = (type: string, amount: number) => {
+    if (amount > 0) return "arrow-down";
+    
+    switch (type) {
+      case 'airtime': return "call";
+      case 'data': return "wifi";
+      case 'cable': return "tv";
+      case 'electricity': return "flash";
+      case 'betting': return "football";
+      case 'withdrawal': return "arrow-up";
+      default: return "arrow-up";
+    }
+  };
+
+  const getTransactionColor = (type: string, amount: number) => {
+    if (amount > 0) return "text-green-500";
+    return "text-foreground";
+  };
+
+  const handleTransactionClick = (transaction: any) => {
+    console.log('Transaction clicked:', transaction); // Debug log
+    
+    // Transform transaction data to match the existing component's interface
+    const transformedTransaction = {
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      network: transaction.network,
+      phone: transaction.phone_number,
+      description: transaction.description,
+      status: transaction.status,
+      date: transaction.created_at,
+      reference: transaction.reference,
+    };
+    
+    console.log('Transformed transaction:', transformedTransaction); // Debug log
+    setSelectedTransaction(transformedTransaction);
+    setShowReceiptModal(true);
+    console.log('Modal should be open now'); // Debug log
+  };
+
+  const closeReceiptModal = () => {
+    setShowReceiptModal(false);
+    setSelectedTransaction(null);
+  };
+
+  const filters: { key: FilterType; label: string; count: number }[] = [
+    { key: 'all' as const, label: 'All', count: transactions?.length || 0 },
+    { key: 'deposit' as const, label: 'Deposits', count: transactions?.filter(t => t.type === 'deposit').length || 0 },
+    { key: 'airtime' as const, label: 'Airtime', count: transactions?.filter(t => t.type === 'airtime').length || 0 },
+    { key: 'data' as const, label: 'Data', count: transactions?.filter(t => t.type === 'data').length || 0 },
+    { key: 'cable' as const, label: 'Cable TV', count: transactions?.filter(t => t.type === 'cable').length || 0 },
+    { key: 'electricity' as const, label: 'Electricity', count: transactions?.filter(t => t.type === 'electricity').length || 0 },
+    { key: 'betting' as const, label: 'Betting', count: transactions?.filter(t => t.type === 'betting').length || 0 },
+    { key: 'withdrawal' as const, label: 'Withdrawals', count: transactions?.filter(t => t.type === 'withdrawal').length || 0 },
+  ].filter(f => f.count > 0 || f.key === 'all');
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link
-              href="/dashboard"
-              className="p-2 -ml-2 hover:bg-white/5 rounded-lg transition-all lg:hidden"
-            >
-              <IonIcon name="arrow-back-outline" size="20px" />
-            </Link>
-            <h1 className="text-lg font-bold ml-2 lg:ml-0 tracking-tight">
-              History
-            </h1>
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+        <div className="flex items-center h-14 px-4">
+          <Link
+            href="/dashboard"
+            className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target"
+          >
+            <IonIcon name="arrow-back-outline" size="20px" />
+          </Link>
+          <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">
+            Transaction History
+          </h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 lg:px-8 py-8 max-w-4xl relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[100px] pointer-events-none" />
-
-        <Card className="bg-white/[0.02] border-white/10 backdrop-blur-sm overflow-hidden rounded-3xl">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-2xl font-bold flex items-center gap-2">
-              <IonIcon name="journal-outline" className="text-green-500" />
-              Transactions
+      <main className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-4xl lg:mx-auto">
+        {/* Summary Card */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
+                <IonIcon name="receipt-outline" size="24px" color="#22c55e" />
+              </div>
+              Transaction History
             </CardTitle>
-            <CardDescription className="text-gray-500">
-              Your real-time financial and service record
+            <CardDescription>
+              View all your wallet activities and purchases
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Search & Filters */}
-            <div className="space-y-4">
-              <div className="relative group">
-                <IonIcon
-                  name="search-outline"
-                  size="18px"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-green-500 transition-colors"
-                />
-                <Input
-                  placeholder="Search by ID, network or service..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-11 h-12 bg-black/40 border-white/5 focus:border-green-500/50 rounded-2xl transition-all"
-                />
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Current Balance</p>
+                <p className="text-2xl font-bold text-green-500">
+                  ₦{(user?.balance || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                </p>
               </div>
-
-              {/* Advanced Filter Pills */}
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                  {[
-                    { value: "all", label: "All Services" },
-                    { value: "deposit", label: "Deposits" },
-                    { value: "airtime", label: "Airtime" },
-                    { value: "data", label: "Data" },
-                    { value: "cable", label: "Cable" },
-                    { value: "electricity", label: "Power" },
-                  ].map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => setFilterType(type.value)}
-                      className={cn(
-                        "px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
-                        filterType === type.value
-                          ? "bg-green-500 border-green-500 text-black shadow-lg shadow-green-500/20"
-                          : "bg-white/5 border-white/5 text-gray-400 hover:text-white"
-                      )}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-4 border-t border-white/5 pt-3">
-                  {[
-                    { value: "all", label: "All Status" },
-                    { value: "success", label: "Success" },
-                    { value: "failed", label: "Failed" },
-                    { value: "pending", label: "Pending" },
-                  ].map((status) => (
-                    <button
-                      key={status.value}
-                      onClick={() => setFilterStatus(status.value)}
-                      className={cn(
-                        "text-[10px] uppercase font-black tracking-widest transition-all",
-                        filterStatus === status.value
-                          ? "text-green-500"
-                          : "text-gray-600 hover:text-gray-400"
-                      )}
-                    >
-                      {status.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total Transactions</p>
+                <p className="text-xl font-semibold text-foreground">
+                  {transactions?.length || 0}
+                </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Transactions List */}
+        {/* Filters */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {filters.map((filterOption) => (
+            <button
+              key={filterOption.key}
+              onClick={() => setFilter(filterOption.key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                filter === filterOption.key
+                  ? 'bg-green-500 text-white'
+                  : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <span className="font-medium">{filterOption.label}</span>
+              {filterOption.count > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  filter === filterOption.key
+                    ? 'bg-white/20 text-white'
+                    : 'bg-muted-foreground/20 text-muted-foreground'
+                }`}>
+                  {filterOption.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Transactions List */}
+        <Card className="border-border">
+          <CardContent className="p-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-10 h-10 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-500 text-xs uppercase tracking-widest font-medium animate-pulse">Loading Ledger...</p>
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : filteredTransactions.length === 0 ? (
-              <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-3xl">
-                <IonIcon
-                  name="file-tray-outline"
-                  size="48px"
-                  className="text-gray-700 mx-auto mb-4"
-                />
-                <p className="text-gray-400 font-bold">
-                  No matches found
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <IonIcon
+                    name="receipt-outline"
+                    size="32px"
+                    className="text-muted-foreground"
+                  />
+                </div>
+                <p className="text-foreground font-medium">
+                  {filter === 'all' ? 'No transactions yet' : `No ${filter} transactions`}
                 </p>
-                <p className="text-xs text-gray-600 mt-1 max-w-[200px] mx-auto">
-                  Try adjusting your search query or switching filters
+                <p className="text-sm text-muted-foreground mt-1">
+                  {filter === 'all' 
+                    ? 'Your transactions will appear here'
+                    : `Your ${filter} transactions will appear here`
+                  }
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    onClick={() => setSelectedTransaction(transaction)}
-                    className="group relative flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-green-500/30 transition-all cursor-pointer overflow-hidden"
-                  >
-                    <div className="absolute inset-y-0 left-0 w-1 bg-transparent group-hover:bg-green-500 transition-all" />
-
-                    {/* Icon */}
+              <div className="divide-y divide-border">
+                {filteredTransactions.map((transaction, index) => {
+                  const date = formatDate(transaction.created_at);
+                  const hasBalanceInfo = (transaction as any).balance_before !== undefined && (transaction as any).balance_after !== undefined;
+                  
+                  return (
                     <div
-                      className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
-                        transaction.amount > 0 ? "bg-green-500/10" : "bg-white/5"
-                      )}
+                      key={transaction.id}
+                      onClick={() => handleTransactionClick(transaction)}
+                      className="flex items-center justify-between p-4 hover:bg-muted/50 transition-smooth cursor-pointer rounded-lg"
                     >
-                      <IonIcon
-                        name={getTypeIcon(transaction.type)}
-                        size="24px"
-                        className={transaction.amount > 0 ? "text-green-500" : "text-gray-400"}
-                      />
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-bold text-foreground text-sm truncate">
-                          {transaction.description}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            transaction.amount > 0
+                              ? "bg-green-500/10"
+                              : "bg-muted"
+                          }`}
+                        >
+                          <IonIcon
+                            name={getTransactionIcon(transaction.type, transaction.amount)}
+                            size="20px"
+                            color={transaction.amount > 0 ? "#22c55e" : "#888"}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm text-foreground truncate">
+                            {transaction.description}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{date}</span>
+                            {hasBalanceInfo && (
+                              <>
+                                <span>•</span>
+                                <span className="font-mono">
+                                  ₦{(transaction as any).balance_before.toLocaleString()} → ₦{(transaction as any).balance_after.toLocaleString()}
+                                </span>
+                              </>
+                            )}
+                            {transaction.network && (
+                              <>
+                                <span>•</span>
+                                <span>{transaction.network}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 ml-3">
+                        <p
+                          className={`font-semibold text-sm ${
+                            transaction.status === "failed"
+                              ? "text-red-500"
+                              : getTransactionColor(transaction.type, transaction.amount)
+                          }`}
+                        >
+                          {transaction.amount > 0 ? "+" : ""}₦
+                          {Math.abs(transaction.amount).toLocaleString()}
                         </p>
-                        {(transaction.status as string) === 'processing' && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-gray-500 font-medium">
-                          {formatDate(transaction.created_at)}
-                        </span>
-                        {transaction.network && (
-                          <span className={cn(
-                            "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
-                            transaction.network === 'MTN' ? 'bg-yellow-500/10 text-yellow-600' :
-                              transaction.network === 'AIRTEL' ? 'bg-red-500/10 text-red-600' :
-                                'bg-green-500/10 text-green-600'
-                          )}>
-                            {transaction.network}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1 justify-end">
+                          {transaction.status === "failed" && (
+                            <span className="text-xs text-red-500 font-medium">Failed</span>
+                          )}
+                          {transaction.status === "pending" && (
+                            <span className="text-xs text-amber-500 font-medium">Pending</span>
+                          )}
+                          {transaction.status === "success" && transaction.amount > 0 && (
+                            <span className="text-xs text-green-500 font-medium">Credit</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    {/* Amount & Quick Actions */}
-                    <div className="text-right flex flex-col items-end gap-2">
-                      <p className={cn(
-                        "font-black text-sm",
-                        transaction.amount > 0 ? "text-green-500" : "text-white"
-                      )}>
-                        {transaction.amount > 0 ? "+" : ""}
-                        ₦{Math.abs(transaction.amount).toLocaleString()}
-                      </p>
-
-                      <div className="flex items-center gap-2">
-                        {(transaction.type === 'data' || transaction.type === 'airtime') && transaction.status === 'success' && (
-                          <button
-                            onClick={(e) => handleRepeat(e, transaction)}
-                            className="p-1.5 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black transition-all"
-                            title="Repeat this purchase"
-                          >
-                            <IonIcon name="refresh-outline" size="14px" />
-                          </button>
-                        )}
-                        <span className={cn(
-                          "px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full",
-                          getStatusColor(transaction.status)
-                        )}>
-                          {transaction.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Summary */}
-            {filteredTransactions.length > 0 && (
-              <div className="mt-8 text-center">
-                <p className="text-[10px] text-gray-600 uppercase tracking-widest font-black">
-                  Ledger ends at {filteredTransactions.length} of {transactions.length} records
-                </p>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
-      </main>
 
-      {/* Transaction Receipt Modal */}
-      {selectedTransaction && (
-        <TransactionReceipt
-          isOpen={!!selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-          transaction={{
-            id: selectedTransaction.id,
-            type: selectedTransaction.type,
-            amount: selectedTransaction.amount,
-            network: selectedTransaction.network || undefined,
-            phone: selectedTransaction.phone_number || undefined,
-            description: selectedTransaction.description || "",
-            status: selectedTransaction.status,
-            date: selectedTransaction.created_at,
-            reference: selectedTransaction.reference || undefined,
-          }}
-        />
-      )}
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/dashboard/fund-wallet">
+            <Button className="w-full h-12 bg-green-500 hover:bg-green-600 gap-2">
+              <IonIcon name="add-circle-outline" size="20px" />
+              Fund Wallet
+            </Button>
+          </Link>
+          <Link href="/dashboard/buy-data">
+            <Button variant="outline" className="w-full h-12 gap-2">
+              <IonIcon name="wifi-outline" size="20px" />
+              Buy Data
+            </Button>
+          </Link>
+        </div>
+
+        {/* Transaction Receipt Modal */}
+        {selectedTransaction && (
+          <TransactionReceipt
+            transaction={selectedTransaction}
+            isOpen={showReceiptModal}
+            onClose={closeReceiptModal}
+          />
+        )}
+      </main>
     </div>
   );
 }

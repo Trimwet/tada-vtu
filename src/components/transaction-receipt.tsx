@@ -132,28 +132,11 @@ Thank you for using TADA VTU!
       <div className="bg-card border border-border rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
         <div ref={receiptRef}>
           {/* Header */}
-          <div className={`p-6 text-center text-white relative overflow-hidden transition-colors ${transaction.status === "success" ? "bg-gradient-to-br from-green-500 to-emerald-600" :
-            transaction.status === "failed" ? "bg-gradient-to-br from-red-500 to-rose-600" :
-              "bg-gradient-to-br from-amber-500 to-orange-600"
-            }`}>
-            <div className="absolute inset-0 bg-black/10 opacity-20 pointer-events-none" />
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg ${transaction.status === "success" ? "bg-white/20" :
-              transaction.status === "failed" ? "bg-white/20" :
-                "bg-white/20 animate-pulse"
-              }`}>
-              <IonIcon
-                name={
-                  transaction.status === "success" ? "checkmark-circle" :
-                    transaction.status === "failed" ? "close-circle" :
-                      "time-outline"
-                }
-                size="40px"
-                className={transaction.status === "pending" || transaction.status === "processing" ? "animate-spin-slow" : ""}
-              />
+          <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 text-center text-white">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <IonIcon name={transaction.status === "success" ? "checkmark-circle" : "close-circle"} size="40px" />
             </div>
-            <h2 className="text-xl font-bold capitalize">
-              Transaction {transaction.status}
-            </h2>
+            <h2 className="text-xl font-bold">Transaction {transaction.status === "success" ? "Successful" : "Failed"}</h2>
             <p className="text-3xl font-bold mt-2">₦{Math.abs(transaction.amount).toLocaleString()}</p>
           </div>
 
@@ -202,18 +185,7 @@ Thank you for using TADA VTU!
           </Button>
         </div>
 
-        <div className="p-4 pt-0 space-y-2">
-          <Button
-            onClick={() => {
-              const text = `Hello TADA VTU Support, I need help with this transaction:\n\nReference: ${transaction.reference || transaction.id}\nType: ${transaction.type}\nAmount: ₦${Math.abs(transaction.amount).toLocaleString()}\nStatus: ${transaction.status}`;
-              window.open(`https://wa.me/2347058748217?text=${encodeURIComponent(text)}`, '_blank');
-            }}
-            variant="outline"
-            className="w-full border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-all gap-2"
-          >
-            <IonIcon name="logo-whatsapp" size="18px" />
-            Need Help?
-          </Button>
+        <div className="p-4 pt-0">
           <Button onClick={onClose} className="w-full bg-green-500 hover:bg-green-600">Done</Button>
         </div>
       </div>

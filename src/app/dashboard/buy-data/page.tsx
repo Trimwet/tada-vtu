@@ -359,7 +359,7 @@ export default function BuyDataPage() {
 
                             {/* Data Type Selection - Dynamic based on available plans */}
                             {selectedNetwork && (
-                                <div className="space-y-3">
+                                <div className="space-y-3 p-4 border border-border rounded-xl bg-muted/20">
                                     <Label className="text-sm font-medium">Select Data Type</Label>
                                     {loadingPlans ? (
                                         <div className="flex flex-col items-center justify-center py-8 space-y-3">
@@ -430,7 +430,7 @@ export default function BuyDataPage() {
                             </div>
 
                             {/* Data Plans - Dynamic from API */}
-                            {selectedNetwork && (
+                            {selectedNetwork && selectedType && (
                                 <div className="space-y-3">
                                     <Label className="text-sm font-medium">
                                         Select Data Plan
@@ -440,67 +440,71 @@ export default function BuyDataPage() {
                                             </span>
                                         )}
                                     </Label>
-                                    {loadingPlans ? (
-                                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                                            <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-                                            <p className="text-muted-foreground font-medium animate-pulse">Fetching best plans for you...</p>
-                                        </div>
-                                    ) : availablePlans.length === 0 ? (
-                                        <div className="text-center py-8 text-muted-foreground">
-                                            <IonIcon
-                                                name="cloud-offline-outline"
-                                                size="32px"
-                                                className="mx-auto mb-2"
-                                            />
-                                            <p>
-                                                {dataPlans.length === 0
-                                                    ? `No plans available for ${selectedNetwork}`
-                                                    : `No ${selectedType} plans for ${selectedNetwork}`
-                                                }
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
-                                            {availablePlans.map((plan, idx) => (
-                                                <button
-                                                    key={`plan-${idx}-${plan.id}`}
-                                                    type="button"
-                                                    onClick={() => setSelectedPlan(plan.id)}
-                                                    className={`p-3 rounded-xl border-2 transition-smooth text-left relative ${selectedPlan === plan.id
-                                                        ? "border-green-500 bg-green-500/10"
-                                                        : "border-border hover:border-green-500/50"
-                                                        }`}
-                                                >
-                                                    {selectedPlan === plan.id && (
-                                                        <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                                            <IonIcon
-                                                                name="checkmark"
-                                                                size="12px"
-                                                                color="white"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                    <div className="font-bold text-foreground truncate" title={plan.name}>
-                                                        {plan.size}
-                                                    </div>
-                                                    {plan.description &&
-                                                        plan.description !== plan.size &&
-                                                        !plan.description.toLowerCase().includes(plan.size.toLowerCase()) &&
-                                                        plan.description.length > 0 && (
-                                                            <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
-                                                                {plan.description}
+
+                                    {/* All Plans Section */}
+                                    <div className="space-y-2">
+                                        {loadingPlans ? (
+                                            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                                                <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+                                                <p className="text-muted-foreground font-medium animate-pulse">Fetching best plans for you...</p>
+                                            </div>
+                                        ) : availablePlans.length === 0 ? (
+                                            <div className="text-center py-8 text-muted-foreground">
+                                                <IonIcon
+                                                    name="cloud-offline-outline"
+                                                    size="32px"
+                                                    className="mx-auto mb-2"
+                                                />
+                                                <p>
+                                                    {dataPlans.length === 0
+                                                        ? `No plans available for ${selectedNetwork}`
+                                                        : `No ${selectedType} plans for ${selectedNetwork}`
+                                                    }
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
+                                                {availablePlans.map((plan, idx) => (
+                                                    <button
+                                                        key={`plan-${idx}-${plan.id}`}
+                                                        type="button"
+                                                        onClick={() => setSelectedPlan(plan.id)}
+                                                        className={`w-full p-3 rounded-xl border-2 transition-smooth text-left relative ${selectedPlan === plan.id
+                                                            ? "border-green-500 bg-green-500/10"
+                                                            : "border-border hover:border-green-500/50"
+                                                            }`}
+                                                    >
+                                                        {selectedPlan === plan.id && (
+                                                            <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                                                <IonIcon
+                                                                    name="checkmark"
+                                                                    size="12px"
+                                                                    color="white"
+                                                                />
                                                             </div>
                                                         )}
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {plan.validity}
-                                                    </div>
-                                                    <div className="font-semibold text-green-500 mt-1">
-                                                        ₦{plan.price.toLocaleString()}
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
+                                                        <div className="font-bold text-foreground truncate" title={plan.name}>
+                                                            {plan.size}
+                                                        </div>
+                                                        {plan.description &&
+                                                            plan.description !== plan.size &&
+                                                            !plan.description.toLowerCase().includes(plan.size.toLowerCase()) &&
+                                                            plan.description.length > 0 && (
+                                                                <div className="text-[10px] text-muted-foreground truncate" title={plan.description}>
+                                                                    {plan.description}
+                                                                </div>
+                                                            )}
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {plan.validity}
+                                                        </div>
+                                                        <div className="font-semibold text-green-500 mt-1">
+                                                            ₦{plan.price.toLocaleString()}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -577,7 +581,7 @@ export default function BuyDataPage() {
                             >
                                 {(isProcessing || isParking) ? (
                                     <div className="flex items-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
                                         {purchaseMode === 'park' ? 'Saving to Vault...' : 'Processing...'}
                                     </div>
                                 ) : (

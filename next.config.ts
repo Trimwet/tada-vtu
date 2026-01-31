@@ -16,80 +16,71 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Advanced bundle splitting
+  // Advanced bundle splitting for streamlined TADA VTU
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     if (!dev && !isServer) {
-      // Split vendor chunks more granularly
+      // Optimized splitting for core mobile services only
       config.optimization.splitChunks = {
         chunks: 'all',
+        maxInitialRequests: 6, // Reduced for faster initial load
+        maxAsyncRequests: 8,   // Optimized for mobile
         cacheGroups: {
-          // Core React libraries
+          // Core React (highest priority)
           react: {
             name: 'react',
             chunks: 'all',
             test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            priority: 40,
+            priority: 50,
+            enforce: true,
           },
-          // Supabase client
+          // Supabase client (essential for auth/data)
           supabase: {
             name: 'supabase',
             chunks: 'all',
             test: /[\\/]node_modules[\\/]@supabase[\\/]/,
-            priority: 35,
+            priority: 45,
+            enforce: true,
           },
-          // UI libraries
+          // Core UI components (icons, notifications)
           ui: {
             name: 'ui',
             chunks: 'all',
-            test: /[\\/]node_modules[\\/](@radix-ui|@phosphor-icons|sonner)[\\/]/,
+            test: /[\\/]node_modules[\\/](@phosphor-icons|sonner|@radix-ui)[\\/]/,
+            priority: 40,
+          },
+          // QR code generation (Data Vault feature)
+          qr: {
+            name: 'qr',
+            chunks: 'async', // Load only when needed
+            test: /[\\/]node_modules[\\/](qrcode)[\\/]/,
+            priority: 35,
+          },
+          // PDF generation (receipts)
+          pdf: {
+            name: 'pdf',
+            chunks: 'async', // Load only when needed
+            test: /[\\/]node_modules[\\/](jspdf)[\\/]/,
             priority: 30,
           },
-          // Charts (only for admin)
-          charts: {
-            name: 'charts',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/](recharts|d3-)[\\/]/,
-            priority: 25,
-          },
-          // Other vendor libraries
+          // Other vendor libraries (minimal)
           vendor: {
             name: 'vendor',
             chunks: 'all',
             test: /[\\/]node_modules[\\/]/,
             priority: 20,
             minChunks: 2,
-          },
-          // Common components
-          common: {
-            name: 'common',
-            chunks: 'all',
-            minChunks: 2,
-            priority: 10,
-            reuseExistingChunk: true,
+            maxSize: 200000, // Keep vendor chunks small
           },
         },
       };
 
-      // Tree shaking optimizations
+      // Aggressive tree shaking for streamlined app
       config.optimization.usedExports = true;
       config.optimization.sideEffects = false;
-    }
-
-    // Bundle analyzer in development
-    if (process.env.ANALYZE === 'true') {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-        config.plugins.push(
-          new BundleAnalyzerPlugin({
-            analyzerMode: 'server',
-            analyzerPort: 8888,
-            openAnalyzer: true,
-          })
-        );
-      } catch (error) {
-        console.warn('webpack-bundle-analyzer not found. Install it with: npm install webpack-bundle-analyzer --save-dev');
-      }
+      config.optimization.innerGraph = true;
+      
+      // Module concatenation for smaller bundles
+      config.optimization.concatenateModules = true;
     }
 
     return config;

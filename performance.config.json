@@ -1,0 +1,23 @@
+{
+  "name": "TADA VTU Performance Config",
+  "version": "1.0.0",
+  "targets": {
+    "First Contentful Paint": "< 1.2s",
+    "Largest Contentful Paint": "< 2.0s",
+    "Time to Interactive": "< 2.5s",
+    "Cumulative Layout Shift": "< 0.1",
+    "Total Blocking Time": "< 200ms"
+  },
+  "optimizations": {
+    "Bundle Size": "Target < 200KB initial JS",
+    "Image Optimization": "AVIF/WebP with 1-year cache",
+    "Code Splitting": "Granular chunks for core services",
+    "Tree Shaking": "Aggressive unused code elimination",
+    "Compression": "Gzip + Brotli enabled"
+  },
+  "monitoring": {
+    "Vercel Analytics": "Real user metrics",
+    "Speed Insights": "Core Web Vitals tracking",
+    "Lighthouse CI": "Automated performance audits"
+  }
+}

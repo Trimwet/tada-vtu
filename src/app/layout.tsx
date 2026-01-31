@@ -7,7 +7,14 @@ import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import dynamic from "next/dynamic";
 import "./globals.css";
+
+// Lazy load cache invalidation (runs once on app load)
+const CacheInvalidation = dynamic(
+  () => import("@/lib/cache-invalidation").then(() => ({ default: () => null })),
+  { ssr: false }
+);
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,11 +27,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL('https://tadavtu.com'),
   title: {
-    default: "TADA VTU - Airtime & Data Services",
+    default: "TADA VTU - Airtime & Data Services with QR Vault",
     template: "%s | TADA VTU"
   },
-  description: "Nigeria's most reliable VTU platform. Buy airtime, data bundles, pay electricity bills, cable TV subscriptions, and more. Instant delivery, secure payments.",
-  keywords: "VTU, airtime, data, bill payment, recharge, Nigeria, MTN, Airtel, Glo, 9mobile, electricity, DSTV, GOTV, Startimes",
+  description: "Nigeria's fastest VTU platform. Buy airtime, data bundles with revolutionary Data Vault QR system. Instant delivery, secure payments, offline access.",
+  keywords: "VTU, airtime, data, data vault, QR code, recharge, Nigeria, MTN, Airtel, Glo, 9mobile, offline data",
   authors: [{ name: "TADA VTU" }],
   creator: "TADA VTU",
   publisher: "TADA VTU",
@@ -50,8 +57,8 @@ export const metadata: Metadata = {
     locale: "en_NG",
     url: "https://tadavtu.com",
     siteName: "TADA VTU",
-    title: "TADA VTU - Airtime & Data Services",
-    description: "Nigeria's most reliable VTU platform. Instant airtime, data, and bill payments.",
+    title: "TADA VTU - Airtime & Data Services with QR Vault",
+    description: "Nigeria's fastest VTU platform. Instant airtime, data, and revolutionary Data Vault with QR codes for offline access.",
     images: [
       {
         url: "/logo.svg",
@@ -63,8 +70,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TADA VTU - Airtime & Data Services",
-    description: "Nigeria's most reliable VTU platform. Instant airtime, data, and bill payments.",
+    title: "TADA VTU - Airtime & Data Services with QR Vault",
+    description: "Nigeria's fastest VTU platform. Instant airtime, data, and revolutionary Data Vault with QR codes for offline access.",
     images: ["/logo.svg"],
   },
   verification: {
@@ -114,6 +121,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <AuthProvider>
+            <CacheInvalidation />
             <ServiceWorkerRegister />
             <NetworkStatusBar />
             {children}

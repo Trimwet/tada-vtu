@@ -18,7 +18,6 @@ import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
 
 const CreatePinModal = dynamic(
   () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -28,52 +27,37 @@ const VerifyPinModal = dynamic(
   () => import("@/components/verify-pin-modal").then(mod => mod.VerifyPinModal),
   { ssr: false }
 );
-const BeneficiariesCard = dynamic(
-  () => import("@/components/beneficiaries-card").then(mod => mod.BeneficiariesCard),
-  { ssr: false }
-);
 
-const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000, 5000];
+const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
-  const { user, refreshUser } = useSupabaseUser();
-  const searchParams = useSearchParams();
+  const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
   const {
     userPin,
     showCreatePin,
-    showVerifyPin,
     setShowCreatePin,
+    showVerifyPin,
     setShowVerifyPin,
     requirePin,
-    onPinVerified,
     onPinCreated,
+    onPinVerified,
   } = useTransactionPin();
 
-  const [selectedNetwork, setSelectedNetwork] = useState(searchParams.get('network') || "");
-  const [phoneNumber, setPhoneNumber] = useState(searchParams.get('phone') || "");
+  const [selectedNetwork, setSelectedNetwork] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Auto-fill and notification for repeat purchases
-  useEffect(() => {
-    const net = searchParams.get('network');
-    const ph = searchParams.get('phone');
-    if (net) setSelectedNetwork(net);
-    if (ph) setPhoneNumber(ph);
-
-    if (searchParams.get('repeat') === 'true') {
-      toast.info("Repeating your previous airtime purchase", "Enter amount to continue");
-    }
-  }, [searchParams]);
-
-  const handleQuickAmount = (value: number) => {
-    setAmount(value.toString());
-  };
-
-  const executePurchase = async () => {
+  // Execute the actual purchase after PIN verification
+  const executePurchase = async (verifiedPin: string) => {
     const numAmount = parseInt(amount);
+    if (!numAmount || numAmount < 50) {
+      toast.error("Minimum airtime amount is ₦50");
+      return;
+    }
 
     setIsProcessing(true);
+
     try {
       const response = await fetch("/api/inlomax/airtime", {
         method: "POST",
@@ -83,15 +67,15 @@ export default function BuyAirtimePage() {
           phone: phoneNumber,
           amount: numAmount,
           userId: user?.id,
+          pin: verifiedPin,
         }),
       });
 
       const result = await response.json();
 
       if (result.status) {
-        // Refresh user data to get updated balance
         await refreshUser();
-        toast.payment("Airtime purchase successful!", `₦${numAmount} ${selectedNetwork} airtime sent to ${phoneNumber}`);
+        toast.payment("Airtime purchase successful!", `₦${numAmount.toLocaleString()} ${selectedNetwork} airtime sent to ${phoneNumber}`);
 
         setPhoneNumber("");
         setAmount("");
@@ -107,33 +91,30 @@ export default function BuyAirtimePage() {
     }
   };
 
-  const handlePurchase = (e: React.FormEvent) => {
+  const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedNetwork || !phoneNumber || !amount) {
+    const numAmount = parseInt(amount);
+    if (!selectedNetwork || !phoneNumber || !numAmount) {
       toast.warning("Please fill all fields");
       return;
     }
 
-    const numAmount = parseInt(amount);
     if (numAmount < 50) {
-      toast.warning("Minimum amount is ₦50");
+      toast.error("Minimum airtime amount is ₦50");
       return;
     }
 
-    if (numAmount > 50000) {
-      toast.warning("Maximum amount is ₦50,000");
-      return;
-    }
-
-    // Check wallet balance
     if (!user || (user.balance || 0) < numAmount) {
       toast.error("Insufficient balance", `You need ₦${numAmount.toLocaleString()} but have ₦${(user?.balance || 0).toLocaleString()}`);
       return;
     }
 
-    // Require PIN verification before purchase
     requirePin(executePurchase);
+  };
+
+  const handleQuickAmount = (value: number) => {
+    setAmount(value.toString());
   };
 
   return (
@@ -171,7 +152,11 @@ export default function BuyAirtimePage() {
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Balance</p>
                 <p className="font-bold text-green-500">
-                  ₦{(user?.balance || 0).toLocaleString()}
+                  {!isProfileLoaded ? (
+                    <span className="inline-block h-5 w-24 bg-green-500/20 animate-pulse rounded" />
+                  ) : (
+                    `₦${(user?.balance || 0).toLocaleString()}`
+                  )}
                 </p>
               </div>
             </div>
@@ -201,23 +186,36 @@ export default function BuyAirtimePage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Select Network</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {NETWORKS.map((network) => (
-                    <button
-                      key={network.value}
-                      type="button"
-                      onClick={() => setSelectedNetwork(network.value)}
-                      className={`p-3 rounded-xl border-2 transition-smooth ${selectedNetwork === network.value
-                        ? "border-green-500 bg-green-500/10"
-                        : "border-border hover:border-green-500/50"
+                  {NETWORKS.map((network) => {
+                    const isSelected = selectedNetwork === network.value;
+                    let activeStyles = "border-green-500 bg-green-500/10";
+
+                    if (isSelected) {
+                      if (network.value === "MTN") activeStyles = "border-yellow-500 bg-yellow-500/10";
+                      if (network.value === "AIRTEL") activeStyles = "border-red-500 bg-red-500/10";
+                      if (network.value === "GLO") activeStyles = "border-green-500 bg-green-500/10";
+                      if (network.value === "9MOBILE") activeStyles = "border-emerald-400 bg-emerald-400/10";
+                    }
+
+                    return (
+                      <button
+                        key={network.value}
+                        type="button"
+                        onClick={() => setSelectedNetwork(network.value)}
+                        className={`p-3 rounded-xl border-2 transition-smooth ${
+                          isSelected
+                            ? activeStyles
+                            : "border-border hover:border-green-500/50"
                         }`}
-                    >
-                      <div className="text-center">
-                        <div className="font-semibold text-sm text-foreground">
-                          {network.label}
+                      >
+                        <div className="text-center">
+                          <div className={`font-semibold text-xs truncate ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            {network.label}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -250,94 +248,73 @@ export default function BuyAirtimePage() {
                   Amount
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
-                    ₦
-                  </span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">₦</span>
                   <Input
                     id="amount"
                     type="number"
-                    placeholder="Enter amount"
+                    placeholder="Enter amount (min ₦50)"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="pl-8 bg-background border-border text-lg font-semibold"
+                    className="pl-8 bg-background border-border"
                     min="50"
-                    max="50000"
                     required
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Min: ₦50 • Max: ₦50,000
-                </p>
-              </div>
 
-              {/* Quick Amounts */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Quick Select</Label>
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_AMOUNTS.map((value) => (
+                {/* Quick Amount Buttons */}
+                <div className="grid grid-cols-3 gap-2">
+                  {QUICK_AMOUNTS.map((quickAmount) => (
                     <button
-                      key={value}
+                      key={quickAmount}
                       type="button"
-                      onClick={() => handleQuickAmount(value)}
-                      className={`px-4 py-2 rounded-lg border transition-smooth text-sm font-medium ${amount === value.toString()
-                        ? "border-green-500 bg-green-500/10 text-green-500"
-                        : "border-border hover:border-green-500/50 text-foreground"
-                        }`}
+                      onClick={() => handleQuickAmount(quickAmount)}
+                      className={`p-2 rounded-lg border-2 transition-smooth text-sm font-medium ${
+                        parseInt(amount) === quickAmount
+                          ? "border-green-500 bg-green-500/10 text-green-600"
+                          : "border-border hover:border-green-500/50 text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      ₦{value.toLocaleString()}
+                      ₦{quickAmount.toLocaleString()}
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Summary */}
-              {selectedNetwork &&
-                phoneNumber &&
-                amount &&
-                parseInt(amount) >= 50 && (
-                  <div className="bg-muted/50 p-4 rounded-xl space-y-3">
-                    <h3 className="font-semibold text-foreground flex items-center gap-2">
-                      <IonIcon
-                        name="receipt-outline"
-                        size="18px"
-                        color="#22c55e"
-                      />
-                      Purchase Summary
-                    </h3>
-                    <div className="space-y-2 text-sm">
+              {selectedNetwork && amount && phoneNumber && parseInt(amount) >= 50 && (
+                <div className="bg-muted/50 p-4 rounded-xl space-y-3">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <IonIcon
+                      name="receipt-outline"
+                      size="18px"
+                      color="#22c55e"
+                    />
+                    Purchase Summary
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Network</span>
+                      <span className="font-medium text-foreground">
+                        {selectedNetwork}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Phone Number</span>
+                      <span className="font-medium text-foreground">
+                        {phoneNumber}
+                      </span>
+                    </div>
+                    <div className="border-t border-border pt-2 mt-2">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Network</span>
-                        <span className="font-medium text-foreground">
-                          {selectedNetwork}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Phone Number
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {phoneNumber}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Amount</span>
-                        <span className="font-medium text-foreground">
+                        <span className="font-semibold text-foreground">Total</span>
+                        <span className="font-bold text-green-500 text-lg">
                           ₦{parseInt(amount).toLocaleString()}
                         </span>
                       </div>
-                      <div className="border-t border-border pt-2 mt-2">
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-foreground">
-                            Total
-                          </span>
-                          <span className="font-bold text-green-500 text-lg">
-                            ₦{parseInt(amount).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Submit Button */}
               <Button
@@ -353,12 +330,12 @@ export default function BuyAirtimePage() {
               >
                 {isProcessing ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
                     Processing...
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <IonIcon name="flash-outline" size="20px" />
+                    <IonIcon name="call-outline" size="20px" />
                     Buy Airtime
                   </div>
                 )}
@@ -375,16 +352,6 @@ export default function BuyAirtimePage() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Recent Beneficiaries */}
-        <BeneficiariesCard
-          serviceType="airtime"
-          onSelect={(phone, network) => {
-            setPhoneNumber(phone);
-            setSelectedNetwork(network);
-            toast.info("Beneficiary selected");
-          }}
-        />
       </main>
 
       {/* PIN Modals */}

@@ -43,7 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string): Promise<Profile | null> => {
+      if (!userId) {
+        console.warn("fetchProfile called without userId");
+        return null;
+      }
+
       try {
+        // Check if user is authenticated first
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user || session.user.id !== userId) {
+          console.warn("User not authenticated or userId mismatch");
+          return null;
+        }
+
         const { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, phone_number, email, balance, referral_code, kyc_level, loyalty_points, loyalty_tier, total_points_earned, login_streak, longest_streak, spin_available, birthday, total_spent, pin, created_at")
@@ -51,7 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (error) {
-          console.error("Profile fetch error:", error);
+          // Only log actual errors, not empty objects
+          if (error.message) {
+            console.error("Profile fetch error:", {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+          }
           return null;
         }
 
@@ -59,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(profileData);
         return profileData;
       } catch (err) {
-        console.error("Profile fetch exception:", err);
+        console.error("Profile fetch exception:", err instanceof Error ? err.message : String(err));
         return null;
       }
     },
