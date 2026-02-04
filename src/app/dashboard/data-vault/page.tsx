@@ -92,37 +92,38 @@ export default function DataVaultPage() {
   return (
     <div className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-7xl lg:mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-              <IonIcon name="archive-outline" size="24px" color="#22c55e" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500/10 rounded-xl flex items-center justify-center shrink-0">
+              <IonIcon name="archive-outline" size="20px" color="#22c55e" />
             </div>
             Data Vault
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage your parked data plans
           </p>
         </div>
-        <Link href="/dashboard/buy-data">
-          <Button className="gap-2">
+        <Link href="/dashboard/buy-data" className="shrink-0">
+          <Button className="gap-1.5 h-9 text-sm">
             <IonIcon name="add-outline" size="16px" />
-            Park Data
+            <span className="hidden sm:inline">Park Data</span>
+            <span className="sm:hidden">Park</span>
           </Button>
         </Link>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="border-border">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <IonIcon name="archive-outline" size="20px" color="#22c55e" />
+              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
+                <IonIcon name="archive-outline" size="18px" color="#22c55e" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Ready to Send</p>
-                <p className="text-xl font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Ready to Send</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground">
                   ₦{stats?.totalParked.toLocaleString() || '0'}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -134,14 +135,14 @@ export default function DataVaultPage() {
         </Card>
 
         <Card className="border-border">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <IonIcon name="checkmark-circle-outline" size="20px" color="#3b82f6" />
+              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
+                <IonIcon name="checkmark-circle-outline" size="18px" color="#3b82f6" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Delivered</p>
-                <p className="text-xl font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Delivered</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground">
                   ₦{stats?.totalDelivered.toLocaleString() || '0'}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -153,14 +154,14 @@ export default function DataVaultPage() {
         </Card>
 
         <Card className="border-border">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                <IonIcon name="time-outline" size="20px" color="#f59e0b" />
+              <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
+                <IonIcon name="time-outline" size="18px" color="#f59e0b" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Expired</p>
-                <p className="text-xl font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground">Expired</p>
+                <p className="text-lg sm:text-xl font-bold text-foreground">
                   {stats?.expiredCount || 0}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -173,12 +174,12 @@ export default function DataVaultPage() {
       </div>
 
       {/* Switch-Style Tabs */}
-      <div className="relative bg-muted p-1 rounded-xl w-fit">
+      <div className="relative bg-muted p-1 rounded-xl w-full sm:w-fit overflow-hidden">
         {/* Animated background indicator */}
         <div 
           className="absolute top-1 bottom-1 bg-background rounded-lg shadow-sm transition-all duration-300 ease-out"
           style={{
-            left: `${4 + (tabs.findIndex(tab => tab.key === activeTab) * (100 / tabs.length))}px`,
+            left: `${4 + (tabs.findIndex(tab => tab.key === activeTab) * (100 / tabs.length))}%`,
             width: `calc(${100 / tabs.length}% - 8px)`,
           }}
         />
@@ -188,30 +189,30 @@ export default function DataVaultPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`relative px-6 py-3 text-sm font-medium transition-all duration-300 flex items-center gap-2 min-w-[120px] justify-center ${
+              className={`relative px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-none sm:min-w-[120px] justify-center ${
                 activeTab === tab.key
                   ? 'text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {/* Tab icon */}
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+              <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
                 activeTab === tab.key
                   ? 'bg-green-500/20'
                   : 'bg-transparent'
               }`}>
-                <div className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
                   activeTab === tab.key
                     ? 'bg-green-500'
                     : 'bg-muted-foreground/50'
                 }`} />
               </div>
               
-              <span className="relative z-10">{tab.label}</span>
+              <span className="relative z-10 truncate">{tab.label}</span>
               
               {/* Count badge */}
               {tab.count > 0 && (
-                <span className={`text-xs px-2 py-0.5 rounded-full transition-all duration-300 ${
+                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full transition-all duration-300 shrink-0 ${
                   activeTab === tab.key
                     ? 'bg-green-500/15 text-green-600 border border-green-500/20'
                     : 'bg-muted-foreground/10 text-muted-foreground'
@@ -276,18 +277,20 @@ export default function DataVaultPage() {
               {activeItems.map((item) => (
                 <div
                   key={item.id}
-                  className="border border-border rounded-xl p-4 hover:border-green-500/50 transition-smooth"
+                  className="border border-border rounded-xl p-3 sm:p-4 hover:border-green-500/50 transition-smooth"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 min-w-0 flex-1">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
+                  {/* Mobile-first layout */}
+                  <div className="space-y-3">
+                    {/* Header row with icon and title */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ${
                         activeTab === 'ready' ? 'bg-green-500/10' :
                         activeTab === 'delivered' ? 'bg-blue-500/10' :
                         'bg-amber-500/10'
                       }`}>
                         <IonIcon 
                           name="wifi-outline" 
-                          size="20px" 
+                          size="18px" 
                           color={
                             activeTab === 'ready' ? '#22c55e' :
                             activeTab === 'delivered' ? '#3b82f6' :
@@ -296,63 +299,62 @@ export default function DataVaultPage() {
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight">
                             {item.network} {item.plan_name}
                           </h3>
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded shrink-0">
                             {item.network}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm text-muted-foreground mb-2 break-all">
                           {item.recipient_phone}
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="font-medium">₦{item.amount.toLocaleString()}</span>
-                          <span>•</span>
-                          <span>Parked {formatDate(item.purchased_at)}</span>
-                          {activeTab === 'ready' && (
-                            <>
-                              <span>•</span>
-                              <span className={new Date(item.expires_at) <= new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-amber-500 font-medium' : ''}>
-                                {formatTimeRemaining(item.expires_at)}
-                              </span>
-                            </>
-                          )}
-                          {activeTab === 'delivered' && item.delivered_at && (
-                            <>
-                              <span>•</span>
-                              <span className="text-green-600">Delivered {formatDate(item.delivered_at)}</span>
-                            </>
-                          )}
+                        <div className="text-sm font-medium text-green-500">
+                          ₦{item.amount.toLocaleString()}
                         </div>
                       </div>
                     </div>
+
+                    {/* Metadata row - mobile optimized */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>Parked {formatDate(item.purchased_at)}</span>
+                      {activeTab === 'ready' && (
+                        <span className={new Date(item.expires_at) <= new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-amber-500 font-medium' : ''}>
+                          {formatTimeRemaining(item.expires_at)}
+                        </span>
+                      )}
+                      {activeTab === 'delivered' && item.delivered_at && (
+                        <span className="text-green-600">Delivered {formatDate(item.delivered_at)}</span>
+                      )}
+                    </div>
+
+                    {/* Action buttons - mobile optimized */}
                     {activeTab === 'ready' && (
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex gap-2 pt-1">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleGenerateQR(item)}
-                          className="gap-2"
+                          className="gap-1.5 flex-1 h-8 text-xs"
                         >
                           <IonIcon name="qr-code-outline" size="14px" />
-                          QR
+                          QR Code
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => handleDeliver(item.id)}
                           disabled={isDelivering === item.id}
-                          className="gap-2"
+                          className="gap-1.5 flex-1 h-8 text-xs bg-green-500 hover:bg-green-600 text-white"
                         >
                           {isDelivering === item.id ? (
                             <>
-                              <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin"></div>
+                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
                               Sending...
                             </>
                           ) : (
                             <>
-                              <IonIcon name="send-outline" size="16px" />
+                              <IonIcon name="send-outline" size="14px" />
                               Send Now
                             </>
                           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -376,98 +376,131 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {transactionsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : recentTransactions.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
                     <IonIcon
                       name="receipt-outline"
-                      size="32px"
+                      size="24px"
                       className="text-muted-foreground"
                     />
                   </div>
-                  <p className="text-foreground font-medium">
+                  <p className="text-foreground font-medium text-sm">
                     No transactions yet
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Your transactions will appear here
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {recentTransactions.map((transaction, index) => {
                     const date = new Date(transaction.created_at);
                     const formattedDate = date.toLocaleDateString("en-NG", {
                       month: "short",
                       day: "numeric",
                     });
+                    const formattedTime = date.toLocaleTimeString("en-NG", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+                    
                     return (
                       <div
                         key={transaction.id}
-                        className={`flex items-center justify-between py-3 px-2 rounded-xl hover:bg-muted/50 transition-smooth overflow-hidden ${index !== recentTransactions.length - 1
-                          ? "border-b border-border/50"
-                          : ""
-                          }`}
+                        className="group relative p-2.5 rounded-lg border border-border hover:border-green-500/50 transition-all duration-200 hover:shadow-sm cursor-pointer"
                       >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5">
+                          {/* Icon */}
                           <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${transaction.amount > 0
-                              ? "bg-green-500/10"
-                              : "bg-muted"
-                              }`}
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                              transaction.status === "failed"
+                                ? "bg-red-500/10 group-hover:bg-red-500/20"
+                                : transaction.amount > 0
+                                ? "bg-green-500/10 group-hover:bg-green-500/20"
+                                : "bg-blue-500/10 group-hover:bg-blue-500/20"
+                            }`}
                           >
-                            {transaction.amount > 0 ? (
+                            {transaction.status === "failed" ? (
                               <IonIcon
-                                name="arrow-down"
-                                size="18px"
+                                name="close-circle"
+                                size="16px"
+                                color="#ef4444"
+                              />
+                            ) : transaction.amount > 0 ? (
+                              <IonIcon
+                                name="arrow-down-circle"
+                                size="16px"
                                 color="#22c55e"
                               />
                             ) : (
                               <IonIcon
-                                name="arrow-up"
-                                size="18px"
-                                className="text-muted-foreground"
+                                name="arrow-up-circle"
+                                size="16px"
+                                color="#3b82f6"
                               />
                             )}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
-                              {transaction.description}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{formattedDate}</span>
-                              <span>•</span>
-                              <span className="capitalize">{transaction.status}</span>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <h4 className="font-medium text-sm text-foreground leading-tight line-clamp-1">
+                                {transaction.description}
+                              </h4>
+                              <p
+                                className={`font-bold text-sm shrink-0 ${
+                                  transaction.status === "failed"
+                                    ? "text-red-500"
+                                    : transaction.amount > 0
+                                    ? "text-green-500"
+                                    : "text-foreground"
+                                }`}
+                              >
+                                {transaction.amount > 0 ? "+" : ""}₦
+                                {Math.abs(transaction.amount).toLocaleString()}
+                              </p>
+                            </div>
+
+                            {/* Metadata row */}
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <span className="text-muted-foreground">
+                                {formattedDate}, {formattedTime}
+                              </span>
+                              
+                              {/* Status badge */}
+                              <span
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-medium ${
+                                  transaction.status === "failed"
+                                    ? "bg-red-500/10 text-red-500"
+                                    : transaction.status === "pending"
+                                    ? "bg-amber-500/10 text-amber-500"
+                                    : "bg-green-500/10 text-green-500"
+                                }`}
+                              >
+                                <div
+                                  className={`w-1 h-1 rounded-full ${
+                                    transaction.status === "failed"
+                                      ? "bg-red-500"
+                                      : transaction.status === "pending"
+                                      ? "bg-amber-500 animate-pulse"
+                                      : "bg-green-500"
+                                  }`}
+                                />
+                                {transaction.status}
+                              </span>
+
+                              {/* Network badge */}
+                              {transaction.network && transaction.status === "success" && (
+                                <span className="text-muted-foreground">
+                                  • {transaction.network}
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <p
-                            className={`font-semibold text-sm ${transaction.status === "failed"
-                              ? "text-foreground"
-                              : transaction.amount > 0
-                                ? "text-green-500"
-                                : "text-foreground"
-                              }`}
-                          >
-                            {transaction.amount > 0 ? "+" : ""}₦
-                            {Math.abs(transaction.amount).toLocaleString()}
-                          </p>
-                          {transaction.status === "failed" ? (
-                            <p className="text-xs text-red-500 font-medium">
-                              failed
-                            </p>
-                          ) : transaction.status === "pending" ? (
-                            <p className="text-xs text-amber-500 font-medium">
-                              pending
-                            </p>
-                          ) : transaction.network ? (
-                            <p className="text-xs text-muted-foreground">
-                              {transaction.network}
-                            </p>
-                          ) : null}
                         </div>
                       </div>
                     );
@@ -495,15 +528,20 @@ export default function DashboardPage() {
                   Spending summary
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 space-y-4">
+              <CardContent className="pt-0 space-y-3">
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
                       <IonIcon name="trending-up" size="20px" color="#22c55e" />
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      Total Spent
-                    </span>
+                    <div>
+                      <span className="text-sm text-muted-foreground block">
+                        Total Spent
+                      </span>
+                      <span className="text-xs text-green-500">
+                        {monthlyStats.transactionCount} transactions
+                      </span>
+                    </div>
                   </div>
                   <span className="font-semibold text-foreground">
                     ₦{monthlyStats.totalSpent.toLocaleString()}
@@ -511,16 +549,16 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="wifi" size="20px" color="#22c55e" />
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                      <IonIcon name="wifi" size="20px" color="#3b82f6" />
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground block">
                         Data Purchased
                       </span>
                       {monthlyStats.dataGB > 0 && (
-                        <span className="text-xs text-green-500">
-                          {monthlyStats.dataGB}GB total
+                        <span className="text-xs text-blue-500">
+                          {monthlyStats.dataGB.toFixed(1)}GB total
                         </span>
                       )}
                     </div>
@@ -531,15 +569,38 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="call" size="20px" color="#22c55e" />
+                    <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
+                      <IonIcon name="call" size="20px" color="#f59e0b" />
                     </div>
-                    <span className="text-sm text-muted-foreground">
-                      Airtime
-                    </span>
+                    <div>
+                      <span className="text-sm text-muted-foreground block">
+                        Airtime
+                      </span>
+                      <span className="text-xs text-amber-500">
+                        Voice & SMS credits
+                      </span>
+                    </div>
                   </div>
                   <span className="font-semibold text-foreground">
                     ₦{monthlyStats.airtimeSpent.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                      <IonIcon name="cellular" size="20px" color="#8b5cf6" />
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground block">
+                        Top Network
+                      </span>
+                      <span className="text-xs text-purple-500">
+                        Most used provider
+                      </span>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    {monthlyStats.topNetwork}
                   </span>
                 </div>
               </CardContent>

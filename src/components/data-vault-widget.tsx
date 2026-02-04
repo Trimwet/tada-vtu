@@ -109,7 +109,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
               Deduct money now, deliver data later with 1 tap.
             </p>
             <Link href="/dashboard/buy-data">
-              <Button size="sm" className="gap-2 bg-green-500 hover:bg-green-600 text-black font-bold h-10 px-6 rounded-xl shadow-lg shadow-green-500/10">
+              <Button size="sm" className="gap-2 bg-green-500 hover:bg-green-600 text-white font-bold h-10 px-6 rounded-lg shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 hover:scale-105">
                 <IonIcon name="add-circle-outline" size="18px" />
                 Fill Your Vault
               </Button>

@@ -215,7 +215,7 @@ export default function TransactionsPage() {
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="space-y-2">
                 {filteredTransactions.map((transaction, index) => {
                   const date = formatDate(transaction.created_at);
                   const hasBalanceInfo = (transaction as any).balance_before !== undefined && (transaction as any).balance_after !== undefined;
@@ -224,66 +224,102 @@ export default function TransactionsPage() {
                     <div
                       key={transaction.id}
                       onClick={() => handleTransactionClick(transaction)}
-                      className="flex items-center justify-between p-4 hover:bg-muted/50 transition-smooth cursor-pointer rounded-lg"
+                      className="group relative p-3 rounded-xl border border-border hover:border-green-500/50 transition-all duration-200 hover:shadow-sm cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex items-start gap-3">
+                        {/* Icon */}
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            transaction.amount > 0
-                              ? "bg-green-500/10"
-                              : "bg-muted"
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                            transaction.status === "failed"
+                              ? "bg-red-500/10 group-hover:bg-red-500/20"
+                              : transaction.amount > 0
+                              ? "bg-green-500/10 group-hover:bg-green-500/20"
+                              : "bg-blue-500/10 group-hover:bg-blue-500/20"
                           }`}
                         >
-                          <IonIcon
-                            name={getTransactionIcon(transaction.type, transaction.amount)}
-                            size="20px"
-                            color={transaction.amount > 0 ? "#22c55e" : "#888"}
-                          />
+                          {transaction.status === "failed" ? (
+                            <IonIcon
+                              name="close-circle"
+                              size="20px"
+                              color="#ef4444"
+                            />
+                          ) : (
+                            <IonIcon
+                              name={getTransactionIcon(transaction.type, transaction.amount)}
+                              size="20px"
+                              color={
+                                (transaction.status as string) === "failed"
+                                  ? "#ef4444"
+                                  : transaction.amount > 0 
+                                  ? "#22c55e" 
+                                  : "#3b82f6"
+                              }
+                            />
+                          )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm text-foreground truncate">
-                            {transaction.description}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{date}</span>
-                            {hasBalanceInfo && (
-                              <>
-                                <span>•</span>
-                                <span className="font-mono">
-                                  ₦{(transaction as any).balance_before.toLocaleString()} → ₦{(transaction as any).balance_after.toLocaleString()}
-                                </span>
-                              </>
-                            )}
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-semibold text-sm text-foreground leading-tight line-clamp-2">
+                              {transaction.description}
+                            </h4>
+                            <p
+                              className={`font-bold text-sm shrink-0 ${
+                                transaction.status === "failed"
+                                  ? "text-red-500"
+                                  : transaction.amount > 0
+                                  ? "text-green-500"
+                                  : "text-foreground"
+                              }`}
+                            >
+                              {transaction.amount > 0 ? "+" : ""}₦
+                              {Math.abs(transaction.amount).toLocaleString()}
+                            </p>
+                          </div>
+
+                          {/* Metadata row */}
+                          <div className="flex items-center gap-2 text-xs flex-wrap">
+                            <span className="text-muted-foreground">
+                              {date}
+                            </span>
+                            
+                            {/* Status badge */}
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${
+                                transaction.status === "failed"
+                                  ? "bg-red-500/10 text-red-500"
+                                  : transaction.status === "pending"
+                                  ? "bg-amber-500/10 text-amber-500"
+                                  : "bg-green-500/10 text-green-500"
+                              }`}
+                            >
+                              <div
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  transaction.status === "failed"
+                                    ? "bg-red-500"
+                                    : transaction.status === "pending"
+                                    ? "bg-amber-500 animate-pulse"
+                                    : "bg-green-500"
+                                }`}
+                              />
+                              {transaction.status}
+                            </span>
+
+                            {/* Network badge */}
                             {transaction.network && (
-                              <>
-                                <span>•</span>
-                                <span>{transaction.network}</span>
-                              </>
+                              <span className="text-muted-foreground">
+                                {transaction.network}
+                              </span>
+                            )}
+
+                            {/* Balance info */}
+                            {hasBalanceInfo && (
+                              <span className="text-muted-foreground font-mono text-[10px] bg-muted/50 px-2 py-0.5 rounded">
+                                ₦{(transaction as any).balance_before.toLocaleString()} → ₦{(transaction as any).balance_after.toLocaleString()}
+                              </span>
                             )}
                           </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 ml-3">
-                        <p
-                          className={`font-semibold text-sm ${
-                            transaction.status === "failed"
-                              ? "text-red-500"
-                              : getTransactionColor(transaction.type, transaction.amount)
-                          }`}
-                        >
-                          {transaction.amount > 0 ? "+" : ""}₦
-                          {Math.abs(transaction.amount).toLocaleString()}
-                        </p>
-                        <div className="flex items-center gap-1 justify-end">
-                          {transaction.status === "failed" && (
-                            <span className="text-xs text-red-500 font-medium">Failed</span>
-                          )}
-                          {transaction.status === "pending" && (
-                            <span className="text-xs text-amber-500 font-medium">Pending</span>
-                          )}
-                          {transaction.status === "success" && transaction.amount > 0 && (
-                            <span className="text-xs text-green-500 font-medium">Credit</span>
-                          )}
                         </div>
                       </div>
                     </div>

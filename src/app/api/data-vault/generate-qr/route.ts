@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('id', vaultId)
       .eq('user_id', userId)
-      .eq('status', 'parked')
+      .eq('status', 'ready')
       .single();
 
     if (vaultError || !vault) {

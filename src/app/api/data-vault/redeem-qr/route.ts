@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       .from('data_vault')
       .select('*')
       .eq('id', parsedQR.vaultId)
-      .eq('status', 'parked')
+      .eq('status', 'ready')
       .single();
 
     if (vaultError || !vault) {
