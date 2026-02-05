@@ -431,10 +431,10 @@ export default function DashboardPage() {
                                 color="#ef4444"
                               />
                             ) : transaction.amount > 0 ? (
-                              // Credit/Deposit transactions (bank transfers show wallet icon)
+                              // Credit/Deposit transactions (bank transfers show cash icon)
                               transaction.type === "deposit" ? (
                                 <IonIcon
-                                  name="wallet"
+                                  name="cash"
                                   size="16px"
                                   color="#22c55e"
                                 />
