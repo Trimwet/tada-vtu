@@ -52,11 +52,6 @@ const GreetingTypewriter = dynamic(
   { ssr: false }
 );
 
-const TransactionReceiptModal = dynamic(
-  () => import("@/components/transaction-receipt-modal").then(mod => ({ default: mod.TransactionReceiptModal })),
-  { ssr: false }
-);
-
 
 
 export default function DashboardPage() {
@@ -89,8 +84,6 @@ export default function DashboardPage() {
   });
 
   const [showWithdrawal, setShowWithdrawal] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
   // Check if user needs to add phone number (for Google signups)
   useEffect(() => {
     if (user?.id && !user.phone_number) {
@@ -163,24 +156,6 @@ export default function DashboardPage() {
     const newValue = !hideBalance;
     setHideBalance(newValue);
     localStorage.setItem("hideBalance", String(newValue));
-  };
-
-  const handleTransactionClick = (transaction: any) => {
-    // Transform transaction data to match the receipt modal interface
-    const transformedTransaction = {
-      id: transaction.id,
-      type: transaction.type,
-      amount: transaction.amount,
-      network: transaction.network,
-      phone: transaction.phone_number,
-      description: transaction.description,
-      status: transaction.status,
-      date: transaction.created_at,
-      reference: transaction.reference,
-    };
-    
-    setSelectedTransaction(transformedTransaction);
-    setShowReceiptModal(true);
   };
 
   // Services list - defined before any conditional returns
@@ -399,7 +374,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="pt-0 px-4">
+            <CardContent className="pt-0">
               {transactionsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
@@ -421,7 +396,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1.5 py-2">
+                <div className="space-y-1.5">
                   {recentTransactions.map((transaction, index) => {
                     const date = new Date(transaction.created_at);
                     const formattedDate = date.toLocaleDateString("en-NG", {
@@ -436,7 +411,6 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={transaction.id}
-                        onClick={() => handleTransactionClick(transaction)}
                         className="group relative p-2.5 rounded-lg border border-border hover:border-green-500/50 transition-all duration-200 hover:shadow-sm cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
@@ -457,35 +431,39 @@ export default function DashboardPage() {
                                 color="#ef4444"
                               />
                             ) : transaction.amount > 0 ? (
-                              // Credit/Deposit transactions
-                              <IonIcon
-                                name="arrow-down-circle"
-                                size="16px"
-                                color="#22c55e"
-                              />
+                              // Credit/Deposit transactions (bank transfers show wallet icon)
+                              transaction.type === "deposit" ? (
+                                <IonIcon
+                                  name="wallet"
+                                  size="16px"
+                                  color="#22c55e"
+                                />
+                              ) : (
+                                <IonIcon
+                                  name="arrow-down-circle"
+                                  size="16px"
+                                  color="#22c55e"
+                                />
+                              )
                             ) : transaction.type === "data" ? (
-                              // Data transactions
                               <IonIcon
                                 name="wifi"
                                 size="16px"
                                 color="#3b82f6"
                               />
                             ) : transaction.type === "airtime" ? (
-                              // Airtime transactions
                               <IonIcon
                                 name="call"
                                 size="16px"
                                 color="#3b82f6"
                               />
                             ) : transaction.type === "withdrawal" ? (
-                              // Withdrawal transactions
                               <IonIcon
                                 name="arrow-up-circle"
                                 size="16px"
                                 color="#3b82f6"
                               />
                             ) : (
-                              // Default for other transactions
                               <IonIcon
                                 name="card"
                                 size="16px"
@@ -580,14 +558,14 @@ export default function DashboardPage() {
               <CardContent className="pt-0 space-y-3">
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="trending-up" size="20px" color="#22c55e" />
+                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                      <IonIcon name="trending-up" size="20px" className="text-muted-foreground" />
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground block">
                         Total Spent
                       </span>
-                      <span className="text-xs text-green-500">
+                      <span className="text-xs text-muted-foreground">
                         {monthlyStats.transactionCount} transactions
                       </span>
                     </div>
@@ -598,15 +576,15 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="wifi" size="20px" color="#3b82f6" />
+                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                      <IonIcon name="wifi" size="20px" className="text-muted-foreground" />
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground block">
                         Data Purchased
                       </span>
                       {monthlyStats.dataGB > 0 && (
-                        <span className="text-xs text-blue-500">
+                        <span className="text-xs text-muted-foreground">
                           {monthlyStats.dataGB.toFixed(1)}GB total
                         </span>
                       )}
@@ -618,14 +596,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="call" size="20px" color="#f59e0b" />
+                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                      <IonIcon name="call" size="20px" className="text-muted-foreground" />
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground block">
                         Airtime
                       </span>
-                      <span className="text-xs text-amber-500">
+                      <span className="text-xs text-muted-foreground">
                         Voice & SMS credits
                       </span>
                     </div>
@@ -636,14 +614,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between p-3 -mx-3 rounded-xl hover:bg-muted/50 transition-smooth">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                      <IonIcon name="cellular" size="20px" color="#8b5cf6" />
+                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                      <IonIcon name="cellular" size="20px" className="text-muted-foreground" />
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground block">
                         Top Network
                       </span>
-                      <span className="text-xs text-purple-500">
+                      <span className="text-xs text-muted-foreground">
                         Most used provider
                       </span>
                     </div>
@@ -699,18 +677,6 @@ export default function DashboardPage() {
           window.location.reload();
         }}
       />
-
-      {/* Transaction Receipt Modal */}
-      {selectedTransaction && (
-        <TransactionReceiptModal
-          isOpen={showReceiptModal}
-          onClose={() => {
-            setShowReceiptModal(false);
-            setSelectedTransaction(null);
-          }}
-          transaction={selectedTransaction}
-        />
-      )}
     </div>
   );
 }
