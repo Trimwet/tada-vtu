@@ -52,6 +52,11 @@ const GreetingTypewriter = dynamic(
   { ssr: false }
 );
 
+const TransactionReceiptModal = dynamic(
+  () => import("@/components/transaction-receipt-modal").then(mod => ({ default: mod.TransactionReceiptModal })),
+  { ssr: false }
+);
+
 
 
 export default function DashboardPage() {
@@ -84,6 +89,8 @@ export default function DashboardPage() {
   });
 
   const [showWithdrawal, setShowWithdrawal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   // Check if user needs to add phone number (for Google signups)
   useEffect(() => {
     if (user?.id && !user.phone_number) {
@@ -156,6 +163,24 @@ export default function DashboardPage() {
     const newValue = !hideBalance;
     setHideBalance(newValue);
     localStorage.setItem("hideBalance", String(newValue));
+  };
+
+  const handleTransactionClick = (transaction: any) => {
+    // Transform transaction data to match the receipt modal interface
+    const transformedTransaction = {
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      network: transaction.network,
+      phone: transaction.phone_number,
+      description: transaction.description,
+      status: transaction.status,
+      date: transaction.created_at,
+      reference: transaction.reference,
+    };
+    
+    setSelectedTransaction(transformedTransaction);
+    setShowReceiptModal(true);
   };
 
   // Services list - defined before any conditional returns
@@ -374,7 +399,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 px-4">
               {transactionsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
@@ -396,7 +421,7 @@ export default function DashboardPage() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 py-2">
                   {recentTransactions.map((transaction, index) => {
                     const date = new Date(transaction.created_at);
                     const formattedDate = date.toLocaleDateString("en-NG", {
@@ -411,6 +436,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={transaction.id}
+                        onClick={() => handleTransactionClick(transaction)}
                         className="group relative p-2.5 rounded-lg border border-border hover:border-green-500/50 transition-all duration-200 hover:shadow-sm cursor-pointer"
                       >
                         <div className="flex items-center gap-2.5">
@@ -431,14 +457,37 @@ export default function DashboardPage() {
                                 color="#ef4444"
                               />
                             ) : transaction.amount > 0 ? (
+                              // Credit/Deposit transactions
                               <IonIcon
                                 name="arrow-down-circle"
                                 size="16px"
                                 color="#22c55e"
                               />
-                            ) : (
+                            ) : transaction.type === "data" ? (
+                              // Data transactions
+                              <IonIcon
+                                name="wifi"
+                                size="16px"
+                                color="#3b82f6"
+                              />
+                            ) : transaction.type === "airtime" ? (
+                              // Airtime transactions
+                              <IonIcon
+                                name="call"
+                                size="16px"
+                                color="#3b82f6"
+                              />
+                            ) : transaction.type === "withdrawal" ? (
+                              // Withdrawal transactions
                               <IonIcon
                                 name="arrow-up-circle"
+                                size="16px"
+                                color="#3b82f6"
+                              />
+                            ) : (
+                              // Default for other transactions
+                              <IonIcon
+                                name="card"
                                 size="16px"
                                 color="#3b82f6"
                               />
@@ -650,6 +699,18 @@ export default function DashboardPage() {
           window.location.reload();
         }}
       />
+
+      {/* Transaction Receipt Modal */}
+      {selectedTransaction && (
+        <TransactionReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            setShowReceiptModal(false);
+            setSelectedTransaction(null);
+          }}
+          transaction={selectedTransaction}
+        />
+      )}
     </div>
   );
 }
