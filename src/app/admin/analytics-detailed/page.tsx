@@ -350,7 +350,7 @@ export default function DetailedAnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => `₦${value.toLocaleString()}`}
+                    formatter={(value: number | undefined) => `₦${(value || 0).toLocaleString()}`}
                     contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                   />
                 </PieChart>
@@ -370,7 +370,7 @@ export default function DetailedAnalyticsPage() {
                   <YAxis stroke="#9ca3af" />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                    formatter={(value: number) => `₦${value.toLocaleString()}`}
+                    formatter={(value: number | undefined) => `₦${(value || 0).toLocaleString()}`}
                   />
                   <Legend />
                   <Bar dataKey="revenue" fill="#22c55e" name="Revenue" />
@@ -393,7 +393,7 @@ export default function DetailedAnalyticsPage() {
                 <YAxis stroke="#9ca3af" />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
-                  formatter={(value: number) => `₦${value.toLocaleString()}`}
+                  formatter={(value: number | undefined) => `₦${(value || 0).toLocaleString()}`}
                 />
                 <Legend />
                 <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} name="Revenue" />
