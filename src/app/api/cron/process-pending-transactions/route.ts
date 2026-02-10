@@ -64,27 +64,19 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Refund the user
+        // Refund the user using RPC function
         const refundAmount = Math.abs(transaction.amount);
-        const { error: refundError } = await supabase
-          .from('profiles')
-          .update({ balance: supabase.raw(`balance + ${refundAmount}`) })
-          .eq('id', transaction.user_id);
+        const { error: refundError } = await supabase.rpc('update_user_balance', {
+          p_user_id: transaction.user_id,
+          p_amount: refundAmount,
+          p_type: 'credit',
+          p_description: `Refund: ${transaction.description || transaction.type} (Timeout)`
+        });
 
         if (refundError) {
           console.error(`[CRON] Failed to refund user ${transaction.user_id}:`, refundError);
           continue;
         }
-
-        // Create refund transaction
-        await supabase.from('transactions').insert({
-          user_id: transaction.user_id,
-          type: 'deposit',
-          amount: refundAmount,
-          status: 'success',
-          description: `Refund: ${transaction.description || transaction.type} (Timeout)`,
-          reference: `REFUND_${transaction.reference}`,
-        });
 
         failedCount++;
         refundedAmount += refundAmount;
