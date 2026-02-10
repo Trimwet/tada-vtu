@@ -224,7 +224,7 @@ export default function DetailedAnalyticsPage() {
                   <SelectTrigger className="bg-gray-900 border-gray-700">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-50">
                     <SelectItem value="day">Today</SelectItem>
                     <SelectItem value="week">Last 7 Days</SelectItem>
                     <SelectItem value="month">This Month</SelectItem>
