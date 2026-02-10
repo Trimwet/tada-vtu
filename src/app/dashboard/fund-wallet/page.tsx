@@ -29,6 +29,11 @@ const CheckDepositsButton = dynamic(
   { ssr: false }
 );
 
+const DepositCalculator = dynamic(
+  () => import("@/components/deposit-calculator").then(mod => mod.DepositCalculator),
+  { ssr: false }
+);
+
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
 interface FeeInfo {
@@ -345,6 +350,9 @@ export default function FundWalletPage() {
             </div>
           </button>
         </div>
+
+        {/* Deposit Calculator - shown for bank transfers */}
+        {paymentMethod === "bank" && <DepositCalculator />}
 
         {/* Bank Transfer Section */}
         {paymentMethod === "bank" && (
