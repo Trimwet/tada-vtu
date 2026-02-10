@@ -26,10 +26,10 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
   const finalBalance = currentBalance + (fees?.walletCredit || 0);
 
   return (
-    <Card className="border-blue-500/30 bg-blue-500/5">
+    <Card className="border-border bg-card">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
-          <IonIcon name="calculator" size="20px" color="#3b82f6" />
+          <IonIcon name="calculator" size="20px" color="#22c55e" />
           Deposit Calculator
         </CardTitle>
       </CardHeader>
@@ -50,7 +50,7 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
             onClick={() => setCalculationMode("add")}
             className={`p-2 rounded-lg text-sm font-medium transition-all ${
               calculationMode === "add"
-                ? "bg-blue-500 text-white"
+                ? "bg-green-500 text-white"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -60,7 +60,7 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
             onClick={() => setCalculationMode("target")}
             className={`p-2 rounded-lg text-sm font-medium transition-all ${
               calculationMode === "target"
-                ? "bg-blue-500 text-white"
+                ? "bg-green-500 text-white"
                 : "bg-muted text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -94,7 +94,7 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
               {calculationMode === "target" && (
                 <div className="flex items-center justify-between text-sm pb-2 border-b border-border">
                   <span className="text-muted-foreground">Amount to Deposit</span>
-                  <span className="font-semibold text-blue-500">₦{depositAmount.toLocaleString()}</span>
+                  <span className="font-semibold text-green-500">₦{depositAmount.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
@@ -110,7 +110,7 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
               <div className="pt-2 border-t border-border">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-foreground">Total to Transfer</span>
-                  <span className="font-bold text-xl text-blue-600">₦{Math.ceil(fees.totalToTransfer).toLocaleString()}</span>
+                  <span className="font-bold text-xl text-green-500">₦{Math.ceil(fees.totalToTransfer).toLocaleString()}</span>
                 </div>
                 {currentBalance > 0 && (
                   <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -122,11 +122,11 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
             </div>
 
             {/* Info Box */}
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <IonIcon name="information-circle" size="18px" color="#3b82f6" className="mt-0.5 shrink-0" />
+                <IonIcon name="information-circle" size="18px" color="#22c55e" className="mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-blue-500 mb-1">Transfer exactly ₦{Math.ceil(fees.totalToTransfer).toLocaleString()}</p>
+                  <p className="font-medium text-green-500 mb-1">Transfer exactly ₦{Math.ceil(fees.totalToTransfer).toLocaleString()}</p>
                   <p>
                     Your wallet will be credited with ₦{fees.walletCredit.toLocaleString()}.
                     {currentBalance > 0 && ` Your new balance will be ₦${finalBalance.toLocaleString()}.`}
@@ -143,7 +143,7 @@ export function DepositCalculator({ currentBalance = 0 }: DepositCalculatorProps
               onClick={() => {
                 navigator.clipboard.writeText(Math.ceil(fees.totalToTransfer).toString());
               }}
-              className="w-full p-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-blue-600 font-medium"
+              className="w-full p-3 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-lg transition-colors flex items-center justify-center gap-2 text-green-600 font-medium"
             >
               <IonIcon name="copy" size="18px" />
               Copy Amount (₦{Math.ceil(fees.totalToTransfer).toLocaleString()})
