@@ -352,7 +352,7 @@ export default function FundWalletPage() {
         </div>
 
         {/* Deposit Calculator - shown for bank transfers */}
-        {paymentMethod === "bank" && <DepositCalculator />}
+        {paymentMethod === "bank" && <DepositCalculator currentBalance={user?.balance || 0} />}
 
         {/* Bank Transfer Section */}
         {paymentMethod === "bank" && (
