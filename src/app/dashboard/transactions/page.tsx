@@ -57,22 +57,26 @@ export default function TransactionsPage() {
   };
 
   const getTransactionIcon = (type: string, amount: number) => {
-    if (amount > 0) return "arrow-down";
+    // Deposits/Credits
+    if (amount > 0) {
+      return type === 'deposit' ? 'cash' : 'arrow-down-circle';
+    }
     
+    // Debits
     switch (type) {
       case 'airtime': return "call";
       case 'data': return "wifi";
       case 'cable': return "tv";
       case 'electricity': return "flash";
       case 'betting': return "football";
-      case 'withdrawal': return "arrow-up";
-      default: return "arrow-up";
+      case 'withdrawal': return "arrow-up-circle";
+      default: return "card";
     }
   };
 
   const getTransactionColor = (type: string, amount: number) => {
-    if (amount > 0) return "text-green-500";
-    return "text-foreground";
+    if (amount > 0) return "#22c55e"; // green for credits
+    return "#6b7280"; // gray for debits
   };
 
   const handleTransactionClick = (transaction: any) => {
@@ -176,7 +180,7 @@ export default function TransactionsPage() {
             >
               <span className="font-medium">{filterOption.label}</span>
               {filterOption.count > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                <span className={`text-xs px-2 py-0.5 rounded-full min-w-[24px] text-center ${
                   filter === filterOption.key
                     ? 'bg-white/20 text-white'
                     : 'bg-muted-foreground/20 text-muted-foreground'
@@ -234,7 +238,7 @@ export default function TransactionsPage() {
                               ? "bg-red-500/10 group-hover:bg-red-500/20"
                               : transaction.amount > 0
                               ? "bg-green-500/10 group-hover:bg-green-500/20"
-                              : "bg-blue-500/10 group-hover:bg-blue-500/20"
+                              : "bg-gray-500/10 group-hover:bg-gray-500/20"
                           }`}
                         >
                           {transaction.status === "failed" ? (
@@ -247,13 +251,7 @@ export default function TransactionsPage() {
                             <IonIcon
                               name={getTransactionIcon(transaction.type, transaction.amount)}
                               size="20px"
-                              color={
-                                (transaction.status as string) === "failed"
-                                  ? "#ef4444"
-                                  : transaction.amount > 0 
-                                  ? "#22c55e" 
-                                  : "#3b82f6"
-                              }
+                              color={getTransactionColor(transaction.type, transaction.amount)}
                             />
                           )}
                         </div>

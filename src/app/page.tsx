@@ -5,20 +5,9 @@ import Link from "next/link";
 import { LogoInline } from "@/components/logo";
 import { LiveTransactionTicker } from "@/components/stats-counter";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { useAllDataPlans } from "@/hooks/useDataPlans";
 import { AnimatedBackgroundWrapper } from "@/components/animated-background-wrapper";
 
 function PricingTeaser() {
-  const { plans, loading } = useAllDataPlans();
-
-  // Get one popular plan per network from live data
-  const teaserPlans = [
-    { net: "MTN", plan: plans.MTN?.[0] || { name: "1GB (SME)", price: 280 } },
-    { net: "Airtel", plan: plans.AIRTEL?.[0] || { name: "2GB (Direct)", price: 550 } },
-    { net: "Glo", plan: plans.GLO?.[0] || { name: "5GB (Gift)", price: 1200 } },
-    { net: "9mobile", plan: plans['9MOBILE']?.[0] || { name: "3GB (SME)", price: 450 } },
-  ];
-
   return (
     <section id="pricing" className="py-24 px-6 relative">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-green-500/5 blur-[120px] pointer-events-none" />
@@ -29,9 +18,9 @@ function PricingTeaser() {
           <p className="text-gray-400 max-w-xl mx-auto">Get more for less. Our rates are calculated in real-time to ensure you always get the best deal in Nigeria.</p>
         </div>
 
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 items-center bg-white/[0.02] border border-white/10 rounded-2xl p-8 md:p-16 backdrop-blur-sm">
-          <div>
-            <div className="flex items-center gap-2 mb-6">
+        <div className="max-w-3xl mx-auto bg-white/[0.02] border border-white/10 rounded-2xl p-8 md:p-16 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-6">
               <div className="flex -space-x-2">
                 <div className="w-8 h-8 rounded-full bg-yellow-500 border-2 border-black flex items-center justify-center text-[10px] font-bold text-black">MTN</div>
                 <div className="w-8 h-8 rounded-full bg-red-500 border-2 border-black flex items-center justify-center text-[10px] font-bold text-white">Air</div>
@@ -43,7 +32,7 @@ function PricingTeaser() {
 
             <h3 className="text-3xl font-bold text-white mb-6">Explore Our Full <br /><span className="text-green-500">Price Catalogue</span></h3>
 
-            <ul className="space-y-4 mb-10">
+            <ul className="space-y-4 mb-10 max-w-md mx-auto">
               {[
                 "Real-time data plan updates",
                 "4 Loyalty tiers with custom discounts",
@@ -65,42 +54,6 @@ function PricingTeaser() {
                 <ArrowRight weight="bold" className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute -inset-4 bg-green-500/20 rounded-2xl blur-2xl opacity-50" />
-            <div className="relative bg-black border border-white/10 rounded-2xl p-6 shadow-2xl">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">
-                  {loading ? 'Refreshing...' : 'LIVE BUNDLES'}
-                </span>
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-              </div>
-
-              <div className="space-y-4">
-                {teaserPlans.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${p.net === 'MTN' ? 'bg-yellow-500 text-black' :
-                        p.net === 'Airtel' ? 'bg-red-500 text-white' :
-                          'bg-green-500 text-black'
-                        }`}>
-                        {p.net[0]}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">{p.plan?.name}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">{p.net}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm font-bold text-green-400">₦{p.plan?.price.toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-white/10 text-center">
-                <p className="text-[10px] text-gray-600 font-mono italic">Rates pulled from direct provider feeds</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

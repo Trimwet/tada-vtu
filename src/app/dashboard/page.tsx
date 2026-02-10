@@ -421,7 +421,7 @@ export default function DashboardPage() {
                                 ? "bg-red-500/10 group-hover:bg-red-500/20"
                                 : transaction.amount > 0
                                 ? "bg-green-500/10 group-hover:bg-green-500/20"
-                                : "bg-blue-500/10 group-hover:bg-blue-500/20"
+                                : "bg-gray-500/10 group-hover:bg-gray-500/20"
                             }`}
                           >
                             {transaction.status === "failed" ? (
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                                 color="#ef4444"
                               />
                             ) : transaction.amount > 0 ? (
-                              // Credit/Deposit transactions (bank transfers show cash icon)
+                              // Credit/Deposit transactions
                               transaction.type === "deposit" ? (
                                 <IonIcon
                                   name="cash"
@@ -449,25 +449,25 @@ export default function DashboardPage() {
                               <IonIcon
                                 name="wifi"
                                 size="16px"
-                                color="#3b82f6"
+                                color="#6b7280"
                               />
                             ) : transaction.type === "airtime" ? (
                               <IonIcon
                                 name="call"
                                 size="16px"
-                                color="#3b82f6"
+                                color="#6b7280"
                               />
                             ) : transaction.type === "withdrawal" ? (
                               <IonIcon
                                 name="arrow-up-circle"
                                 size="16px"
-                                color="#3b82f6"
+                                color="#6b7280"
                               />
                             ) : (
                               <IonIcon
                                 name="card"
                                 size="16px"
-                                color="#3b82f6"
+                                color="#6b7280"
                               />
                             )}
                           </div>
