@@ -2,19 +2,19 @@
   "crons": [
     {
       "path": "/api/cron/verify-payments",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/process-transfers",
-      "schedule": "*/10 * * * *"
-    },
-    {
-      "path": "/api/cron/process-vault-expiry",
       "schedule": "0 */6 * * *"
     },
     {
+      "path": "/api/cron/process-transfers",
+      "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/process-vault-expiry",
+      "schedule": "0 0 * * *"
+    },
+    {
       "path": "/api/cron/process-pending-transactions",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 */6 * * *"
     }
   ]
 }
