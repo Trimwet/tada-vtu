@@ -255,10 +255,10 @@ export default function AdminDashboard() {
           ))}
           <Button
             variant="ghost"
-            onClick={() => router.push('/admin/analytics')}
+            onClick={() => router.push('/admin/analytics-detailed')}
             className="text-gray-400 hover:text-white hover:bg-gray-800 ml-auto"
           >
-            📈 Analytics
+            📈 Detailed Analytics
           </Button>
         </div>
 
