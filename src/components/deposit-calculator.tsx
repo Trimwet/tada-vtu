@@ -5,33 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
+import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
 
 export function DepositCalculator() {
   const [desiredAmount, setDesiredAmount] = useState("");
 
-  const calculateFees = (amount: number) => {
-    if (!amount || amount < 100) {
-      return { platformFee: 0, flutterwaveFee: 0, totalToTransfer: 0, walletCredit: 0 };
-    }
-
-    // Platform fee: ₦25.50 for amounts under ₦5,000
-    const platformFee = amount < 5000 ? 25.50 : Math.ceil(amount * 0.025 * 1.015); // 2.5% + VAT
-    
-    // Flutterwave fee: approximately ₦25 (varies by bank)
-    const flutterwaveFee = 25;
-    
-    const totalToTransfer = amount + platformFee + flutterwaveFee;
-    
-    return {
-      platformFee,
-      flutterwaveFee,
-      totalToTransfer,
-      walletCredit: amount
-    };
-  };
-
   const amount = parseInt(desiredAmount) || 0;
-  const fees = calculateFees(amount);
+  const fees = amount >= 100 ? calculateBankTransferTotal(amount) : null;
 
   return (
     <Card className="border-blue-500/30 bg-blue-500/5">
@@ -57,7 +37,7 @@ export function DepositCalculator() {
           </div>
         </div>
 
-        {amount >= 100 && (
+        {fees && (
           <div className="space-y-3 pt-2">
             {/* Fee Breakdown */}
             <div className="bg-background rounded-xl p-4 border border-border space-y-2">
@@ -66,12 +46,10 @@ export function DepositCalculator() {
                 <span className="font-semibold text-green-500">₦{fees.walletCredit.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Platform Fee</span>
+                <span className="text-muted-foreground">
+                  Platform Fee {fees.feeType === 'percentage' ? '(2.5% + VAT)' : '(Flat)'}
+                </span>
                 <span className="font-medium text-foreground">₦{fees.platformFee.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Flutterwave Fee (est.)</span>
-                <span className="font-medium text-foreground">~₦{fees.flutterwaveFee}</span>
               </div>
               <div className="pt-2 border-t border-border">
                 <div className="flex items-center justify-between">
@@ -88,8 +66,10 @@ export function DepositCalculator() {
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium text-blue-500 mb-1">Transfer exactly ₦{Math.ceil(fees.totalToTransfer).toLocaleString()}</p>
                   <p>
-                    Flutterwave's fee varies by bank (₦20-30). If you transfer ₦{Math.ceil(fees.totalToTransfer).toLocaleString()}, 
-                    you'll get approximately ₦{fees.walletCredit.toLocaleString()} in your wallet.
+                    Your wallet will be credited with ₦{fees.walletCredit.toLocaleString()}. 
+                    {fees.feeType === 'flat' 
+                      ? ' Flat fee applies for amounts under ₦5,000.' 
+                      : ' Percentage fee applies for amounts ₦5,000 and above.'}
                   </p>
                 </div>
               </div>
