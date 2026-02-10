@@ -36,11 +36,13 @@ npm run dev
 ## 🔑 Core Features
 
 - ✅ Airtime & Data Top-up (MTN, Airtel, Glo, 9mobile)
+- ✅ Data Vault with QR Codes (Park & Deliver)
 - ✅ Bill Payments (Electricity, Cable TV)
-- ✅ Gift Rooms (Send airtime to multiple people)
 - ✅ Wallet System with Bank Transfer
 - ✅ Referral Program (₦100 per referral)
+- ✅ Loyalty System with Tiers & Rewards
 - ✅ Real-time Notifications
+- ✅ Admin Analytics Dashboard
 
 ## 🏃‍♂️ Development Commands
 
