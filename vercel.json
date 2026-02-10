@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/verify-payments",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/process-transfers",
-      "schedule": "0 */12 * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/cron/process-vault-expiry",
@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/process-pending-transactions",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 16 * * *"
     }
   ]
 }
