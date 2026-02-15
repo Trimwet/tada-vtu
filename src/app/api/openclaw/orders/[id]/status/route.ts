@@ -81,12 +81,15 @@ async function handlerWithParams(
 }
 
 // Wrap with auth middleware
-async function handler(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const params = await context.params;
+  
   const authResult = await withOpenClawAuth(async (req) => {
-    return handlerWithParams(req, context);
+    return handlerWithParams(req, { params });
   })(request);
   
   return authResult;
 }
-
-export const GET = handler;
