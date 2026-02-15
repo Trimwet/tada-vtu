@@ -351,8 +351,8 @@ export default function FundWalletPage() {
           </button>
         </div>
 
-        {/* Deposit Calculator - shown for bank transfers */}
-        {paymentMethod === "bank" && <DepositCalculator currentBalance={user?.balance || 0} />}
+        {/* Deposit Calculator - shown only for permanent accounts (BVN connected) */}
+        {paymentMethod === "bank" && virtualAccount && <DepositCalculator currentBalance={user?.balance || 0} />}
 
         {/* Bank Transfer Section */}
         {paymentMethod === "bank" && (
