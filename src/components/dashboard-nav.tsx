@@ -184,7 +184,7 @@ export function DashboardBottomNav() {
     { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
     { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
     { name: "Vault", href: "/dashboard/data-vault", icon: "wallet" },
-    { name: "History", href: "/dashboard/transactions", icon: "time" },
+    { name: "Profile", href: "/dashboard/profile", icon: "person" },
   ];
 
   return (
