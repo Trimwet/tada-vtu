@@ -1,0 +1,24 @@
+{
+  "name": "tadavtu-openclaw-agent",
+  "version": "1.0.0",
+  "description": "OpenClaw agent for TADA VTU platform",
+  "main": "agent.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "openclaw",
+    "vtu",
+    "airtime",
+    "data",
+    "nigeria",
+    "tada"
+  ],
+  "author": "tadavtu.com",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
