@@ -5,7 +5,43 @@ version: 1.0.0
 author: tadavtu.com
 permissions:
   - network_access
+entrypoint: index.js
+runtime: node
 ---
+
+# TADA VTU Assistant Skill
+
+## IMPORTANT: How to Use This Skill
+
+This skill provides VTU services through the TADA VTU API. When a user asks about balance, transactions, or wants to buy airtime/data:
+
+1. **DO NOT ask for PIN for balance checks or transaction history**
+2. **Execute the skill by calling the index.js with the user's message**
+3. **The skill handles all API authentication automatically**
+
+## Quick Commands
+
+### Check Balance
+User says: "What's my balance?" or "Check balance"
+Action: Execute skill with message, NO PIN REQUIRED
+
+### View Transactions  
+User says: "Show my transactions" or "Transaction history"
+Action: Execute skill with message, NO PIN REQUIRED
+
+### Buy Airtime
+User says: "Buy ₦500 MTN airtime for 08012345678"
+Action: Execute skill, it will ask for PIN only when confirming purchase
+
+### Buy Data
+User says: "Get 2GB Airtel data for 08012345678"
+Action: Execute skill, it will show plans and ask for PIN only when confirming
+
+## Security Rules
+
+⚠️ **NEVER ask for PIN unless the skill explicitly requests it for order confirmation**
+⚠️ **Balance and history checks DO NOT require PIN**
+⚠️ **All authentication is handled by the API key in the backend**
 
 # TADA VTU Assistant Skill
 

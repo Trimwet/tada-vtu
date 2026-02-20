@@ -17,6 +17,7 @@ async function handler(request: NextRequest) {
     // Get WhatsApp number from query params
     const { searchParams } = new URL(request.url);
     const whatsappNumber = searchParams.get('whatsapp');
+    const message = searchParams.get('message') || ''; // Optional: user's message for email detection
 
     if (!whatsappNumber) {
       return NextResponse.json(
@@ -57,83 +58,134 @@ async function handler(request: NextRequest) {
       );
     }
 
-    // Query database for user with this phone number
     const supabase = createAdminClient();
 
     type ProfileData = {
       id: string;
       full_name: string | null;
       phone_number: string | null;
+      whatsapp_number: string | null;
       balance: number;
       is_active: boolean;
     };
 
-    const { data, error: profileError } = await supabase
+    // STRATEGY 1: Try direct phone match (phone_number OR whatsapp_number)
+    const { data: directMatch, error: directError } = await supabase
       .from('profiles')
-      .select('id, full_name, phone_number, balance, is_active')
-      .eq('phone_number', normalizedPhone)
-      .single<ProfileData>();
+      .select('id, full_name, phone_number, whatsapp_number, balance, is_active')
+      .or(`phone_number.eq.${normalizedPhone},whatsapp_number.eq.${normalizedPhone}`)
+      .maybeSingle<ProfileData>();
 
-    if (profileError) {
-      // Check if it's a "not found" error
-      if (profileError.code === 'PGRST116') {
-        const registrationUrl = getRegistrationUrl(whatsappNumber);
-
+    if (directMatch) {
+      // Check if account is active
+      if (!directMatch.is_active) {
         return NextResponse.json(
-          openclawSuccess({
-            isRegistered: false,
-            registrationUrl,
-            message:
-              'Welcome! You need a TADA account to buy data. Register at tadavtu.com to get started.',
-          }),
-          { status: 200 }
+          openclawError(
+            'Your account has been deactivated. Please contact support@tadavtu.com',
+            'ACCOUNT_INACTIVE'
+          ),
+          { status: 403 }
         );
       }
 
-      console.error('[OPENCLAW IDENTIFY] Database error:', profileError);
-      return NextResponse.json(
-        openclawError(
-          'Failed to query user information',
-          'DATABASE_ERROR'
-        ),
-        { status: 500 }
-      );
-    }
-
-    // User not found (shouldn't happen with single() but just in case)
-    if (!data) {
-      const registrationUrl = getRegistrationUrl(whatsappNumber);
-
+      // User found - return user info
       return NextResponse.json(
         openclawSuccess({
-          isRegistered: false,
-          registrationUrl,
-          message:
-            'Welcome! You need a TADA account to buy data. Register at tadavtu.com to get started.',
+          isRegistered: true,
+          userId: directMatch.id,
+          fullName: directMatch.full_name || 'User',
+          balance: directMatch.balance || 0,
+          currency: 'NGN',
+          method: 'phone_match',
         }),
         { status: 200 }
       );
     }
 
-    // Check if account is active
-    if (!data.is_active) {
+    // STRATEGY 2: Check if there's a pending link for this WhatsApp number
+    const { data: pendingLink } = await supabase
+      .from('whatsapp_pending_links')
+      .select('user_id, verification_code, expires_at')
+      .eq('whatsapp_number', normalizedPhone)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (pendingLink) {
       return NextResponse.json(
-        openclawError(
-          'Your account has been deactivated. Please contact support@tadavtu.com',
-          'ACCOUNT_INACTIVE'
-        ),
-        { status: 403 }
+        openclawSuccess({
+          isRegistered: false,
+          needsVerification: true,
+          message: `To link your WhatsApp, visit: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/link-whatsapp?code=${pendingLink.verification_code}`,
+          verificationCode: pendingLink.verification_code,
+        }),
+        { status: 200 }
       );
     }
 
-    // User found - return user info
+    // STRATEGY 3: Email lookup (if message contains an email)
+    if (message && message.includes('@') && message.includes('.')) {
+      const emailMatch = message.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) {
+        const email = emailMatch[0].toLowerCase();
+        const { data: emailUser } = await supabase
+          .from('profiles')
+          .select('id, full_name, balance, is_active')
+          .eq('email', email)
+          .maybeSingle<ProfileData>();
+
+        if (emailUser && emailUser.is_active) {
+          // Link this WhatsApp number to the account
+          await supabase
+            .from('profiles')
+            .update({
+              whatsapp_number: normalizedPhone,
+              whatsapp_linked_at: new Date().toISOString(),
+            })
+            .eq('id', emailUser.id);
+
+          return NextResponse.json(
+            openclawSuccess({
+              isRegistered: true,
+              userId: emailUser.id,
+              fullName: emailUser.full_name || 'User',
+              balance: emailUser.balance || 0,
+              currency: 'NGN',
+              method: 'email_link',
+              message: '✅ WhatsApp linked successfully! You can now use all features.',
+            }),
+            { status: 200 }
+          );
+        }
+      }
+    }
+
+    // STRATEGY 4: Create pending link for first-time users
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await supabase
+      .from('whatsapp_pending_links')
+      .insert({
+        whatsapp_number: normalizedPhone,
+        verification_code: verificationCode,
+        expires_at: expiresAt.toISOString(),
+      });
+
+    const registrationUrl = getRegistrationUrl(whatsappNumber);
+    const linkUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/link-whatsapp?code=${verificationCode}`;
+
     return NextResponse.json(
       openclawSuccess({
-        isRegistered: true,
-        userId: data.id,
-        fullName: data.full_name || 'User',
-        balance: data.balance || 0,
-        currency: 'NGN',
+        isRegistered: false,
+        needsLinking: true,
+        registrationUrl,
+        linkUrl,
+        verificationCode,
+        message:
+          `👋 Welcome to TADA VTU!\n\n` +
+          `If you have an account, link it here:\n${linkUrl}\n\n` +
+          `Or register a new account:\n${registrationUrl}\n\n` +
+          `You can also reply with your registered email to link automatically.`,
       }),
       { status: 200 }
     );

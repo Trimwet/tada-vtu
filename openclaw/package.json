@@ -2,8 +2,8 @@
   "name": "tadavtu-openclaw-agent",
   "version": "1.0.0",
   "description": "OpenClaw agent for TADA VTU platform",
-  "main": "agent.ts",
-  "type": "module",
+  "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
