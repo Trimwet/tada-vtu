@@ -141,13 +141,14 @@ async function handler(request: NextRequest) {
 
         if (emailUser && emailUser.is_active) {
           // Link this WhatsApp number to the account
-          // @ts-ignore - whatsapp_number field added in migration 028
-          const updateQuery = supabase.from('profiles').update({
-            whatsapp_number: normalizedPhone,
-            whatsapp_linked_at: new Date().toISOString(),
-          });
-          // @ts-ignore
-          await updateQuery.eq('id', emailUser.id);
+          await supabase
+            .from('profiles')
+            // @ts-expect-error - whatsapp_number field added in migration 028
+            .update({
+              whatsapp_number: normalizedPhone,
+              whatsapp_linked_at: new Date().toISOString(),
+            })
+            .eq('id', emailUser.id);
 
           return NextResponse.json(
             openclawSuccess({
