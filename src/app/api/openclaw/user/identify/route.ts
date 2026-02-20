@@ -103,23 +103,29 @@ async function handler(request: NextRequest) {
     }
 
     // STRATEGY 2: Check if there's a pending link for this WhatsApp number
-    const { data: pendingLink } = await supabase
-      .from('whatsapp_pending_links')
-      .select('user_id, verification_code, expires_at')
-      .eq('whatsapp_number', normalizedPhone)
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
+    // Note: This requires migration 028 to be applied first
+    try {
+      const { data: pendingLink } = await supabase
+        .from('whatsapp_pending_links')
+        .select('user_id, verification_code, expires_at')
+        .eq('whatsapp_number', normalizedPhone)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
 
-    if (pendingLink) {
-      return NextResponse.json(
-        openclawSuccess({
-          isRegistered: false,
-          needsVerification: true,
-          message: `To link your WhatsApp, visit: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/link-whatsapp?code=${pendingLink.verification_code}`,
-          verificationCode: pendingLink.verification_code,
-        }),
-        { status: 200 }
-      );
+      if (pendingLink) {
+        return NextResponse.json(
+          openclawSuccess({
+            isRegistered: false,
+            needsVerification: true,
+            message: `To link your WhatsApp, visit: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/link-whatsapp?code=${(pendingLink as any).verification_code}`,
+            verificationCode: (pendingLink as any).verification_code,
+          }),
+          { status: 200 }
+        );
+      }
+    } catch (tableError) {
+      // Table doesn't exist yet - skip this strategy
+      console.log('[OPENCLAW IDENTIFY] whatsapp_pending_links table not found - skipping strategy 2');
     }
 
     // STRATEGY 3: Email lookup (if message contains an email)
@@ -135,13 +141,13 @@ async function handler(request: NextRequest) {
 
         if (emailUser && emailUser.is_active) {
           // Link this WhatsApp number to the account
-          await supabase
-            .from('profiles')
-            .update({
-              whatsapp_number: normalizedPhone,
-              whatsapp_linked_at: new Date().toISOString(),
-            })
-            .eq('id', emailUser.id);
+          // @ts-ignore - whatsapp_number field added in migration 028
+          const updateQuery = supabase.from('profiles').update({
+            whatsapp_number: normalizedPhone,
+            whatsapp_linked_at: new Date().toISOString(),
+          });
+          // @ts-ignore
+          await updateQuery.eq('id', emailUser.id);
 
           return NextResponse.json(
             openclawSuccess({
@@ -163,13 +169,18 @@ async function handler(request: NextRequest) {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    await supabase
-      .from('whatsapp_pending_links')
-      .insert({
-        whatsapp_number: normalizedPhone,
-        verification_code: verificationCode,
-        expires_at: expiresAt.toISOString(),
-      });
+    try {
+      await supabase
+        .from('whatsapp_pending_links')
+        .insert({
+          whatsapp_number: normalizedPhone,
+          verification_code: verificationCode,
+          expires_at: expiresAt.toISOString(),
+        } as any);
+    } catch (insertError) {
+      // Table doesn't exist yet - skip pending link creation
+      console.log('[OPENCLAW IDENTIFY] whatsapp_pending_links table not found - skipping pending link creation');
+    }
 
     const registrationUrl = getRegistrationUrl(whatsappNumber);
     const linkUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/link-whatsapp?code=${verificationCode}`;
