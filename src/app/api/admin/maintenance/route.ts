@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
+import { createClient } from '@supabase/supabase-js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const MAINTENANCE_FILE = join(process.cwd(), '.maintenance');
+
+// Verify admin token (same as dashboard)
+function verifyToken(token: string): { valid: boolean; adminId?: string } {
+  try {
+    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (payload.exp < Date.now()) {
+      return { valid: false };
+    }
+    return { valid: true, adminId: payload.id };
+  } catch {
+    return { valid: false };
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,10 +26,27 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const { valid, adminId } = verifyToken(token);
     
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!valid || !adminId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Verify admin exists
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', adminId)
+      .eq('is_active', true)
+      .single();
+
+    if (adminError || !admin) {
+      return NextResponse.json({ error: 'Admin not found' }, { status: 401 });
     }
 
     // Check if maintenance file exists
@@ -49,10 +78,27 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const { valid, adminId } = verifyToken(token);
     
-    if (decoded.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!valid || !adminId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Verify admin exists
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', adminId)
+      .eq('is_active', true)
+      .single();
+
+    if (adminError || !admin) {
+      return NextResponse.json({ error: 'Admin not found' }, { status: 401 });
     }
 
     const { maintenanceMode } = await request.json();
