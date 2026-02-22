@@ -160,7 +160,9 @@ export default function FundWalletPage() {
               window.location.href = "/dashboard/fund-wallet";
             }, 2000);
           } else {
-            toast.error("Payment verification failed", "Contact support if you were debited");
+            toast.error("Payment verification failed", {
+              description: "Contact support if you were debited"
+            });
             window.history.replaceState({}, "", "/dashboard/fund-wallet");
           }
         } catch {
