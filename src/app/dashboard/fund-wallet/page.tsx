@@ -153,7 +153,9 @@ export default function FundWalletPage() {
           const result = await response.json();
 
           if (result.status === "success") {
-            toast.payment(`Payment successful!`, `₦${result.data?.amount?.toLocaleString() || ''} added to your wallet`);
+            toast.success("Payment successful!", {
+              description: `₦${result.data?.amount?.toLocaleString() || ''} added to your wallet`
+            });
             setTimeout(() => {
               window.location.href = "/dashboard/fund-wallet";
             }, 2000);
@@ -162,12 +164,16 @@ export default function FundWalletPage() {
             window.history.replaceState({}, "", "/dashboard/fund-wallet");
           }
         } catch {
-          toast.info("Payment processing", "Your wallet will be credited shortly");
+          toast.success("Payment processing", {
+            description: "Your wallet will be credited shortly"
+          });
           window.history.replaceState({}, "", "/dashboard/fund-wallet");
         }
         localStorage.removeItem("pending_payment");
       } else if (status === "cancelled") {
-        toast.warning("Payment cancelled", "You can try again anytime");
+        toast.error("Payment cancelled", {
+          description: "You can try again anytime"
+        });
         localStorage.removeItem("pending_payment");
         window.history.replaceState({}, "", "/dashboard/fund-wallet");
       }
