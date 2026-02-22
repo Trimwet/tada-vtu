@@ -310,7 +310,9 @@ export default function FundWalletPage() {
     const success = await copyAccountNumber();
     if (success) {
       setCopied(true);
-      toast.success("Copied!", { description: "Account number copied to clipboard", confetti: false });
+      toast.success("Copied!", { 
+        description: "Account number copied to clipboard" 
+      });
       setTimeout(() => setCopied(false), 2000);
     }
   };
