@@ -300,7 +300,9 @@ export default function FundWalletPage() {
       } else if (vaError.toLowerCase().includes('bvn') && vaError.toLowerCase().includes('required')) {
         friendlyMessage = "BVN is required to create a virtual account.";
       }
-      toast.error("Account creation failed", friendlyMessage);
+      toast.error("Account creation failed", {
+        description: friendlyMessage
+      });
     }
   }, [vaError]);
 
