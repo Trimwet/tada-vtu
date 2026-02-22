@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 
-const MAINTENANCE_FILE = join(process.cwd(), '.maintenance');
-
+// This should match the cache from the admin endpoint
+// In a real production app, you'd use Redis or a database
+// For now, we'll check environment variable as fallback
 export async function GET(request: NextRequest) {
   try {
-    // Check if maintenance file exists
-    let isMaintenanceMode = false;
-    try {
-      const content = await readFile(MAINTENANCE_FILE, 'utf-8');
-      isMaintenanceMode = content.trim() === 'true';
-    } catch {
-      // File doesn't exist, maintenance mode is off
-      isMaintenanceMode = false;
-    }
+    // Check environment variable (can be set in Vercel dashboard)
+    const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
 
     return NextResponse.json({ 
       maintenanceMode: isMaintenanceMode 
