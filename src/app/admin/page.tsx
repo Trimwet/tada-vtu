@@ -90,6 +90,8 @@ export default function AdminDashboard() {
   const [userModal, setUserModal] = useState<UserModalState>({
     isOpen: false, user: null, action: null, amount: '', reason: '', loading: false,
   });
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
 
   const openUserModal = (user: User, action: 'view' | 'fund' | 'debit') => {
     setUserModal({ isOpen: true, user, action, amount: '', reason: '', loading: false });
@@ -129,6 +131,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleMaintenanceMode = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+    
+    setMaintenanceLoading(true);
+    try {
+      const response = await fetch('/api/admin/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ maintenanceMode: !maintenanceMode }),
+      });
+      
+      const result = await response.json();
+      if (response.ok && result.success) {
+        setMaintenanceMode(result.maintenanceMode);
+        toast.success(result.message);
+      } else {
+        toast.error(result.error || 'Failed to toggle maintenance mode');
+      }
+    } catch (error) {
+      console.error('Error toggling maintenance mode:', error);
+      toast.error('Network error');
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -155,6 +184,17 @@ export default function AdminDashboard() {
       setStats(data.stats || getDefaultStats());
       setUsers(data.users || []);
       setTransactions(data.transactions || []);
+
+      // Fetch maintenance status
+      try {
+        const maintenanceRes = await fetch('/api/admin/maintenance', { headers: { Authorization: `Bearer ${token}` } });
+        const maintenanceData = await maintenanceRes.json();
+        if (maintenanceData.success) {
+          setMaintenanceMode(maintenanceData.maintenanceMode);
+        }
+      } catch (e) {
+        console.error('Failed to fetch maintenance status:', e);
+      }
 
       try {
         const balanceRes = await fetch('/api/inlomax/balance');
@@ -261,6 +301,46 @@ export default function AdminDashboard() {
             📈 Detailed Analytics
           </Button>
         </div>
+
+        {/* Maintenance Mode Control */}
+        <Card className="mb-6 bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${maintenanceMode ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                <div>
+                  <h3 className="font-medium text-white">
+                    {maintenanceMode ? '🔧 Maintenance Mode Active' : '✅ VTU Services Online'}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {maintenanceMode 
+                      ? 'Users will see a yellow maintenance banner and cannot fund wallets or make VTU purchases'
+                      : 'All VTU services are available to users'
+                    }
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={toggleMaintenanceMode}
+                disabled={maintenanceLoading}
+                className={`${
+                  maintenanceMode 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-yellow-600 hover:bg-yellow-700'
+                } min-w-[140px]`}
+              >
+                {maintenanceLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Updating...</span>
+                  </div>
+                ) : (
+                  maintenanceMode ? 'Enable Services' : 'Enable Maintenance'
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && stats && (
