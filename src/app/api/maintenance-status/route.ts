@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     try {
       const content = await readFile(MAINTENANCE_FILE, 'utf-8');
       isMaintenanceMode = content.trim() === 'true';
-    } catch (error) {
+    } catch {
       // File doesn't exist, maintenance mode is off
       isMaintenanceMode = false;
     }
