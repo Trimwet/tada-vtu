@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// In-memory cache for maintenance mode (will reset on deployment)
-let maintenanceCache: { enabled: boolean; timestamp: number } | null = null;
+import { getMaintenanceStatus, setMaintenanceStatus } from '@/lib/maintenance-cache';
 
 // Verify admin token (same as dashboard)
 function verifyToken(token: string): { valid: boolean; adminId?: string } {
@@ -31,8 +28,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Check maintenance mode from cache or environment variable
-    const isMaintenanceMode = maintenanceCache?.enabled || process.env.MAINTENANCE_MODE === 'true';
+    // Check maintenance mode from shared cache or environment variable
+    const isMaintenanceMode = getMaintenanceStatus();
 
     return NextResponse.json({ 
       success: true, 
@@ -65,11 +62,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid maintenance mode value' }, { status: 400 });
     }
 
-    // Store in memory cache (temporary solution for serverless)
-    maintenanceCache = {
-      enabled: maintenanceMode,
-      timestamp: Date.now()
-    };
+    // Store in shared cache (temporary solution for serverless)
+    setMaintenanceStatus(maintenanceMode);
 
     return NextResponse.json({ 
       success: true, 
