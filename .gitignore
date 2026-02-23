@@ -43,5 +43,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# whatsapp bot cache and auth
+whatsapp-bot/node_modules/
+whatsapp-bot/.wwebjs_auth/
+whatsapp-bot/.wwebjs_cache/
+
 .vercel
 .env*.local
