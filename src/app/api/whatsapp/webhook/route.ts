@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { handleWhatsAppMessage } from '@/lib/stateful-vtu-wrapper';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,17 +13,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid webhook data' }, { status: 400 });
     }
 
-    // Execute stateful command system directly (use relative path)
-    const { handleMessage } = require('../../../../openclaw/stateful-vtu.js');
+    // Process message with stateful VTU system
+    const result = await handleWhatsAppMessage(message, phoneNumber);
     
-    // Process message with stateful system
-    const response = await handleMessage(message, phoneNumber);
-    
-    console.log(`📤 Reply: ${response.substring(0, 100)}...`);
+    console.log(`📤 Reply: ${result.reply.substring(0, 100)}...`);
 
     // Return response for WhatsApp
     return NextResponse.json({
-      reply: response
+      reply: result.reply
     });
 
   } catch (error) {
