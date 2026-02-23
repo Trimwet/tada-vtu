@@ -17,6 +17,7 @@ import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
+import { useMaintenanceRedirect } from "@/hooks/useMaintenanceMode";
 import dynamic from "next/dynamic";
 import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
 import { useDataVault } from "@/hooks/useDataVault";
@@ -43,6 +44,9 @@ const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> =
 };
 
 export default function BuyDataPage() {
+    // Redirect if maintenance mode is active
+    useMaintenanceRedirect();
+    
     const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
     const {
         userPin,

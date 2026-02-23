@@ -1,0 +1,46 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    // Extract message and phone number from WhatsApp webhook
+    const message = body.message?.text || '';
+    const phoneNumber = body.from || '';
+    
+    if (!message || !phoneNumber) {
+      return NextResponse.json({ error: 'Invalid webhook data' }, { status: 400 });
+    }
+
+    // Execute stateful command system directly (use relative path)
+    const { handleMessage } = require('../../../../openclaw/stateful-vtu.js');
+    
+    // Process message with stateful system
+    const response = await handleMessage(message, phoneNumber);
+    
+    console.log(`📤 Reply: ${response.substring(0, 100)}...`);
+
+    // Return response for WhatsApp
+    return NextResponse.json({
+      reply: response
+    });
+
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json({ 
+      reply: '❌ An error occurred. Please try again later.' 
+    }, { status: 500 });
+  }
+}
+
+// Verify webhook (if needed)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const challenge = searchParams.get('hub.challenge');
+  
+  if (challenge) {
+    return new Response(challenge);
+  }
+  
+  return NextResponse.json({ status: 'WhatsApp webhook active' });
+}

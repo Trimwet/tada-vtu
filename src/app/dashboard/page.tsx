@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +23,7 @@ import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotific
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { supabaseFetcher } from "@/lib/swr-fetcher";
+import { toast } from "sonner";
 
 // Clear old feature caches on app load
 import "@/lib/cache-invalidation";
@@ -55,9 +56,22 @@ const GreetingTypewriter = dynamic(
 
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams();
   const { user, loading: userLoading, isProfileLoaded } = useSupabaseUser();
   const { transactions: recentTransactions, loading: transactionsLoading } =
     useSupabaseTransactions(5);
+
+  // Handle maintenance redirect
+  useEffect(() => {
+    if (searchParams.get('maintenance') === 'true') {
+      toast.error("Service Temporarily Unavailable", {
+        description: "Fund wallet is currently disabled due to maintenance. Please try again later.",
+        duration: 5000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [searchParams]);
 
   const startOfMonth = useMemo(() => {
     const now = new Date();

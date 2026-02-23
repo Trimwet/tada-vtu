@@ -22,7 +22,7 @@ import {
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
-import dynamic from "next/dynamic";
+import { useMaintenanceRedirect } from "@/hooks/useMaintenanceMode";
 
 const CheckDepositsButton = dynamic(
   () => import("@/components/CheckDepositsButton").then(mod => mod.CheckDepositsButton),
@@ -62,26 +62,9 @@ export default function FundWalletPage() {
   const [tempAmount, setTempAmount] = useState("");
   const [showTempOption, setShowTempOption] = useState(false);
   const [accountOption, setAccountOption] = useState<'permanent' | 'temporary' | null>(null);
-  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
-
-  // Check maintenance mode
-  useEffect(() => {
-    const checkMaintenanceStatus = async () => {
-      try {
-        const response = await fetch('/api/maintenance-status');
-        const data = await response.json();
-        setIsMaintenanceMode(data.maintenanceMode);
-      } catch (error) {
-        console.error('Failed to check maintenance status:', error);
-        setIsMaintenanceMode(false);
-      }
-    };
-
-    checkMaintenanceStatus();
-    // Check every 30 seconds
-    const interval = setInterval(checkMaintenanceStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  
+  // Use maintenance mode hook with redirect
+  const { isMaintenanceMode } = useMaintenanceRedirect();
 
   // Virtual account hook
   const {

@@ -1,127 +1,84 @@
-# TADA VTU OpenClaw Integration
+# TADA VTU Stateful Command System
 
-This directory contains the OpenClaw agent implementation for TADA VTU.
+A reliable, USSD-style WhatsApp bot for VTU services with no AI dependencies.
 
-## Files
+## 🎯 Features
 
-- `agent.ts` - Main agent implementation with conversation logic
-- `SKILL.md` - OpenClaw skill manifest and documentation
-- `README.md` - This file
+- **Stateful Conversations** - USSD-like guided menus
+- **Session Management** - Maintains user state across messages
+- **Complete VTU Services** - Balance, data, airtime, history
+- **Real-time API Integration** - Live data plans and pricing
+- **No AI Required** - Pure command-driven interface
 
-## Installation for OpenClaw
+## 📱 Commands
 
-### Option 1: Copy to OpenClaw Skills Directory
+- `/balance` - Check wallet balance
+- `/buy` - Buy data (guided menu)
+- `/airtime` - Buy airtime (guided menu)
+- `/history` - View recent transactions
+- `/help` - Show all commands
+- `/cancel` - Cancel current operation
+
+## 🚀 Usage
+
+The system works exactly like USSD codes:
+
+```
+User: /buy
+Bot: Select network: 1. MTN 2. GLO 3. AIRTEL 4. 9MOBILE
+
+User: 1
+Bot: MTN Data Plans: 1. 500MB - ₦500 2. 1GB - ₦1000 ...
+
+User: 2
+Bot: Enter phone number:
+
+User: 09063546728
+Bot: Purchase Summary: 1GB MTN - ₦1000 to 09063546728
+     Reply "confirm" to proceed
+
+User: confirm
+Bot: Enter your 4-digit PIN:
+
+User: 1234
+Bot: ✅ Purchase successful! 1GB MTN data sent to 09063546728
+```
+
+## 🔧 Technical Details
+
+- **File**: `stateful-vtu.js`
+- **Session Storage**: In-memory (15-minute timeout)
+- **API Integration**: Direct HTTPS calls to tadavtu.com
+- **Phone Normalization**: Handles Nigerian number formats
+- **Error Handling**: Comprehensive validation and user feedback
+
+## 🎉 Benefits
+
+- **100% Reliable** - No AI failures or rate limits
+- **Fast Response** - Direct command processing
+- **User Friendly** - Guided step-by-step flow
+- **Production Ready** - Complete error handling and validation
+- **Cost Effective** - No AI API costs
+
+## 🧪 Testing
 
 ```bash
-# Copy the entire openclaw directory to OpenClaw skills folder
-cp -r openclaw ~/.openclaw/skills/tadavtu-assistant
+# Test balance check
+node stateful-vtu.js "/balance"
+
+# Test data purchase flow
+node stateful-vtu.js "/buy"
+
+# Test help
+node stateful-vtu.js "/help"
 ```
 
-### Option 2: Symlink (for development)
+## 📋 Integration
 
-```bash
-# Create a symlink for easier development
-ln -s /path/to/tada-vtu/openclaw ~/.openclaw/skills/tadavtu-assistant
+The system integrates with OpenClaw via the exec tool:
+
+```
+exec: node "C:\Users\MAFUYAI\.openclaw\skills\tadavtu-assistant\stateful-vtu.js" "[command]"
 ```
 
-## Configuration
-
-The agent requires these authentication parameters to be passed when initialized:
-
-```typescript
-import { OpenClawAgent, createAgentContext } from './agent';
-
-// Initialize agent
-const agent = new OpenClawAgent(
-  'https://tadavtu.com', // Your production URL
-  {
-    userId: 'user-id-from-identify-endpoint',
-    sessionId: 'session-id-from-identify-endpoint',
-    signature: 'signature-from-identify-endpoint',
-  }
-);
-
-// Create conversation context
-const context = createAgentContext(userId, sessionId);
-
-// Process user message
-const response = await agent.processMessage('Buy ₦500 MTN airtime', context);
-```
-
-## Usage Flow
-
-1. **User Identification**: Call `/api/openclaw/user/identify` to get auth tokens
-2. **Create Context**: Initialize agent context with user session
-3. **Process Messages**: Send user messages to agent.processMessage()
-4. **Handle Responses**: Display agent responses to user
-5. **Confirm Orders**: When requiresConfirmation=true, collect PIN and call agent.confirmOrder()
-
-## API Endpoints Used
-
-The agent calls these TADA VTU API endpoints:
-
-- `GET /api/openclaw/user/balance` - Check wallet balance
-- `GET /api/openclaw/transactions/recent` - Get transaction history
-- `GET /api/openclaw/pricing?network={network}` - Get data plans
-- `POST /api/openclaw/orders/create` - Create pending order
-- `POST /api/openclaw/orders/execute` - Execute order with PIN
-
-## Security
-
-- All API calls include authentication headers (X-OpenClaw-User-ID, X-OpenClaw-Session-ID, X-OpenClaw-Signature)
-- PIN is only sent during order execution
-- No sensitive data is stored in conversation history
-- All operations are validated by backend API
-
-## Development
-
-To modify the agent:
-
-1. Edit `agent.ts` with your changes
-2. Test locally with your backend API
-3. Deploy updated version to OpenClaw skills directory
-4. Restart OpenClaw gateway
-
-## Testing
-
-```typescript
-// Example test conversation
-const context = createAgentContext('test-user', 'test-session');
-
-// Test balance check
-let response = await agent.processMessage('What is my balance?', context);
-console.log(response.message);
-
-// Test airtime purchase
-response = await agent.processMessage('Buy ₦500 MTN airtime for 08012345678', context);
-console.log(response.message);
-
-// Confirm with PIN
-if (response.requiresConfirmation) {
-  response = await agent.confirmOrder(context, '1234');
-  console.log(response.message);
-}
-```
-
-## Troubleshooting
-
-### Agent not responding
-- Check that SKILL.md is present in the skills directory
-- Verify OpenClaw gateway is running
-- Check OpenClaw logs for errors
-
-### Authentication errors
-- Verify user identification endpoint is working
-- Check that auth tokens are being passed correctly
-- Ensure backend API is accessible
-
-### Order execution fails
-- Verify user has sufficient balance
-- Check that PIN is correct
-- Review backend API logs for errors
-
-## Support
-
-For issues or questions:
-- Email: support@tadavtu.com
-- Documentation: https://tadavtu.com/docs
+OpenClaw translates natural language to commands and executes the stateful system.

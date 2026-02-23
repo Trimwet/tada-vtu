@@ -1,0 +1,17 @@
+{
+  "name": "tadavtu-free-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "TADA VTU WhatsApp Bot - 100% Free with Existing Stateful System",
+  "main": "free-bot.js",
+  "scripts": {
+    "start": "node free-bot.js",
+    "dev": "nodemon free-bot.js"
+  },
+  "dependencies": {
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

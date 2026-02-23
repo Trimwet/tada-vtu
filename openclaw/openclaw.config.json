@@ -1,0 +1,72 @@
+{
+  "name": "TADA VTU Assistant",
+  "description": "USSD-style WhatsApp bot for TADA VTU services - buy data, airtime, check balance",
+  "version": "2.0.0",
+  "main": "stateful-vtu.js",
+  "type": "stateful",
+  "capabilities": [
+    "whatsapp",
+    "ussd-style-commands",
+    "session-management",
+    "account-linking",
+    "vtu-services"
+  ],
+  "commands": {
+    "/start": "Start session and identify user",
+    "/help": "Show available commands",
+    "/balance": "Check wallet balance",
+    "/buy": "Buy data plans (guided menu)",
+    "/airtime": "Buy airtime (guided menu)", 
+    "/history": "View recent transactions",
+    "/cancel": "Cancel current operation"
+  },
+  "features": {
+    "account_linking": {
+      "phone_detection": true,
+      "email_verification": true,
+      "pin_authentication": true
+    },
+    "vtu_services": {
+      "networks": ["MTN", "GLO", "AIRTEL", "9MOBILE"],
+      "data_plans": true,
+      "airtime": true,
+      "balance_check": true,
+      "transaction_history": true
+    },
+    "session_management": {
+      "timeout": "15 minutes",
+      "state_persistence": true,
+      "conversation_flow": true
+    }
+  },
+  "api_endpoints": {
+    "base_url": "https://www.tadavtu.com",
+    "user_check_phone": "/api/openclaw/user/check-phone",
+    "user_check_email": "/api/openclaw/user/check-email", 
+    "link_whatsapp": "/api/openclaw/user/link-whatsapp-pin",
+    "user_identify": "/api/openclaw/user/identify",
+    "user_balance": "/api/openclaw/user/balance",
+    "pricing": "/api/openclaw/pricing",
+    "transactions": "/api/openclaw/transactions/recent",
+    "orders_create": "/api/openclaw/orders/create",
+    "orders_execute": "/api/openclaw/orders/execute"
+  },
+  "environment": {
+    "OPENCLAW_API_KEY": "oc_tada_2024_secure_key_change_in_production",
+    "BASE_URL": "https://www.tadavtu.com"
+  },
+  "testing": {
+    "test_phone": "09063546728",
+    "test_commands": [
+      "/start",
+      "/help", 
+      "/balance",
+      "/buy",
+      "1",
+      "1", 
+      "09012345678",
+      "confirm",
+      "1234"
+    ]
+  }
+}

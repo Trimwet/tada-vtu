@@ -1,24 +1,29 @@
 {
-  "name": "tadavtu-openclaw-agent",
-  "version": "1.0.0",
-  "description": "OpenClaw agent for TADA VTU platform",
+  "name": "tadavtu-assistant",
+  "version": "1.1.0",
+  "description": "OpenClaw skill for TADA VTU platform - Buy airtime, data, and manage VTU services",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node index.js 'what is my balance?'"
   },
   "keywords": [
     "openclaw",
+    "skill",
     "vtu",
     "airtime",
     "data",
     "nigeria",
-    "tada"
+    "tada",
+    "whatsapp",
+    "assistant"
   ],
-  "author": "tadavtu.com",
+  "author": "TADA VTU <support@tadavtu.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.0.0"
-  }
+  "devDependencies": {}
 }

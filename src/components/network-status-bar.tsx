@@ -27,8 +27,8 @@ export function NetworkStatusBar() {
     // Check immediately
     checkMaintenanceStatus();
 
-    // Check every 30 seconds
-    const interval = setInterval(checkMaintenanceStatus, 30000);
+    // Check every 10 seconds for faster updates
+    const interval = setInterval(checkMaintenanceStatus, 10000);
 
     return () => clearInterval(interval);
   }, []);

@@ -1,0 +1,14 @@
+2026/02/21-20:22:10.779 4f3c Reusing MANIFEST C:\Users\MAFUYAI\Documents\TADA VTU\tada-vtu\whatsapp-bot\.wwebjs_auth\session-tadavtu-enhanced-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/02/21-20:22:10.780 4f3c Recovering log #24
+2026/02/21-20:22:10.818 4f3c Reusing old log C:\Users\MAFUYAI\Documents\TADA VTU\tada-vtu\whatsapp-bot\.wwebjs_auth\session-tadavtu-enhanced-bot\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000024.log 
+2026/02/21-20:24:09.654 8bc0 Level-0 table #30: started
+2026/02/21-20:24:09.711 8bc0 Level-0 table #30: 1527853 bytes OK
+2026/02/21-20:24:09.714 8bc0 Delete type=0 #24
+2026/02/21-20:24:16.833 8bc0 Compacting 1@1 + 2@2 files
+2026/02/21-20:24:16.905 8bc0 Generated table #31@1: 41080 keys, 2208649 bytes
+2026/02/21-20:24:16.944 8bc0 Generated table #32@1: 30655 keys, 859861 bytes
+2026/02/21-20:24:16.945 8bc0 Compacted 1@1 + 2@2 files => 3068510 bytes
+2026/02/21-20:24:16.945 8bc0 compacted to: files[ 0 0 2 0 0 0 0 ]
+2026/02/21-20:24:16.946 8bc0 Delete type=2 #26
+2026/02/21-20:24:16.946 8bc0 Delete type=2 #27
+2026/02/21-20:24:16.946 8bc0 Delete type=2 #30

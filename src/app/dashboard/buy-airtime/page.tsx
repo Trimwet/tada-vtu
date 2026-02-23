@@ -17,6 +17,7 @@ import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
+import { useMaintenanceRedirect } from "@/hooks/useMaintenanceMode";
 import dynamic from "next/dynamic";
 
 const CreatePinModal = dynamic(
@@ -31,6 +32,9 @@ const VerifyPinModal = dynamic(
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
+  // Redirect if maintenance mode is active
+  useMaintenanceRedirect();
+  
   const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
   const {
     userPin,
