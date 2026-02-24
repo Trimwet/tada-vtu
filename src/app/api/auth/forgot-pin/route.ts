@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendOtpEmail } from '@/lib/email';
+import { withAuthRateLimit, withEmailRateLimit } from '@/lib/auth-protection';
 
 // Create Supabase admin client
 function getSupabaseAdmin() {
@@ -71,14 +72,16 @@ async function clearOTP(supabase: any, email: string) {
     .eq('email', email.toLowerCase());
 }
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const { action, email, otp, newPin } = await request.json();
 
     const supabase = getSupabaseAdmin();
 
     if (action === 'request') {
-      // Find user by email
+      // Apply email-based rate limiting for OTP requests
+      return withEmailRateLimit(email, async () => {
+        // Find user by email
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, email, full_name')
@@ -130,6 +133,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Verification code sent to your email'
+      });
       });
     }
 
@@ -207,3 +211,8 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Apply rate limiting to the entire endpoint
+export const POST = async (request: NextRequest) => {
+  return withAuthRateLimit(request, () => handler(request));
+};

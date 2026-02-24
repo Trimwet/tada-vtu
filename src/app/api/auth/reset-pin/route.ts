@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withAuthRateLimit } from '@/lib/auth-protection';
 
 // Create Supabase admin client
 function getSupabaseAdmin() {
@@ -27,7 +28,7 @@ function verifyPin(pin: string, hash: string): boolean {
   return hashPin(pin) === hash;
 }
 
-export async function POST(request: NextRequest) {
+async function handler(request: NextRequest) {
   try {
     const body = await request.json();
     const { currentPin, newPin, userId } = body;
@@ -101,3 +102,8 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Apply rate limiting and brute force protection
+export const POST = async (request: NextRequest) => {
+  return withAuthRateLimit(request, () => handler(request));
+};

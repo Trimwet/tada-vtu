@@ -6,6 +6,7 @@ import {
   openclawError,
   normalizeNigerianPhone,
 } from '@/lib/openclaw-utils';
+import { withAuthRateLimit } from '@/lib/auth-protection';
 
 // Simple PIN hash (matches the one used in withdrawal routes)
 function hashPin(pin: string): string {
@@ -123,4 +124,9 @@ async function handler(request: NextRequest) {
   }
 }
 
-export const POST = withOpenClawAuth(handler);
+// Apply rate limiting and brute force protection to PIN verification
+export const POST = async (request: NextRequest) => {
+  return withAuthRateLimit(request, async () => {
+    return withOpenClawAuth(handler)(request);
+  });
+};
