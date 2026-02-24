@@ -17,7 +17,6 @@ import { toast } from "@/lib/toast";
 import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
-import { useMaintenanceRedirect } from "@/hooks/useMaintenanceMode";
 import dynamic from "next/dynamic";
 
 const CreatePinModal = dynamic(

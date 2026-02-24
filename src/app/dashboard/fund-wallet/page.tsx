@@ -23,7 +23,6 @@ import {
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
-import { useMaintenanceRedirect } from "@/hooks/useMaintenanceMode";
 
 const CheckDepositsButton = dynamic(
   () => import("@/components/CheckDepositsButton").then(mod => mod.CheckDepositsButton),
