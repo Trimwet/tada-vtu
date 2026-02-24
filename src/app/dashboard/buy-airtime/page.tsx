@@ -31,9 +31,6 @@ const VerifyPinModal = dynamic(
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function BuyAirtimePage() {
-  // Redirect if maintenance mode is active
-  useMaintenanceRedirect();
-  
   const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
   const {
     userPin,

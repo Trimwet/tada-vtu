@@ -62,9 +62,6 @@ export default function FundWalletPage() {
   const [tempAmount, setTempAmount] = useState("");
   const [showTempOption, setShowTempOption] = useState(false);
   const [accountOption, setAccountOption] = useState<'permanent' | 'temporary' | null>(null);
-  
-  // Use maintenance mode hook with redirect
-  const { isMaintenanceMode } = useMaintenanceRedirect();
 
   // Virtual account hook
   const {
@@ -172,15 +169,6 @@ export default function FundWalletPage() {
   };
 
   const handleFundWallet = async () => {
-    // Check maintenance mode first
-    if (isMaintenanceMode) {
-      toast.error("Service Temporarily Unavailable", {
-        description: "We're currently under maintenance. Please try again later.",
-        duration: 5000,
-      });
-      return;
-    }
-
     const fundAmount = parseInt(amount);
     if (!fundAmount || fundAmount < 100) {
       toast.error("Minimum amount is ₦100");
@@ -216,15 +204,6 @@ export default function FundWalletPage() {
   };
 
   const handleCreateVirtualAccount = async () => {
-    // Check maintenance mode first
-    if (isMaintenanceMode) {
-      toast.error("Service Temporarily Unavailable", {
-        description: "We're currently under maintenance. Please try again later.",
-        duration: 5000,
-      });
-      return;
-    }
-
     if (!bvn || bvn.length !== 11) {
       toast.error("Please enter a valid 11-digit BVN");
       return;
@@ -240,15 +219,6 @@ export default function FundWalletPage() {
   };
 
   const handleCreateTempAccount = async () => {
-    // Check maintenance mode first
-    if (isMaintenanceMode) {
-      toast.error("Service Temporarily Unavailable", {
-        description: "We're currently under maintenance. Please try again later.",
-        duration: 5000,
-      });
-      return;
-    }
-
     const amt = parseInt(tempAmount);
     if (!amt || amt < 100) {
       toast.error("Please enter a valid amount (minimum ₦100)");

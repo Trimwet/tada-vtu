@@ -43,9 +43,6 @@ const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> =
 };
 
 export default function BuyDataPage() {
-    // Redirect if maintenance mode is active
-    useMaintenanceRedirect();
-    
     const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
     const {
         userPin,
