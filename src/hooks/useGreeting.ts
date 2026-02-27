@@ -28,6 +28,16 @@ const MORNING_GREETINGS = [
   "New day, new opportunities",
   "Morning motivation loading...",
   "Sunrise, top-up time!",
+  "Oya na, make we start the day sharp sharp!",
+  "Morning don break, your data sef don finish?",
+  "Abeg, make we load data before traffic jam",
+  "Good morning o! Your wallet ready?",
+  "E don do for sleep, time to buy data",
+  "Morning blessings, data blessings too!",
+  "Chai! Another day to save money here",
+  "Your morning data plug don show",
+  "Breakfast first or data first? 😄",
+  "Morning king/queen, wetin we dey buy?",
 ];
 
 const AFTERNOON_GREETINGS = [
@@ -41,6 +51,16 @@ const AFTERNOON_GREETINGS = [
   "Afternoon deals await you",
   "Midday momentum building",
   "Afternoon energy boost needed?",
+  "Afternoon don reach, data don finish?",
+  "Oya come buy data make you continue work",
+  "Sun dey hot, but our prices dey cool",
+  "Afternoon stress? Buy data, relax small",
+  "Your afternoon entertainment needs data o",
+  "Lunch time = Data time, no cap!",
+  "Afternoon vibes, cheap data vibes",
+  "Wetin you dey stream this afternoon?",
+  "Make afternoon no boring, buy data!",
+  "Your afternoon plug don arrive",
 ];
 
 const EVENING_GREETINGS = [
@@ -54,6 +74,16 @@ const EVENING_GREETINGS = [
   "Evening scrolling needs data",
   "Sunset recharge time",
   "Evening entertainment awaits",
+  "Evening don reach, make we flex small",
+  "After work vibes, buy data relax",
+  "Oya na, time to stream that movie",
+  "Evening gist needs data o, buy am",
+  "Your evening entertainment plug",
+  "Sunset loading... your data sef?",
+  "Evening cruise needs unlimited data",
+  "Time to catch up on social media",
+  "Evening vibes, no dulling allowed!",
+  "Your evening data dealer don show",
 ];
 
 const NIGHT_GREETINGS = [
@@ -67,6 +97,16 @@ const NIGHT_GREETINGS = [
   "Quiet hours, quick recharge",
   "Insomnia? Stream something!",
   "Night warriors need data too",
+  "Midnight gang, una data don finish?",
+  "Who no sleep? Make we buy data",
+  "Night shift workers, we see you o",
+  "3am and you dey online? Legend!",
+  "Insomnia gang, data is the cure",
+  "Night time na the best time to stream",
+  "Vampire hours, but we still dey work",
+  "Your midnight data plug never sleep",
+  "Night owls deserve cheap data too",
+  "Shey you no go sleep? Buy data first",
 ];
 
 // Balance-based messages with fallbacks
@@ -77,6 +117,14 @@ const LOW_BALANCE_MESSAGES = [
   "Fund up and keep moving",
   "Wallet looking light today",
   "Ready for a top-up?",
+  "Omo, your wallet don dry o",
+  "Abeg, make you add money small",
+  "Wallet dey cry, fund am sharp",
+  "E be like say money don finish",
+  "Your wallet need urgent attention",
+  "Make we load this wallet quick",
+  "Shey you go fund wallet today?",
+  "Wallet balance dey on red alert",
 ];
 
 const HIGH_BALANCE_MESSAGES = [
@@ -86,6 +134,14 @@ const HIGH_BALANCE_MESSAGES = [
   "Loaded and ready",
   "Your wallet is blessed!",
   "Money dey, let's spend am",
+  "Omo! Money dey your wallet o",
+  "Big man/woman things, wallet full",
+  "You don load wallet well well",
+  "Shey na Dangote be this? 😄",
+  "Your wallet dey smile today",
+  "Money plenty, make we flex",
+  "Wallet balance looking correct!",
+  "You sabi save money, I hail o",
 ];
 
 // General typewriter messages - Level 1 Fallback
@@ -110,6 +166,36 @@ const TYPEWRITER_MESSAGES = [
   "Your digital life starts here",
   "Seamless transactions daily",
   "Trust the process, trust us",
+  "E don tey wey you buy data?",
+  "Your data plug don show up",
+  "Oya na, make we do business",
+  "No stress, just buy and go",
+  "We dey for you 24/7, no cap",
+  "Your money safe with us",
+  "Fastest VTU for Naija",
+  "Data wey go last you well well",
+  "Cheap pass your neighbor's plug",
+  "Make we help you save money",
+  "Your wallet go thank you later",
+  "Reliable pass NEPA 😄",
+  "We no dey disappoint, I swear",
+  "Your number one data dealer",
+  "Shey you don chop? Buy data too",
+  "Data na life, buy am make e sweet",
+  "We dey deliver sharp sharp",
+  "No hidden charges, na straight",
+  "Your mama go proud of this deal",
+  "Better than black market prices",
+  "Data wey go make you smile",
+  "Oya come flex with us",
+  "We dey online, waiting for you",
+  "Your personal data assistant",
+  "Make we sort you out today",
+  "Cheap data, premium service",
+  "We no dey play with your money",
+  "Trust us, we no go disappoint",
+  "Your satisfaction na our priority",
+  "Data wey sweet pass sugar",
 ];
 
 // Safe message selection with fallbacks
