@@ -18,7 +18,6 @@ type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'cable' | 'electricit
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
 
 export default function TransactionsPage() {
-  const { user } = useSupabaseUser();
   const { transactions, loading } = useSupabaseTransactions(100);
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -64,7 +63,12 @@ export default function TransactionsPage() {
     });
   };
 
-  const getTransactionIcon = (type: string) => {
+  const getTransactionIcon = (type: string, description?: string | null) => {
+    // Check description for bank transfer
+    if (description?.toLowerCase().includes('bank transfer')) {
+      return 'business-outline';
+    }
+    
     const icons: Record<string, string> = {
       deposit: 'arrow-down-circle',
       airtime: 'call',
@@ -73,8 +77,14 @@ export default function TransactionsPage() {
       electricity: 'flash',
       betting: 'football',
       withdrawal: 'arrow-up-circle',
+      gift_room_create: 'gift-outline',
+      gift_room_refund: 'arrow-undo-outline',
+      gift_room_claim: 'gift',
+      gift_send: 'gift-outline',
+      gift_receive: 'gift',
+      gift_refund: 'arrow-undo-outline',
     };
-    return icons[type] || 'card';
+    return icons[type] || 'card-outline';
   };
 
   const handleTransactionClick = (transaction: any) => {
@@ -223,15 +233,17 @@ export default function TransactionsPage() {
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                     transaction.status === 'failed' ? 'bg-red-500/10' :
                     transaction.amount > 0 ? 'bg-green-500/10' :
+                    transaction.amount < 0 ? 'bg-blue-500/10' :
                     'bg-muted'
                   }`}>
                     <IonIcon
-                      name={getTransactionIcon(transaction.type)}
+                      name={getTransactionIcon(transaction.type, transaction.description)}
                       size="20px"
-                      color={
-                        transaction.status === 'failed' ? '#ef4444' :
-                        transaction.amount > 0 ? '#22c55e' :
-                        '#6b7280'
+                      className={
+                        transaction.status === 'failed' ? 'text-red-500' :
+                        transaction.amount > 0 ? 'text-green-500' :
+                        transaction.amount < 0 ? 'text-blue-500' :
+                        'text-muted-foreground'
                       }
                     />
                   </div>
