@@ -6,6 +6,13 @@ import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { useSupabaseUser, useSupabaseTransactions } from "@/hooks/useSupabaseUser";
 import { TransactionReceipt } from "@/components/transaction-receipt";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal';
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
@@ -17,7 +24,6 @@ export default function TransactionsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
@@ -141,54 +147,20 @@ export default function TransactionsPage() {
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
         {/* Filters Bar */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          {/* Type Filter Custom Dropdown */}
+          {/* Type Filter with shadcn Select */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative">
-              <button
-                onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                className="flex items-center justify-between gap-3 px-4 py-2 bg-background border border-border rounded-lg text-sm hover:border-green-500/50 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all min-w-[160px]"
-              >
-                <span className="text-foreground">
-                  {typeFilters.find(f => f.key === typeFilter)?.label}
-                </span>
-                <IonIcon 
-                  name={showTypeDropdown ? "chevron-up-outline" : "chevron-down-outline"} 
-                  size="16px" 
-                  className="text-muted-foreground"
-                />
-              </button>
-
-              {/* Dropdown Menu */}
-              {showTypeDropdown && (
-                <>
-                  {/* Backdrop */}
-                  <div 
-                    className="fixed inset-0 z-10" 
-                    onClick={() => setShowTypeDropdown(false)}
-                  />
-                  
-                  {/* Menu */}
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-20 py-1 max-h-80 overflow-y-auto">
-                    {typeFilters.map(filter => (
-                      <button
-                        key={filter.key}
-                        onClick={() => {
-                          setTypeFilter(filter.key);
-                          setShowTypeDropdown(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                          typeFilter === filter.key
-                            ? 'bg-green-500/10 text-green-500 font-medium'
-                            : 'text-foreground hover:bg-muted'
-                        }`}
-                      >
-                        {filter.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as FilterType)}>
+              <SelectTrigger className="w-[180px] h-10">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {typeFilters.map(filter => (
+                  <SelectItem key={filter.key} value={filter.key}>
+                    {filter.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Status Filter */}
             <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
