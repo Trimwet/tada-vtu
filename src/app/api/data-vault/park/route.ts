@@ -149,12 +149,12 @@ export async function POST(request: NextRequest) {
           .eq('id', transaction.id);
 
         return NextResponse.json(
-          { status: false, message: rpcResult?.[0]?.message || 'Failed to park data. Please try again.' },
+          { status: false, message: 'Failed to park data. Please try again.' },
           { status: 400 }
         );
       }
 
-      const result = rpcResult?.[0];
+      const result = rpcResult?.[0] as { success: boolean; message: string; vault_id: string; new_balance: number } | undefined;
       if (!result?.success) {
         // Mark transaction as failed
         await supabase
