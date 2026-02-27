@@ -6,171 +6,180 @@ import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
 import { LogoutDialog } from "@/components/logout-dialog";
 import { cn } from "@/lib/utils";
-import { TierBadge } from "@/components/tier-badge";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
-import { getUserTier } from "@/lib/pricing-tiers";
+import { useState } from "react";
 
 const navItems = [
-  { name: "Home", href: "/dashboard", icon: "home", exact: true },
-  { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
-  { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
-  { name: "Data Vault", href: "/dashboard/data-vault", icon: "wallet" },
-  { name: "Transactions", href: "/dashboard/transactions", icon: "time" },
-  { name: "Profile", href: "/dashboard/profile", icon: "person" },
+  { name: "Overview", href: "/dashboard", icon: "grid-outline", exact: true },
+  { name: "Buy Airtime", href: "/dashboard/buy-airtime", icon: "call-outline" },
+  { name: "Buy Data", href: "/dashboard/buy-data", icon: "wifi-outline" },
+  { name: "Data Vault", href: "/dashboard/data-vault", icon: "archive-outline" },
+  { name: "Transactions", href: "/dashboard/transactions", icon: "receipt-outline" },
+];
+
+const secondaryItems = [
+  { name: "Referrals", href: "/dashboard/referrals", icon: "people-outline" },
+  { name: "Profile", href: "/dashboard/profile", icon: "person-outline" },
+  { name: "Settings", href: "/dashboard/settings", icon: "settings-outline" },
 ];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { user } = useSupabaseUser();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-border bg-card/50 backdrop-blur-xl z-40 overflow-hidden">
-      <div className="p-6 border-b border-border">
-        <div className="flex items-center justify-between">
-          <LogoInline size="sm" />
-          {user && <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" showLabel={false} />}
-        </div>
+    <aside className={cn(
+      "hidden lg:flex flex-col h-screen fixed left-0 top-0 bg-background border-r border-border z-40 transition-all duration-300",
+      isCollapsed ? "w-16" : "w-64"
+    )}>
+      {/* Header */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
+        {!isCollapsed && (
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <LogoInline size="sm" />
+          </Link>
+        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 hover:bg-muted rounded-lg transition-colors ml-auto"
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <IonIcon 
+            name={isCollapsed ? "chevron-forward-outline" : "chevron-back-outline"} 
+            size="18px" 
+            className="text-muted-foreground"
+          />
+        </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1 sidebar-scroll">
-        {navItems.map((item) => {
-          const isActive = item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
+      {/* User Info */}
+      {!isCollapsed && user && (
+        <div className="px-4 py-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-semibold text-sm">
+              {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {user.full_name || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                ₦{(user.balance || 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-                isActive
-                  ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {/* Active indicator bar */}
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
-              )}
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                isActive
-                  ? "bg-primary/20"
-                  : "group-hover:bg-muted"
-              )}>
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3">
+        <div className="space-y-1">
+          {navItems.map((item) => {
+            const isActive = item.exact
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group relative",
+                  isActive
+                    ? "bg-muted text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+                title={isCollapsed ? item.name : undefined}
+              >
                 <IonIcon
-                  name={isActive ? item.icon : `${item.icon}-outline`}
+                  name={item.icon}
+                  size="18px"
                   className={cn(
-                    "transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:text-foreground",
+                    "shrink-0 transition-colors",
+                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
-                  size="20px"
                 />
-              </div>
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-
-        <div className="pt-4 mt-4 border-t border-border space-y-1">
-          <Link
-            href="/dashboard/referrals"
-            className={cn(
-              "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-              pathname.startsWith("/dashboard/referrals")
-                ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            {pathname.startsWith("/dashboard/referrals") && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
-            )}
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-              pathname.startsWith("/dashboard/referrals")
-                ? "bg-primary/20"
-                : "group-hover:bg-muted"
-            )}>
-              <IonIcon
-                name={
-                  pathname.startsWith("/dashboard/referrals")
-                    ? "people"
-                    : "people-outline"
-                }
-                className={cn(
-                  "transition-colors",
-                  pathname.startsWith("/dashboard/referrals")
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground",
+                {!isCollapsed && (
+                  <span className="text-sm truncate">{item.name}</span>
                 )}
-                size="20px"
-              />
-            </div>
-            <span>Referrals</span>
-          </Link>
-          <Link
-            href="/dashboard/settings"
-            className={cn(
-              "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-              pathname.startsWith("/dashboard/settings")
-                ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary font-semibold shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            {pathname.startsWith("/dashboard/settings") && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full" />
-            )}
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-              pathname.startsWith("/dashboard/settings")
-                ? "bg-primary/20"
-                : "group-hover:bg-muted"
-            )}>
-              <IonIcon
-                name={
-                  pathname.startsWith("/dashboard/settings")
-                    ? "settings"
-                    : "settings-outline"
-                }
-                className={cn(
-                  "transition-colors",
-                  pathname.startsWith("/dashboard/settings")
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground",
+                {isActive && (
+                  <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-green-500" />
                 )}
-                size="20px"
-              />
-            </div>
-            <span>Settings</span>
-          </Link>
+              </Link>
+            );
+          })}
+        </div>
 
-          {/* Logout Button */}
-          <LogoutDialog
-            trigger={
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-red-500 hover:bg-red-500/10">
-                <IonIcon name="log-out-outline" size="20px" />
-                <span>Logout</span>
-              </button>
-            }
-          />
+        {/* Divider */}
+        <div className="my-4 border-t border-border" />
+
+        {/* Secondary Items */}
+        <div className="space-y-1">
+          {secondaryItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group relative",
+                  isActive
+                    ? "bg-muted text-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+                title={isCollapsed ? item.name : undefined}
+              >
+                <IonIcon
+                  name={item.icon}
+                  size="18px"
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                  )}
+                />
+                {!isCollapsed && (
+                  <span className="text-sm truncate">{item.name}</span>
+                )}
+                {isActive && (
+                  <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-green-500" />
+                )}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <div className="bg-muted/50 p-4 rounded-xl border border-border">
-          <p className="text-xs text-muted-foreground mb-2">Need Help?</p>
+      {/* Footer */}
+      <div className="border-t border-border p-3 space-y-2">
+        {/* Support Link */}
+        {!isCollapsed && (
           <Link
             href="https://wa.me/2349076721885"
             target="_blank"
-            className="text-sm font-medium text-green-600 hover:text-green-700 flex items-center gap-2"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
           >
-            <IonIcon name="logo-whatsapp" />
-            Contact Support
+            <IonIcon name="help-circle-outline" size="18px" />
+            <span>Help & Support</span>
           </Link>
-        </div>
+        )}
+
+        {/* Logout */}
+        <LogoutDialog
+          trigger={
+            <button 
+              className={cn(
+                "w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10 rounded-lg transition-colors",
+                isCollapsed && "justify-center"
+              )}
+              title={isCollapsed ? "Logout" : undefined}
+            >
+              <IonIcon name="log-out-outline" size="18px" />
+              {!isCollapsed && <span>Logout</span>}
+            </button>
+          }
+        />
       </div>
     </aside>
   );
@@ -180,16 +189,16 @@ export function DashboardBottomNav() {
   const pathname = usePathname();
 
   const mobileNavItems = [
-    { name: "Home", href: "/dashboard", icon: "home", exact: true },
-    { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call" },
-    { name: "Data", href: "/dashboard/buy-data", icon: "wifi" },
-    { name: "Vault", href: "/dashboard/data-vault", icon: "wallet" },
-    { name: "Profile", href: "/dashboard/profile", icon: "person" },
+    { name: "Home", href: "/dashboard", icon: "grid-outline", exact: true },
+    { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call-outline" },
+    { name: "Data", href: "/dashboard/buy-data", icon: "wifi-outline" },
+    { name: "Vault", href: "/dashboard/data-vault", icon: "archive-outline" },
+    { name: "More", href: "/dashboard/profile", icon: "person-outline" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border lg:hidden z-50 safe-bottom">
-      <div className="flex items-center justify-around h-16">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl border-t border-border lg:hidden z-50 safe-bottom">
+      <div className="flex items-center justify-around h-16 px-2">
         {mobileNavItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -200,29 +209,28 @@ export function DashboardBottomNav() {
               key={item.name}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-all no-select touch-target",
+                "relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground active:text-foreground",
+                  ? "text-foreground"
+                  : "text-muted-foreground active:text-foreground"
               )}
             >
-              {/* Active indicator dot */}
-              {isActive && (
-                <span className="absolute top-1 w-1 h-1 bg-primary rounded-full" />
-              )}
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                isActive && "bg-primary/15"
+                "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+                isActive && "bg-muted"
               )}>
                 <IonIcon
-                  name={isActive ? item.icon : `${item.icon}-outline`}
-                  size="22px"
+                  name={item.icon}
+                  size="20px"
                 />
               </div>
               <span className={cn(
                 "text-[10px]",
-                isActive ? "font-bold" : "font-medium"
+                isActive ? "font-semibold" : "font-medium"
               )}>{item.name}</span>
+              {isActive && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-green-500 rounded-full" />
+              )}
             </Link>
           );
         })}
