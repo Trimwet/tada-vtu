@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 
 interface VaultItem {
@@ -30,13 +30,18 @@ interface VaultData {
   stats: VaultStats;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export function useDataVault(userId?: string) {
   const [isParking, setIsParking] = useState(false);
   const [isDelivering, setIsDelivering] = useState<string | null>(null);
+  const [readyPage, setReadyPage] = useState(0);
+  const [deliveredPage, setDeliveredPage] = useState(0);
+  const [expiredPage, setExpiredPage] = useState(0);
 
-  // Fetch vault data
+  // Fetch vault data with pagination
   const { data, error, mutate } = useSWR<{ status: boolean; data: VaultData }>(
-    userId ? `/api/data-vault/list?userId=${userId}` : null,
+    userId ? `/api/data-vault/list?userId=${userId}&limit=${ITEMS_PER_PAGE}` : null,
     async (url) => {
       const response = await fetch(url);
       if (!response.ok) {
@@ -45,8 +50,9 @@ export function useDataVault(userId?: string) {
       return response.json();
     },
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
+      refreshInterval: 60000, // Refresh every 60 seconds (reduced from 30s)
       revalidateOnFocus: true,
+      dedupingInterval: 30000, // Prevent duplicate requests within 30s
     }
   );
 
@@ -76,8 +82,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data
-        mutate();
+        // Refresh vault data immediately
+        await mutate();
       }
 
       return result;
@@ -107,8 +113,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data
-        mutate();
+        // Refresh vault data immediately
+        await mutate();
       }
 
       return result;
@@ -137,8 +143,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data
-        mutate();
+        // Refresh vault data immediately
+        await mutate();
       }
 
       return result;
@@ -161,5 +167,14 @@ export function useDataVault(userId?: string) {
     deliverData,
     refundData,
     refresh: mutate,
+    pagination: {
+      readyPage,
+      setReadyPage,
+      deliveredPage,
+      setDeliveredPage,
+      expiredPage,
+      setExpiredPage,
+      itemsPerPage: ITEMS_PER_PAGE,
+    },
   };
 }

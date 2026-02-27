@@ -99,34 +99,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already has a ready vault item for this phone+plan combination
-    const { data: existingVault } = await supabase
-      .from('data_vault')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('recipient_phone', phone)
-      .eq('plan_id', planId)
-      .eq('status', 'ready')
-      .single();
-
-    if (existingVault) {
-      return NextResponse.json(
-        { status: false, message: `You already have ${planName} parked for ${phone}. Deliver it first or choose a different plan.` },
-        { status: 400 }
-      );
-    }
-
     // Generate unique reference
     const reference = `VAULT_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-    // Start transaction: Create transaction record first
+    // Create transaction record first
     const { data: transaction, error: txnError } = await supabase
       .from('transactions')
       .insert({
         user_id: userId,
         type: 'data',
         amount: -numAmount,
-        status: 'success', // Mark as success since we're parking it
+        status: 'success',
         reference: reference,
         phone_number: phone,
         network: network.toUpperCase(),
@@ -144,65 +127,46 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Deduct balance immediately
-      const newBalance = currentBalance - numAmount;
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ balance: newBalance })
-        .eq('id', userId);
+      // Use RPC function for atomic park operation
+      const { data: rpcResult, error: rpcError } = await supabase
+        .rpc('park_data_vault', {
+          p_user_id: userId,
+          p_network: network.toUpperCase(),
+          p_plan_id: planId,
+          p_plan_name: planName,
+          p_amount: numAmount,
+          p_recipient_phone: phone,
+          p_transaction_id: transaction.id,
+        });
 
-      if (updateError) {
-        console.error('Balance update error:', updateError);
-        throw new Error('Failed to update balance');
-      }
-
-      // Create vault entry
-      const { data: vaultItem, error: vaultError } = await supabase
-        .from('data_vault')
-        .insert({
-          user_id: userId,
-          network: network.toUpperCase(),
-          plan_id: planId,
-          plan_name: planName,
-          amount: numAmount,
-          recipient_phone: phone,
-          status: 'ready',
-          transaction_id: transaction.id,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        })
-        .select()
-        .single();
-
-      if (vaultError) {
-        console.error('Vault creation error:', vaultError);
+      if (rpcError) {
+        console.error('RPC error:', rpcError);
         
-        // Rollback balance update
-        await supabase
-          .from('profiles')
-          .update({ balance: currentBalance })
-          .eq('id', userId);
-
         // Mark transaction as failed
         await supabase
           .from('transactions')
           .update({ status: 'failed' })
           .eq('id', transaction.id);
 
-        throw new Error('Failed to create vault entry');
+        return NextResponse.json(
+          { status: false, message: rpcResult?.[0]?.message || 'Failed to park data. Please try again.' },
+          { status: 400 }
+        );
       }
 
-      // Create wallet transaction record
-      await supabase
-        .from('wallet_transactions')
-        .insert({
-          user_id: userId,
-          type: 'debit',
-          amount: numAmount,
-          description: `Data Vault: ${planName} for ${phone}`,
-          reference: reference,
-          balance_before: currentBalance,
-          balance_after: newBalance,
-        });
+      const result = rpcResult?.[0];
+      if (!result?.success) {
+        // Mark transaction as failed
+        await supabase
+          .from('transactions')
+          .update({ status: 'failed' })
+          .eq('id', transaction.id);
+
+        return NextResponse.json(
+          { status: false, message: result?.message || 'Failed to park data.' },
+          { status: 400 }
+        );
+      }
 
       // Create notification
       await supabase
@@ -218,14 +182,13 @@ export async function POST(request: NextRequest) {
         status: true,
         message: `${planName} successfully parked for ${phone}!`,
         data: {
-          vaultId: vaultItem.id,
+          vaultId: result.vault_id,
           reference: transaction.reference,
           network,
           phone,
           planName,
           amount: numAmount,
-          newBalance,
-          expiresAt: vaultItem.expires_at,
+          newBalance: result.new_balance,
         },
       });
 

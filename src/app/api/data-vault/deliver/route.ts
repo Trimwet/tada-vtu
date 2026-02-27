@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       console.log(`[DATA-VAULT] Inlomax response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        // Mark vault item as delivered
+        // Mark vault item as delivered atomically
         const { error: updateError } = await supabase
           .from('data_vault')
           .update({
@@ -92,13 +92,18 @@ export async function POST(request: NextRequest) {
             delivery_reference: result.data?.reference,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', vaultId);
+          .eq('id', vaultId)
+          .eq('status', 'ready'); // Ensure it's still ready
 
         if (updateError) {
           console.error('Vault update error:', updateError);
+          return NextResponse.json(
+            { status: false, message: 'Failed to confirm delivery. Please contact support.' },
+            { status: 500 }
+          );
         }
 
-        // Create a new transaction record for the delivery
+        // Create delivery transaction record
         const deliveryReference = `VAULT_DELIVERY_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         
         await supabase
@@ -106,7 +111,7 @@ export async function POST(request: NextRequest) {
           .insert({
             user_id: userId,
             type: 'data',
-            amount: 0, // No additional charge since already paid
+            amount: 0,
             status: 'success',
             reference: deliveryReference,
             phone_number: vaultItem.recipient_phone,
@@ -141,14 +146,14 @@ export async function POST(request: NextRequest) {
         });
 
       } else if (result.status === 'processing') {
-        // Mark as processing - we'll need a webhook or cron to check status later
+        // Mark as delivered optimistically - webhook will confirm
         await supabase
           .from('data_vault')
           .update({
-            status: 'delivered', // Optimistically mark as delivered for now
+            status: 'delivered',
             delivered_at: new Date().toISOString(),
             delivery_reference: result.data?.reference,
-            metadata: { ...vaultItem.metadata, processing: true },
+            metadata: { processing: true },
           })
           .eq('id', vaultId);
 
