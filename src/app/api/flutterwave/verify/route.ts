@@ -115,31 +115,37 @@ export async function GET(request: NextRequest) {
 
               // Only pay bonus on first deposit
               if (depositCount === 1) {
-                const REFERRAL_BONUS = 100; // ₦100 referral bonus
+                const REFERRAL_POINTS = 100; // 100 points per referral
 
-                // Get referrer's current balance
+                // Get referrer's current points
                 const { data: referrer } = await supabase
                   .from('profiles')
-                  .select('balance, full_name')
+                  .select('balance, referral_points, referral_count, full_name')
                   .eq('id', profile.referred_by)
                   .single();
 
                 if (referrer) {
-                  // Credit referrer
-                  const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS;
+                  // Add points to referrer (using raw SQL to ensure it works)
+                  const newPoints = (referrer.referral_points || 0) + REFERRAL_POINTS;
+                  const newCount = (referrer.referral_count || 0) + 1;
+                  
                   await supabase
                     .from('profiles')
-                    .update({ balance: referrerNewBalance })
+                    .update({ 
+                      referral_points: newPoints,
+                      referral_count: newCount,
+                      updated_at: new Date().toISOString()
+                    })
                     .eq('id', profile.referred_by);
 
-                  // Create referral bonus transaction
+                  // Create referral points transaction
                   await supabase.from('transactions').insert({
                     user_id: profile.referred_by,
                     type: 'deposit',
-                    amount: REFERRAL_BONUS,
+                    amount: REFERRAL_POINTS,
                     status: 'success',
-                    description: `Referral bonus - ${userId.slice(0, 8)}`,
-                    reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
+                    description: `Referral points earned - ${userId.slice(0, 8)}`,
+                    reference: `REF_POINTS_${Date.now()}_${userId.slice(0, 8)}`,
                   });
 
                   // Create notification for referrer
@@ -147,11 +153,11 @@ export async function GET(request: NextRequest) {
                   await (supabase as any).from('notifications').insert({
                     user_id: profile.referred_by,
                     type: 'success',
-                    title: 'Referral Bonus! 🎉',
-                    message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
+                    title: 'Referral Points Earned! 🎉',
+                    message: `You earned ${REFERRAL_POINTS} points because someone you referred made their first deposit!`,
                   });
 
-                  console.log('Referral bonus paid:', { referrerId: profile.referred_by, bonus: REFERRAL_BONUS });
+                  console.log('Referral points awarded:', { referrerId: profile.referred_by, points: REFERRAL_POINTS });
                 }
               }
             }

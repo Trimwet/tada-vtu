@@ -249,17 +249,19 @@ export default function BuyDataPage() {
 
                     <CardContent>
                         {/* Important Notice */}
-                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
+                        <div className="relative overflow-hidden bg-gradient-to-r from-green-500/5 via-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-4 mb-6 backdrop-blur-md">
+                            {/* Liquid shine effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
                             <div className="flex gap-3">
                                 <IonIcon
                                     name="warning"
                                     size="20px"
-                                    color="#f59e0b"
+                                    color="#22c55e"
                                     className="shrink-0 mt-0.5"
                                 />
                                 <div className="text-sm">
-                                    <p className="font-semibold text-amber-500 mb-1">Important Notice</p>
-                                    <p className="text-amber-200/80">
+                                    <p className="font-semibold text-green-500 mb-1">Important Notice</p>
+                                    <p className="text-green-200/80">
                                         Please, don&apos;t send Airtel Awoof and Gifting to any number owing Airtel.
                                         It will not deliver and you will not be refunded. Thank you for choosing TADA VTU.
                                     </p>
@@ -586,7 +588,7 @@ export default function BuyDataPage() {
                             >
                                 {(isProcessing || isParking) ? (
                                     <div className="flex items-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-[spin_0.5s_linear_infinite]"></div>
                                         {purchaseMode === 'park' ? 'Saving to Vault...' : 'Processing...'}
                                     </div>
                                 ) : (

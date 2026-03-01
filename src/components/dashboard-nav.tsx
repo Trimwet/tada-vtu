@@ -85,8 +85,8 @@ export function DashboardSidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group relative",
-                  isCollapsed ? "justify-center" : "",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group relative",
+                  isCollapsed ? "justify-center px-0" : "",
                   isActive
                     ? "bg-muted text-foreground font-medium"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -98,7 +98,7 @@ export function DashboardSidebar() {
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-500 rounded-r-full" />
                 )}
                 
-                <div className="relative">
+                <div className="flex items-center justify-center w-5">
                   <IonIcon
                     name={item.icon}
                     size="18px"
@@ -107,10 +107,6 @@ export function DashboardSidebar() {
                       isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
-                  {/* Notification badge - can be made dynamic later */}
-                  {item.name === "Transactions" && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-                  )}
                 </div>
                 
                 {!isCollapsed && (

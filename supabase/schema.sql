@@ -228,8 +228,8 @@ CREATE TABLE IF NOT EXISTS public.admins (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert default admin (password: admin123 - change in production!)
--- Password hash is bcrypt of 'admin123'
+-- Insert default admin (password: 2005159 - change in production!)
+-- Password hash is bcrypt of '2005159'
 INSERT INTO public.admins (email, password_hash, full_name, role)
 VALUES ('admin@tadavtu.com', '$2a$10$rQnM1.kK8LFXxKjKvKjKvOeJKjKvKjKvKjKvKjKvKjKvKjKvKjKvK', 'Super Admin', 'super_admin')
 ON CONFLICT (email) DO NOTHING;

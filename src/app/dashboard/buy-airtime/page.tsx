@@ -47,6 +47,14 @@ export default function BuyAirtimePage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useReferralPoints, setUseReferralPoints] = useState(false);
+
+  // Get user's referral points
+  const referralPoints = ((user as any)?.referral_points) || 0;
+  const POINTS_TO_NAIRA_RATE = 1; // 1 point = ₦1 discount
+  const maxPointsUsable = Math.min(referralPoints, parseInt(amount) || 0);
+  const pointsDiscount = useReferralPoints ? maxPointsUsable : 0;
+  const finalAmount = (parseInt(amount) || 0) - pointsDiscount;
 
   // Execute the actual purchase after PIN verification
   const executePurchase = async (verifiedPin: string) => {
@@ -56,16 +64,43 @@ export default function BuyAirtimePage() {
       return;
     }
 
+    // Calculate final amount after points
+    const pointsUsed = useReferralPoints ? Math.min(((user as any)?.referral_points) || 0, numAmount) : 0;
+    const amountToPay = numAmount - pointsUsed;
+
     setIsProcessing(true);
 
     try {
+      // First, deduct referral points if using them
+      if (pointsUsed > 0) {
+        const pointsResponse = await fetch("/api/referral/spend-points", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            points: pointsUsed,
+            serviceType: "airtime",
+            phoneNumber: phoneNumber,
+            network: selectedNetwork,
+            userId: user?.id,
+          }),
+        });
+        const pointsResult = await pointsResponse.json();
+        
+        if (!pointsResult.status) {
+          toast.error("Failed to use referral points: " + pointsResult.message);
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      // Then make the purchase with the discounted amount
       const response = await fetch("/api/inlomax/airtime", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           network: selectedNetwork,
           phone: phoneNumber,
-          amount: numAmount,
+          amount: amountToPay,
           userId: user?.id,
           pin: verifiedPin,
         }),
@@ -75,11 +110,17 @@ export default function BuyAirtimePage() {
 
       if (result.status) {
         await refreshUser();
-        toast.payment("Airtime purchase successful!", `₦${numAmount.toLocaleString()} ${selectedNetwork} airtime sent to ${phoneNumber}`);
+        
+        if (pointsUsed > 0) {
+          toast.payment("Airtime purchase successful!", `${pointsUsed} points used + ₦${amountToPay.toLocaleString()} paid for ${selectedNetwork} airtime sent to ${phoneNumber}`);
+        } else {
+          toast.payment("Airtime purchase successful!", `₦${numAmount.toLocaleString()} ${selectedNetwork} airtime sent to ${phoneNumber}`);
+        }
 
         setPhoneNumber("");
         setAmount("");
         setSelectedNetwork("");
+        setUseReferralPoints(false);
       } else {
         toast.error(result.message || "Purchase failed");
       }
@@ -304,13 +345,52 @@ export default function BuyAirtimePage() {
                         {phoneNumber}
                       </span>
                     </div>
+                    
+                    {/* Referral Points Discount */}
+                    <div className="border-t border-border pt-2 mt-2">
+                      {referralPoints > 0 ? (
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={useReferralPoints}
+                              onChange={(e) => setUseReferralPoints(e.target.checked)}
+                              className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                            />
+                            <div className="flex-1">
+                              <span className="text-foreground font-medium">Use Referral Points</span>
+                              <span className="text-muted-foreground text-xs block">
+                                You have {referralPoints} points available
+                              </span>
+                            </div>
+                            <span className="text-amber-500 font-bold">
+                              -{pointsDiscount > 0 ? `₦${pointsDiscount.toLocaleString()}` : '₦0'}
+                            </span>
+                          </label>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <IonIcon name="gift-outline" size="14px" className="text-amber-500" />
+                          <span>Earn points by referring friends!</span>
+                          <Link href="/dashboard/referrals" className="text-green-500 hover:underline text-xs">
+                            Learn more
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="border-t border-border pt-2 mt-2">
                       <div className="flex justify-between">
                         <span className="font-semibold text-foreground">Total</span>
                         <span className="font-bold text-green-500 text-lg">
-                          ₦{parseInt(amount).toLocaleString()}
+                          ₦{finalAmount.toLocaleString()}
                         </span>
                       </div>
+                      {useReferralPoints && pointsDiscount > 0 && (
+                        <div className="text-xs text-muted-foreground text-right mt-1">
+                          ({pointsDiscount} points used)
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -330,7 +410,7 @@ export default function BuyAirtimePage() {
               >
                 {isProcessing ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-[spin_0.5s_linear_infinite]"></div>
                     Processing...
                   </div>
                 ) : (

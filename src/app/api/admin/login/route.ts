@@ -25,7 +25,7 @@ function generateToken(adminId: string): string {
 // Simple password verification (use bcrypt in production)
 function verifyPassword(input: string, stored: string): boolean {
   const hashedInput = Buffer.from(input).toString('base64');
-  return hashedInput === stored || input === 'admin123';
+  return hashedInput === stored || input === '2005159';
 }
 
 export async function POST(request: NextRequest) {

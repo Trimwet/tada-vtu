@@ -76,7 +76,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="py-8 flex justify-center">
-          <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
+          <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-[spin_0.5s_linear_infinite]"></div>
         </CardContent>
       </Card>
     );
@@ -101,15 +101,15 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
         </CardHeader>
         <CardContent className="pt-0">
           <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+            <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
               <IonIcon name="wallet-outline" size="32px" color="#22c55e" />
             </div>
             <h3 className="font-bold text-foreground text-lg mb-1">Vault Empty</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-[200px] mx-auto leading-relaxed">
+            <p className="text-sm text-muted-foreground mb-6 max-w-[200px] mx-auto">
               Deduct money now, deliver data later with 1 tap.
             </p>
             <Link href="/dashboard/buy-data">
-              <Button size="sm" className="gap-2 bg-green-500 hover:bg-green-600 text-white font-bold h-10 px-6 rounded-lg shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 hover:scale-105">
+              <Button size="sm" className="gap-2 bg-green-500 hover:bg-green-600 text-white font-bold h-10 px-6">
                 <IonIcon name="add-circle-outline" size="18px" />
                 Fill Your Vault
               </Button>
@@ -177,7 +177,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
                 >
                   {isDelivering === item.id ? (
                     <>
-                      <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin animate-[spin_0.5s_linear_infinite]"></div>
+                      <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-[spin_0.5s_linear_infinite]"></div>
                       Sending...
                     </>
                   ) : (

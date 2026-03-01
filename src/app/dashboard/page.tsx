@@ -288,35 +288,25 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Quick Actions - 4 buttons like inspiration */}
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                <Link href="/dashboard/buy-data" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <IonIcon name="arrow-up-outline" size="18px" color="white" />
-                  </div>
-                  <span className="text-xs font-medium text-white">Send</span>
+              <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
+                <Link href="/dashboard/fund-wallet" className="flex-1">
+                  <Button
+                    size="sm"
+                    className="w-full bg-white text-green-600 hover:bg-white/90 gap-1.5 sm:gap-2 font-semibold shadow-lg transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
+                  >
+                    <IonIcon name="add-circle-outline" size="16px" />
+                    Add Money
+                  </Button>
                 </Link>
-                
-                <Link href="/dashboard/fund-wallet" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <IonIcon name="add-outline" size="18px" color="white" />
-                  </div>
-                  <span className="text-xs font-medium text-white">Add funds</span>
-                </Link>
-                
-                <button onClick={() => setShowWithdrawal(true)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <IonIcon name="arrow-down-outline" size="18px" color="white" />
-                  </div>
-                  <span className="text-xs font-medium text-white">Request</span>
-                </button>
-                
-                <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <IonIcon name="ellipsis-horizontal" size="18px" color="white" />
-                  </div>
-                  <span className="text-xs font-medium text-white">More</span>
-                </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm relative"
+                  onClick={() => setShowWithdrawal(true)}
+                >
+                  <IonIcon name="arrow-up-circle-outline" size="16px" />
+                  Withdraw
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -365,35 +355,6 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
-
-        {/* Promotional Banner - Referral */}
-        <Link href="/dashboard/referrals">
-          <Card className="bg-gradient-to-r from-gray-900 to-gray-800 border-0 overflow-hidden cursor-pointer hover:shadow-lg transition-all group">
-            <CardContent className="p-4 sm:p-5 relative">
-              {/* Decorative coins */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-30 transition-opacity">
-                <div className="relative w-20 h-20">
-                  <div className="absolute inset-0 bg-green-500 rounded-full blur-xl"></div>
-                  <IonIcon name="cash-outline" size="40px" className="relative text-green-400" />
-                </div>
-              </div>
-              
-              <div className="relative">
-                <h3 className="text-white font-bold text-base sm:text-lg mb-1">
-                  Invite a friend and get ₦100
-                </h3>
-                <p className="text-gray-400 text-xs sm:text-sm mb-3">
-                  Share your referral code and earn rewards
-                </p>
-                <div className="inline-flex items-center gap-2 text-green-400 text-sm font-medium group-hover:gap-3 transition-all">
-                  <span>Share invite</span>
-                  <IonIcon name="arrow-forward" size="16px" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
 
 
         {/* Main Content Grid */}
@@ -683,31 +644,47 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Referral Card - Coming Soon */}
+            {/* Referral Points Card */}
             <Card
               className="border-border animate-slide-up"
               style={{ animationDelay: "0.4s" }}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
-                    <IonIcon name="people-outline" size="16px" className="text-muted-foreground" />
+                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-lg flex items-center justify-center">
+                    <IonIcon name="gift-outline" size="16px" className="text-amber-500" />
                   </div>
-                  Refer & Earn
+                  Referral Points
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Referral program
+                  Earn points for every referral
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <IonIcon name="time-outline" size="24px" className="text-muted-foreground" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Your Points</span>
+                    <span className="text-lg font-bold text-amber-500">
+                      {((user as any)?.referral_points) || 0}
+                    </span>
                   </div>
-                  <p className="font-medium text-foreground">Coming Soon</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Exciting rewards await!
-                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Total Referrals</span>
+                    <span className="font-medium text-foreground">
+                      {((user as any)?.referral_count) || 0}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Earn 100 points per successful referral
+                    </p>
+                    <Link href="/dashboard/referrals">
+                      <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-white">
+                        <IonIcon name="share-outline" size="14px" className="mr-1" />
+                        Invite Friends
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardContent>
             </Card>

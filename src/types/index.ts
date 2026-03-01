@@ -12,6 +12,8 @@ export interface User {
   referralCode: string;
   referredBy?: string;
   referralEarnings: number;
+  referralPoints: number;
+  referralCount: number;
   isEmailVerified: boolean;
   darkModePreference: boolean;
   createdAt: Date;

@@ -76,20 +76,26 @@ export async function GET(request: NextRequest) {
       dateFilter = `created_at >= '${yearStart.toISOString()}'`;
     }
 
-    // Fetch all transactions for the period
+    // Fetch all transactions for the period (not just successful)
     let query = supabase
       .from('transactions')
-      .select('type, amount, status, created_at, network')
-      .eq('status', 'success');
+      .select('type, amount, status, created_at, network');
+
+    // For detailed status breakdown, we also need all transactions
+    let allTxnQuery = supabase
+      .from('transactions')
+      .select('type, amount, status, created_at');
 
     if (dateFilter) {
       const [field, operator, value] = dateFilter.split(' ');
       if (operator === '>=') {
         query = query.gte('created_at', value.replace(/'/g, ''));
+        allTxnQuery = allTxnQuery.gte('created_at', value.replace(/'/g, ''));
       }
     }
 
     const { data: transactions, error: txnError } = await query;
+    const { data: allTransactions, error: allTxnError } = await allTxnQuery;
 
     if (txnError) {
       console.error('Transaction fetch error:', txnError);
@@ -158,12 +164,19 @@ export async function GET(request: NextRequest) {
         transactions: number;
       }>,
 
-      // Hourly breakdown (for current day)
+      // Hourly breakdown (for today)
       hourly: [] as Array<{
         hour: number;
         transactions: number;
         revenue: number;
       }>,
+
+      // Transaction status breakdown
+      statusBreakdown: {
+        success: { count: 0, volume: 0, amount: 0 },
+        pending: { count: 0, volume: 0, amount: 0 },
+        failed: { count: 0, volume: 0, amount: 0 },
+      } as Record<string, { count: number; volume: number; amount: number }>,
     };
 
     // Process transactions
@@ -291,6 +304,21 @@ export async function GET(request: NextRequest) {
       } else if (txn.type === 'withdrawal') {
         analytics.volume.withdrawalCount++;
         analytics.volume.totalWithdrawals += amount;
+      }
+    });
+
+    // Process all transactions for status breakdown
+    allTransactions?.forEach((txn) => {
+      const amount = Math.abs(txn.amount);
+      const status = txn.status || 'unknown';
+      
+      if (analytics.statusBreakdown[status]) {
+        analytics.statusBreakdown[status].count++;
+        analytics.statusBreakdown[status].volume += amount;
+        // For successful transactions, add to amount
+        if (status === 'success') {
+          analytics.statusBreakdown[status].amount += amount;
+        }
       }
     });
 

@@ -24,8 +24,12 @@ export default function DataVaultPage() {
   const [showQRModal, setShowQRModal] = useState(false);
 
   const handleDeliver = async (vaultId: string) => {
+    if (!user?.id) {
+      toast.error('Please log in to deliver data');
+      return;
+    }
     try {
-      const result = await deliverData(vaultId, user!.id);
+      const result = await deliverData(vaultId, user.id);
       
       if (result.status) {
         toast.success(result.message);
