@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { toast } from "@/lib/toast";
@@ -359,41 +366,39 @@ export default function BuyDataPage() {
 
                             {/* Data Type Selection - Dynamic based on available plans */}
                             {selectedNetwork && (
-                                <div className="space-y-3 p-4 border border-border rounded-xl bg-muted/20">
+                                <div className="space-y-3">
                                     <Label className="text-sm font-medium">Select Data Type</Label>
                                     {loadingPlans ? (
-                                        <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                                            <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin" />
-                                            <p className="text-muted-foreground text-sm animate-pulse">Loading data types for {selectedNetwork}...</p>
+                                        <div className="flex items-center justify-center py-8 space-x-3 border border-border rounded-xl bg-muted/20">
+                                            <div className="w-6 h-6 border-3 border-green-600 border-t-transparent rounded-full animate-spin" />
+                                            <p className="text-muted-foreground text-sm">Loading data types...</p>
                                         </div>
                                     ) : availableTypes.length > 0 ? (
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                            {availableTypes.map((type) => (
-                                                <button
-                                                    key={type.value}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedType(type.value);
-                                                        setSelectedPlan("");
-                                                    }}
-                                                    className={`p-3 rounded-xl border-2 transition-smooth ${selectedType === type.value
-                                                        ? "border-green-500 bg-green-500/10"
-                                                        : "border-border hover:border-green-500/50"
-                                                        }`}
-                                                >
-                                                    <div className="text-center">
-                                                        <div className="font-semibold text-sm text-foreground">
-                                                            {type.label}
+                                        <Select
+                                            value={selectedType}
+                                            onValueChange={(value) => {
+                                                setSelectedType(value);
+                                                setSelectedPlan("");
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-12">
+                                                <SelectValue placeholder="Choose data type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {availableTypes.map((type) => (
+                                                    <SelectItem key={type.value} value={type.value}>
+                                                        <div className="flex items-center justify-between w-full gap-3">
+                                                            <span className="font-medium">{type.label}</span>
+                                                            <span className="text-xs text-muted-foreground">
+                                                                {type.count} plan{type.count !== 1 ? 's' : ''}
+                                                            </span>
                                                         </div>
-                                                        <div className="text-xs text-muted-foreground mt-0.5">
-                                                            {type.count} plan{type.count !== 1 ? 's' : ''}
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            ))}
-                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     ) : (
-                                        <div className="text-center py-6 text-muted-foreground">
+                                        <div className="text-center py-6 text-muted-foreground border border-border rounded-xl bg-muted/20">
                                             <IonIcon
                                                 name="cloud-offline-outline"
                                                 size="28px"

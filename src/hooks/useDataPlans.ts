@@ -126,6 +126,17 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
 
+      // Check if response is ok
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
+      // Check content type to ensure it's JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('API returned non-JSON response. Server may be experiencing issues.');
+      }
+
       const data = await response.json();
 
       if (!mountedRef.current) return;
@@ -161,6 +172,8 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       const errorMessage = isTimeout
         ? 'Request timed out. Using cached data.'
         : error instanceof Error ? error.message : 'Network error';
+
+      console.error('[useDataPlans] Error fetching plans:', errorMessage);
 
       setState(prev => ({
         ...prev,

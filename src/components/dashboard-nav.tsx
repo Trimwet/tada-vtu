@@ -86,25 +86,40 @@ export function DashboardSidebar() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group relative",
+                  isCollapsed ? "justify-center" : "",
                   isActive
                     ? "bg-muted text-foreground font-medium"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
-                <IonIcon
-                  name={item.icon}
-                  size="18px"
-                  className={cn(
-                    "shrink-0 transition-colors",
-                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                  )}
-                />
-                {!isCollapsed && (
-                  <span className="text-sm truncate">{item.name}</span>
+                {/* Active indicator - left side when collapsed */}
+                {isActive && isCollapsed && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-500 rounded-r-full" />
                 )}
-                {isActive && (
-                  <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-green-500" />
+                
+                <div className="relative">
+                  <IonIcon
+                    name={item.icon}
+                    size="18px"
+                    className={cn(
+                      "shrink-0 transition-colors",
+                      isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                  />
+                  {/* Notification badge - can be made dynamic later */}
+                  {item.name === "Transactions" && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
+                </div>
+                
+                {!isCollapsed && (
+                  <span className="text-sm truncate flex-1">{item.name}</span>
+                )}
+                
+                {/* Active indicator - right side when expanded */}
+                {isActive && !isCollapsed && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                 )}
               </Link>
             );
@@ -125,12 +140,18 @@ export function DashboardSidebar() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 group relative",
+                  isCollapsed ? "justify-center" : "",
                   isActive
                     ? "bg-muted text-foreground font-medium"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
                 title={isCollapsed ? item.name : undefined}
               >
+                {/* Active indicator - left side when collapsed */}
+                {isActive && isCollapsed && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-green-500 rounded-r-full" />
+                )}
+                
                 <IonIcon
                   name={item.icon}
                   size="18px"
@@ -139,11 +160,14 @@ export function DashboardSidebar() {
                     isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
+                
                 {!isCollapsed && (
-                  <span className="text-sm truncate">{item.name}</span>
+                  <span className="text-sm truncate flex-1">{item.name}</span>
                 )}
-                {isActive && (
-                  <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-green-500" />
+                
+                {/* Active indicator - right side when expanded */}
+                {isActive && !isCollapsed && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                 )}
               </Link>
             );

@@ -7,8 +7,15 @@
     },
     "shadcn": {
       "url": "https://www.shadcn.io/api/mcp",
-      "disabled": false,
+      "disabled": true,
       "autoApprove": []
+    }
+  },
+  "mcp": {
+    "paper": {
+      "type": "remote",
+      "url": "http://127.0.0.1:29979/mcp",
+      "enabled": true
     }
   }
 }
