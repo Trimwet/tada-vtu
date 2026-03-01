@@ -249,7 +249,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-950/20 via-black to-black flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -257,19 +257,19 @@ export default function AdminDashboard() {
 
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-green-950/20 via-black to-black">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+      <header className="bg-black/40 backdrop-blur-xl border-b border-green-500/20 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <LogoInline size="sm" />
-              <span className="text-gray-400">|</span>
+              <span className="text-green-500/60">|</span>
               <span className="text-white font-semibold">Admin Panel</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-gray-400 text-sm">{admin?.full_name}</span>
-              <Button variant="outline" size="sm" onClick={handleLogout} className="border-gray-600 text-gray-300 hover:bg-gray-700">
+              <span className="text-green-400/60 text-sm">{admin?.full_name}</span>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/50">
                 Logout
               </Button>
             </div>
@@ -279,13 +279,13 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 py-6">
         {/* Navigation Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-700 pb-4 flex-wrap">
+        <div className="flex gap-2 mb-6 border-b border-green-500/20 pb-4 flex-wrap">
           {(['overview', 'users', 'transactions'] as const).map((tab) => (
             <Button
               key={tab}
               variant={activeTab === tab ? 'default' : 'ghost'}
               onClick={() => { setActiveTab(tab); setSearchQuery(''); }}
-              className={activeTab === tab ? 'bg-green-600 hover:bg-green-700' : 'text-gray-400 hover:text-white hover:bg-gray-800'}
+              className={activeTab === tab ? 'bg-green-600 hover:bg-green-700' : 'text-green-400/60 hover:text-green-400 hover:bg-green-500/10'}
             >
               {tab === 'overview' && '📊 '}
               {tab === 'users' && '👥 '}
@@ -296,23 +296,23 @@ export default function AdminDashboard() {
           <Button
             variant="ghost"
             onClick={() => router.push('/admin/analytics-detailed')}
-            className="text-gray-400 hover:text-white hover:bg-gray-800 ml-auto"
+            className="text-green-400/60 hover:text-green-400 hover:bg-green-500/10 ml-auto"
           >
             📈 Detailed Analytics
           </Button>
         </div>
 
         {/* Maintenance Mode Control */}
-        <Card className="mb-6 bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
+        <Card className="mb-6 bg-black/40 border-green-500/20 backdrop-blur-xl">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${maintenanceMode ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+                <div className={`w-3 h-3 rounded-full ${maintenanceMode ? 'bg-yellow-500' : 'bg-green-500'} animate-pulse`}></div>
                 <div>
                   <h3 className="font-medium text-white">
                     {maintenanceMode ? '🔧 Maintenance Mode Active' : '✅ VTU Services Online'}
                   </h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-green-400/60">
                     {maintenanceMode 
                       ? 'Users will see a yellow maintenance banner and cannot fund wallets or make VTU purchases'
                       : 'All VTU services are available to users'

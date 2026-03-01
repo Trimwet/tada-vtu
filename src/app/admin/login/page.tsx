@@ -52,16 +52,19 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-950/20 via-black to-black flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
           <LogoInline size="lg" />
         </div>
 
-        <Card className="border-gray-800 bg-gray-800/50">
+        <div className="relative overflow-hidden bg-black/40 backdrop-blur-xl border border-green-500/20 rounded-2xl p-6 shadow-2xl shadow-green-500/5">
+          {/* Liquid shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shine pointer-events-none" />
+          
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl text-white">Admin Portal</CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-green-400/60">
               Sign in to access the admin dashboard
             </CardDescription>
           </CardHeader>
@@ -69,27 +72,27 @@ export default function AdminLoginPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Email</Label>
+                <Label htmlFor="email" className="text-green-400/80">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  className="bg-black/40 border-green-500/20 text-white placeholder:text-green-500/30"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300">Password</Label>
+                <Label htmlFor="password" className="text-green-400/80">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  className="bg-black/40 border-green-500/20 text-white placeholder:text-green-500/30"
                   required
                 />
               </div>
@@ -110,9 +113,9 @@ export default function AdminLoginPage() {
               </Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
 
-        <p className="text-center text-gray-500 text-sm">
+        <p className="text-center text-green-500/40 text-sm">
           This portal is for authorized administrators only.
         </p>
       </div>
