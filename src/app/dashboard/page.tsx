@@ -244,7 +244,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Wallet Card */}
+        {/* Wallet Card - Premium Design */}
         <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0 overflow-hidden shadow-lg shadow-green-500/20 animate-slide-up">
           <CardContent className="p-4 sm:p-6 relative">
             {/* Background pattern */}
@@ -253,62 +253,70 @@ export default function DashboardPage() {
               <div className="absolute bottom-0 left-0 w-24 sm:w-32 h-24 sm:h-32 bg-white rounded-full translate-y-1/2 -translate-x-1/2"></div>
             </div>
 
-            <div className="relative">
+            <div className="relative space-y-6">
+              {/* Balance Section */}
               <div className="flex items-start justify-between">
-                <div className="space-y-0.5">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium flex items-center gap-1.5">
-                    <IonIcon name="wallet-outline" size="14px" />
-                    Available Balance
+                <div className="space-y-1">
+                  <p className="text-green-100 text-xs sm:text-sm font-medium">
+                    Total balance
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                      {hideBalance
+                        ? "₦••••••"
+                        : !isProfileLoaded
+                          ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            </div>
+                          )
+                          : `₦${(user.balance || 0).toLocaleString("en-NG")}`
+                      }
+                    </h2>
                     <button
                       onClick={toggleHideBalance}
-                      className="p-1 hover:bg-white/10 rounded-full transition-smooth active:bg-white/20"
+                      className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                       title={hideBalance ? "Show balance" : "Hide balance"}
                     >
                       <IonIcon
                         name={hideBalance ? "eye-off-outline" : "eye-outline"}
-                        size="14px"
+                        size="18px"
                         color="white"
                       />
                     </button>
-                  </p>
-                  <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight">
-                    {hideBalance
-                      ? "₦••••••"
-                      : !isProfileLoaded
-                        ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            <span className="text-white/60 text-lg">Loading...</span>
-                          </div>
-                        )
-                        : `₦${(user.balance || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}`
-                    }
-                  </h2>
-                </div>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <IonIcon name="card-outline" size="20px" color="white" />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
-                <Link href="/dashboard/fund-wallet" className="flex-1">
-                  <Button
-                    size="sm"
-                    className="w-full bg-white text-green-600 hover:bg-white/90 gap-1.5 sm:gap-2 font-semibold shadow-lg transition-smooth h-9 sm:h-10 text-xs sm:text-sm"
-                  >
-                    <IonIcon name="add-circle-outline" size="16px" />
-                    Add Money
-                  </Button>
+              {/* Quick Actions - 4 buttons like inspiration */}
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                <Link href="/dashboard/buy-data" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <IonIcon name="arrow-up-outline" size="18px" color="white" />
+                  </div>
+                  <span className="text-xs font-medium text-white">Send</span>
                 </Link>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 flex-1 gap-1.5 sm:gap-2 font-medium transition-smooth h-9 sm:h-10 text-xs sm:text-sm relative"
-                  onClick={() => setShowWithdrawal(true)}
-                >
-                  <IonIcon name="arrow-up-circle-outline" size="16px" />
-                  Withdraw
-                </Button>
+                
+                <Link href="/dashboard/fund-wallet" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <IonIcon name="add-outline" size="18px" color="white" />
+                  </div>
+                  <span className="text-xs font-medium text-white">Add funds</span>
+                </Link>
+                
+                <button onClick={() => setShowWithdrawal(true)} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <IonIcon name="arrow-down-outline" size="18px" color="white" />
+                  </div>
+                  <span className="text-xs font-medium text-white">Request</span>
+                </button>
+                
+                <Link href="/dashboard/profile" className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <IonIcon name="ellipsis-horizontal" size="18px" color="white" />
+                  </div>
+                  <span className="text-xs font-medium text-white">More</span>
+                </Link>
               </div>
             </div>
           </CardContent>
@@ -357,6 +365,34 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        {/* Promotional Banner - Referral */}
+        <Link href="/dashboard/referrals">
+          <Card className="bg-gradient-to-r from-gray-900 to-gray-800 border-0 overflow-hidden cursor-pointer hover:shadow-lg transition-all group">
+            <CardContent className="p-4 sm:p-5 relative">
+              {/* Decorative coins */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-30 transition-opacity">
+                <div className="relative w-20 h-20">
+                  <div className="absolute inset-0 bg-green-500 rounded-full blur-xl"></div>
+                  <IonIcon name="cash-outline" size="40px" className="relative text-green-400" />
+                </div>
+              </div>
+              
+              <div className="relative">
+                <h3 className="text-white font-bold text-base sm:text-lg mb-1">
+                  Invite a friend and get ₦100
+                </h3>
+                <p className="text-gray-400 text-xs sm:text-sm mb-3">
+                  Share your referral code and earn rewards
+                </p>
+                <div className="inline-flex items-center gap-2 text-green-400 text-sm font-medium group-hover:gap-3 transition-all">
+                  <span>Share invite</span>
+                  <IonIcon name="arrow-forward" size="16px" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
 
 
