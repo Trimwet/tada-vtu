@@ -10,6 +10,8 @@ import { Logo } from '@/components/logo';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBackgroundWrapper } from '@/components/animated-background-wrapper';
+import { LoadingScreen } from '@/components/loading-screen';
+import { ButtonLoading } from '@/components/loading-icons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -84,11 +86,7 @@ export default function RegisterPage() {
   const inputClass = "w-full h-11 pl-10 pr-3 rounded-lg bg-white/[0.05] border border-white/10 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-colors";
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingScreen message="Loading..." />;
   }
 
   if (isAuthenticated) return null;
@@ -179,10 +177,7 @@ export default function RegisterPage() {
 
             <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold h-11 transition-colors" disabled={loading}>
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating account...
-                </div>
+                <ButtonLoading type="sending" text="Creating account..." />
               ) : 'Create Account'}
             </Button>
           </form>
@@ -200,10 +195,7 @@ export default function RegisterPage() {
               try { await signInWithGoogle(); } catch { toast.error('Failed to sign up with Google'); setGoogleLoading(false); }
             }}>
             {googleLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
-                Connecting...
-              </div>
+              <ButtonLoading type="loading" text="Connecting..." />
             ) : (
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

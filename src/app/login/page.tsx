@@ -10,6 +10,8 @@ import { Logo } from '@/components/logo';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { AnimatedBackgroundWrapper } from '@/components/animated-background-wrapper';
+import { LoadingScreen } from '@/components/loading-screen';
+import { ButtonLoading } from '@/components/loading-icons';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,11 +71,7 @@ export default function LoginPage() {
 
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingScreen message="Loading..." />;
   }
 
   if (isAuthenticated) return null;
@@ -126,10 +124,7 @@ export default function LoginPage() {
 
             <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold h-11 transition-colors" disabled={loading}>
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Signing in...
-                </div>
+                <ButtonLoading type="sending" text="Signing in..." />
               ) : 'Sign In'}
             </Button>
           </form>
@@ -147,10 +142,7 @@ export default function LoginPage() {
               try { await signInWithGoogle(); } catch { toast.error('Failed to sign in with Google'); setGoogleLoading(false); }
             }}>
             {googleLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
-                Connecting...
-              </div>
+              <ButtonLoading type="loading" text="Connecting..." />
             ) : (
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

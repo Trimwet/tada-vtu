@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { IonIcon } from "@/components/ion-icon";
 import { toast } from "sonner";
+import { LoadingIcon, ButtonLoading } from "@/components/loading-icons";
 
 interface Bank {
   id: number;
@@ -404,7 +405,7 @@ export function BankWithdrawalModal({
                         <span className="font-medium text-foreground">
                           {loadingFee ? (
                             <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                              <LoadingIcon type="loading" size={12} />
                               <span>Calculating...</span>
                             </div>
                           ) : (
@@ -463,7 +464,7 @@ export function BankWithdrawalModal({
                 <div className="space-y-2">
                   {loadingBanks ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                      <LoadingIcon type="loading" size={32} />
                     </div>
                   ) : filteredBanks.length === 0 ? (
                     <div className="text-center py-12">
@@ -534,7 +535,7 @@ export function BankWithdrawalModal({
 
                 {verifying && (
                   <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl border border-border">
-                    <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                    <LoadingIcon type="loading" size={20} />
                     <span className="text-sm text-muted-foreground">Verifying account...</span>
                   </div>
                 )}
@@ -628,8 +629,7 @@ export function BankWithdrawalModal({
                 >
                   {processing ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                      <ButtonLoading type="processing" text="Processing..." />
                     </div>
                   ) : (
                     "Confirm Withdrawal"

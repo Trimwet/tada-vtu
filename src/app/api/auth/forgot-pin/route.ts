@@ -175,20 +175,60 @@ async function handler(request: NextRequest) {
       // Simple hash for PIN (use bcrypt in production with proper setup)
       const hashedPin = Buffer.from(newPin + 'tada_salt_2024').toString('base64');
 
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (!existingProfile) {
+        console.error('Profile not found for email:', email);
+        return NextResponse.json(
+          { success: false, message: 'User profile not found' },
+          { status: 404 }
+        );
+      }
+
       // Update profile and clear OTP
-      const { error } = await supabase
+      const { data: updateData, error } = await supabase
         .from('profiles')
         .update({ 
           pin: hashedPin,
           reset_otp: null,
           reset_otp_expires: null
         })
-        .eq('email', email.toLowerCase());
+        .eq('email', email.toLowerCase())
+        .select();
 
       if (error) {
         console.error('PIN update error:', error);
         return NextResponse.json(
-          { success: false, message: 'Failed to update PIN' },
+          { success: false, message: 'Failed to update PIN: ' + error.message },
+          { status: 500 }
+        );
+      }
+
+      // Verify the update happened
+      if (!updateData || updateData.length === 0) {
+        console.error('PIN update returned no data');
+        return NextResponse.json(
+          { success: false, message: 'Failed to update PIN - no rows affected' },
+          { status: 500 }
+        );
+      }
+
+      // Verify the PIN was actually updated
+      const { data: verifyProfile } = await supabase
+        .from('profiles')
+        .select('pin')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (!verifyProfile || verifyProfile.pin !== hashedPin) {
+        console.error('PIN update verification failed. Expected:', hashedPin, 'Got:', verifyProfile?.pin);
+        return NextResponse.json(
+          { success: false, message: 'PIN update failed - please try again' },
           { status: 500 }
         );
       }

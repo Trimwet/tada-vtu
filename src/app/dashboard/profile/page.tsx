@@ -20,6 +20,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/date-utils";
+import { LoadingScreen } from "@/components/loading-screen";
+import { ButtonLoading } from "@/components/loading-icons";
 
 export default function ProfilePage() {
   const { user, loading, refreshUser } = useSupabaseUser();
@@ -49,11 +51,7 @@ export default function ProfilePage() {
   };
 
   if (loading && !user) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingScreen message="Loading profile..." />;
   }
 
   if (!user) {
@@ -274,10 +272,7 @@ export default function ProfilePage() {
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Saving...
-                  </div>
+                  <ButtonLoading type="sending" text="Saving..." />
                 ) : (
                   "Save Changes"
                 )}

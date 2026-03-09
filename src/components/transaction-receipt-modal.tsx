@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
 import { LogoInline } from "@/components/logo";
+import { ButtonLoading } from "@/components/loading-icons";
 
 interface Transaction {
   id: string;
@@ -289,10 +290,7 @@ export function TransactionReceiptModal({
                 className="flex-1 h-9 text-xs bg-green-500 hover:bg-green-600 gap-1"
               >
                 {isDownloading ? (
-                  <>
-                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                    Generating...
-                  </>
+                  <ButtonLoading type="loading" text="Generating..." />
                 ) : (
                   <>
                     <IonIcon name="download-outline" size="14px" />

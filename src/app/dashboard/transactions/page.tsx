@@ -6,6 +6,7 @@ import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { useSupabaseUser, useSupabaseTransactions } from "@/hooks/useSupabaseUser";
 import { TransactionReceipt } from "@/components/transaction-receipt";
+import { LoadingIcon } from "@/components/loading-icons";
 import {
   Select,
   SelectContent,
@@ -199,7 +200,7 @@ export default function TransactionsPage() {
         {/* Transactions List */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+            <LoadingIcon type="loading" size={32} />
           </div>
         ) : filteredTransactions.length === 0 ? (
           <div className="text-center py-20">

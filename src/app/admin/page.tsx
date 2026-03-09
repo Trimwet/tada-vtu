@@ -29,7 +29,6 @@ interface Stats {
   todayEstimatedEarnings: number;
   grossVolume: number;
   todayGrossVolume: number;
-  // New fields
   flutterwaveFeesPaid: number;
   totalVTUCosts: number;
   grossRevenue: number;
@@ -301,46 +300,6 @@ export default function AdminDashboard() {
             📈 Detailed Analytics
           </Button>
         </div>
-
-        {/* Maintenance Mode Control */}
-        <Card className="mb-6 bg-black/40 border-green-500/20 backdrop-blur-xl">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${maintenanceMode ? 'bg-yellow-500' : 'bg-green-500'} animate-pulse`}></div>
-                <div>
-                  <h3 className="font-medium text-white">
-                    {maintenanceMode ? '🔧 Maintenance Mode Active' : '✅ VTU Services Online'}
-                  </h3>
-                  <p className="text-sm text-green-400/60">
-                    {maintenanceMode 
-                      ? 'Users will see a yellow maintenance banner and cannot fund wallets or make VTU purchases'
-                      : 'All VTU services are available to users'
-                    }
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={toggleMaintenanceMode}
-                disabled={maintenanceLoading}
-                className={`${
-                  maintenanceMode 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-yellow-600 hover:bg-yellow-700'
-                } min-w-[140px]`}
-              >
-                {maintenanceLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Updating...</span>
-                  </div>
-                ) : (
-                  maintenanceMode ? 'Enable Services' : 'Enable Maintenance'
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && stats && (

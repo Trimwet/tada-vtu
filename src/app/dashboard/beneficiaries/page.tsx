@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { NETWORKS } from '@/lib/constants';
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 import { getSupabase } from '@/lib/supabase/client';
+import { LoadingIcon } from '@/components/loading-icons';
 
 interface Beneficiary {
   id: string;
@@ -244,7 +245,7 @@ export default function BeneficiariesPage() {
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin" />
+                <LoadingIcon type="loading" size={32} />
               </div>
             ) : beneficiaries.length === 0 ? (
               <div className="text-center py-12">

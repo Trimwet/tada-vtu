@@ -23,6 +23,7 @@ import {
 import { useFlutterwavePayment } from "@/hooks/use-flutterwave";
 import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 import { calculateBankTransferTotal } from "@/lib/api/flutterwave";
+import { LoadingIcon, ButtonLoading } from "@/components/loading-icons";
 
 const CheckDepositsButton = dynamic(
   () => import("@/components/CheckDepositsButton").then(mod => mod.CheckDepositsButton),
@@ -295,7 +296,7 @@ export default function FundWalletPage() {
 
       <main className="container mx-auto px-4 lg:px-8 py-6 max-w-2xl space-y-6">
         {/* Balance Card */}
-        <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0">
+        <Card className="bg-linear-to-br from-green-500 via-green-600 to-emerald-600 border-0">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -306,7 +307,7 @@ export default function FundWalletPage() {
                 <h2 className="text-2xl font-bold text-white">
                   {!isProfileLoaded ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <LoadingIcon type="loading" size={20} />
                       <span className="text-white/70 text-lg">Loading...</span>
                     </div>
                   ) : (
@@ -381,7 +382,7 @@ export default function FundWalletPage() {
             <CardContent className="space-y-4">
               {vaLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <LoadingIcon type="loading" size={24} />
                   <span className="ml-2 text-muted-foreground">Loading...</span>
                 </div>
               ) : virtualAccount ? (
@@ -447,7 +448,7 @@ export default function FundWalletPage() {
               ) : tempAccount ? (
                 <>
                   {/* Temporary Account Details */}
-                  <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-orange-500/10 border border-amber-500/30 rounded-2xl p-6 relative overflow-hidden">
+                  <div className="bg-linear-to-br from-amber-500/10 via-amber-500/5 to-orange-500/10 border border-amber-500/30 rounded-2xl p-6 relative overflow-hidden">
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -477,7 +478,7 @@ export default function FundWalletPage() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-muted-foreground">Account Number</span>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-lg text-green-500 font-mono tracking-wider">
+                              <span className="font-bold text-lg text-foreground font-mono tracking-wider">
                                 {tempAccount.account_number}
                               </span>
                               <button
@@ -500,7 +501,7 @@ export default function FundWalletPage() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-muted-foreground">Amount to Transfer</span>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xl text-blue-600">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
+                              <span className="font-bold text-xl text-green-500">₦{parseFloat(tempAccount.amount).toLocaleString()}</span>
                               <button
                                 onClick={async () => {
                                   await navigator.clipboard.writeText(parseFloat(tempAccount.amount).toString());
@@ -508,7 +509,7 @@ export default function FundWalletPage() {
                                 }}
                                 className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                               >
-                                <IonIcon name="copy-outline" size="16px" color="#3b82f6" />
+                                <IonIcon name="copy-outline" size="16px" color="#22c55e" />
                               </button>
                             </div>
                           </div>
@@ -521,7 +522,7 @@ export default function FundWalletPage() {
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4">
+                  <div className="bg-linear-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0">
                         <IonIcon name="warning" size="20px" color="#f59e0b" />
@@ -562,7 +563,7 @@ export default function FundWalletPage() {
                         toast.success("Account number copied!");
                         setTimeout(() => setCopied(false), 2000);
                       }}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg"
+                      className="flex-1 bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg"
                     >
                       <IonIcon name={copied ? "checkmark-circle" : "copy"} size="18px" className="mr-2" />
                       {copied ? "Copied!" : "Copy Details"}
@@ -594,7 +595,7 @@ export default function FundWalletPage() {
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
-                            <IonIcon name="flash" size="20px" color="#888" className="group-hover:!text-green-500 transition-colors" />
+                            <IonIcon name="flash" size="20px" color="#888" className="group-hover:text-green-500! transition-colors" />
                           </div>
                           <div>
                             <p className="font-semibold text-foreground flex items-center gap-2">
@@ -618,7 +619,7 @@ export default function FundWalletPage() {
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
-                            <IonIcon name="shield-checkmark" size="20px" color="#888" className="group-hover:!text-green-500 transition-colors" />
+                            <IonIcon name="shield-checkmark" size="20px" color="#888" className="group-hover:text-green-500! transition-colors" />
                           </div>
                           <div>
                             <p className="font-semibold text-foreground">Permanent Account</p>
@@ -782,10 +783,7 @@ export default function FundWalletPage() {
                           className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold"
                         >
                           {vaCreating ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Creating...
-                            </div>
+                            <ButtonLoading type="sending" text="Creating..." />
                           ) : (
                             "Create Account"
                           )}
@@ -847,7 +845,7 @@ export default function FundWalletPage() {
                 <div className="bg-muted/50 rounded-lg p-4">
                   {loadingFees ? (
                     <div className="flex items-center justify-center py-2">
-                      <div className="w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                      <LoadingIcon type="loading" size={20} />
                       <span className="ml-2 text-sm text-muted-foreground">Calculating...</span>
                     </div>
                   ) : feeInfo ? (
@@ -921,7 +919,7 @@ export default function FundWalletPage() {
         )}
 
         {/* Fee Comparison */}
-        <Card className="border-border bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+        <Card className="border-border bg-linear-to-br from-green-500/5 to-emerald-500/5">
           <CardContent className="p-4">
             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <IonIcon name="calculator" size="18px" color="#22c55e" />

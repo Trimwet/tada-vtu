@@ -8,6 +8,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 import { getSupabase } from '@/lib/supabase/client';
+import { LoadingIcon } from '@/components/loading-icons';
 
 interface Notification {
   id: string;
@@ -199,7 +200,7 @@ export default function NotificationsPage() {
         {loading ? (
           <Card className="border-border">
             <CardContent className="py-16 text-center">
-              <div className="w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <LoadingIcon type="loading" size={32} className="mx-auto mb-4" />
               <p className="text-muted-foreground">Loading notifications...</p>
             </CardContent>
           </Card>

@@ -24,6 +24,8 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { supabaseFetcher } from "@/lib/swr-fetcher";
 import { toast } from "sonner";
+import { Spinner } from "@/components/loading-screen";
+import { LoadingIcon } from "@/components/loading-icons";
 
 // Clear old feature caches on app load
 import "@/lib/cache-invalidation";
@@ -39,7 +41,7 @@ const BankWithdrawalModal = dynamic(
   () => import("@/components/bank-withdrawal-modal").then(mod => ({ default: mod.BankWithdrawalModal })),
   { 
     ssr: false,
-    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div></div>
+    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><Spinner size={32} /></div>
   }
 );
 
@@ -267,7 +269,7 @@ export default function DashboardPage() {
                         : !isProfileLoaded
                           ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                              <LoadingIcon type="loading" size={24} />
                             </div>
                           )
                           : `₦${(user.balance || 0).toLocaleString("en-NG")}`
@@ -388,7 +390,7 @@ export default function DashboardPage() {
             <CardContent className="pt-0">
               {transactionsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <LoadingIcon type="loading" size={24} />
                 </div>
               ) : recentTransactions.length === 0 ? (
                 <div className="text-center py-8">

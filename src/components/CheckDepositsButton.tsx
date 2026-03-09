@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IonIcon } from '@/components/ion-icon';
 import { toast } from '@/lib/toast';
+import { ButtonLoading } from '@/components/loading-icons';
 
 export function CheckDepositsButton() {
   const [checking, setChecking] = useState(false);
@@ -47,10 +48,7 @@ export function CheckDepositsButton() {
       className="w-full border-green-500/30 text-green-600 hover:bg-green-500/10"
     >
       {checking ? (
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-          Checking...
-        </div>
+        <ButtonLoading type="loading" text="Checking..." />
       ) : (
         <div className="flex items-center gap-2">
           <IonIcon name="refresh" size="18px" />

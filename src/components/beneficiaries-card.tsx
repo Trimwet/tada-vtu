@@ -6,6 +6,7 @@ import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { getSupabase } from "@/lib/supabase/client";
+import { LoadingIcon } from "@/components/loading-icons";
 
 interface Beneficiary {
   id: string;
@@ -52,7 +53,7 @@ export function BeneficiariesCard({ serviceType, onSelect }: BeneficiariesCardPr
     return (
       <Card className="border-border mt-6">
         <CardContent className="py-8 flex justify-center">
-          <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+          <LoadingIcon type="loading" size={24} />
         </CardContent>
       </Card>
     );

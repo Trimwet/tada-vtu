@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { IonIcon } from '@/components/ion-icon';
 import { toast } from 'sonner';
 import { getSupabase } from '@/lib/supabase/client';
+import { ButtonLoading } from '@/components/loading-icons';
 
 interface CreatePinModalProps {
   userId: string;
@@ -118,10 +119,7 @@ export function CreatePinModal({ userId, isOpen, onClose, onSuccess, canSkip = t
             className="w-full bg-green-500 hover:bg-green-600 text-white"
           >
             {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Creating...
-              </div>
+              <ButtonLoading type="sending" text="Creating..." />
             ) : (
               'Create PIN'
             )}

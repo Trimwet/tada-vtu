@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { IonIcon } from "@/components/ion-icon";
 import { toast } from "@/lib/toast";
+import { ButtonLoading } from "@/components/loading-icons";
 
 interface VaultQRModalProps {
   isOpen: boolean;
@@ -158,10 +159,7 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
                 {isGenerating ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Generating...
-                  </div>
+                  <ButtonLoading type="loading" text="Generating..." />
                 ) : (
                   <div className="flex items-center gap-2">
                     <IonIcon name="qr-code" size="18px" />

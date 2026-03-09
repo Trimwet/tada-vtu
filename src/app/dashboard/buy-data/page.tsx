@@ -249,9 +249,9 @@ export default function BuyDataPage() {
 
                     <CardContent>
                         {/* Important Notice */}
-                        <div className="relative overflow-hidden bg-gradient-to-r from-green-500/5 via-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-4 mb-6 backdrop-blur-md">
+                        <div className="relative overflow-hidden bg-linear-to-r from-green-500/5 via-green-500/10 to-green-500/5 border border-green-500/20 rounded-2xl p-4 mb-6 backdrop-blur-md">
                             {/* Liquid shine effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
+                            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
                             <div className="flex gap-3">
                                 <IonIcon
                                     name="warning"
@@ -288,7 +288,7 @@ export default function BuyDataPage() {
                         </div>
 
                         {/* Purchase Mode Toggle - More robust layout */}
-                        <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 mb-6">
+                        <div className="bg-white/3 border border-white/10 rounded-2xl p-4 mb-6">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="space-y-1 flex-1">
                                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -413,29 +413,6 @@ export default function BuyDataPage() {
                                 </div>
                             )}
 
-                            {/* Phone Number */}
-                            <div className="space-y-2">
-                                <Label htmlFor="phone" className="text-sm font-medium">
-                                    Phone Number
-                                </Label>
-                                <div className="relative">
-                                    <IonIcon
-                                        name="call-outline"
-                                        size="18px"
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <Input
-                                        id="phone"
-                                        type="tel"
-                                        placeholder="08012345678"
-                                        value={phoneNumber}
-                                        onChange={(e) => setPhoneNumber(e.target.value)}
-                                        className="pl-10 bg-background border-border"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
                             {/* Data Plans - Dynamic from API */}
                             {selectedNetwork && selectedType && (
                                 <div className="space-y-3">
@@ -470,7 +447,7 @@ export default function BuyDataPage() {
                                                 </p>
                                             </div>
                                         ) : (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1 thin-scrollbar">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-75 overflow-y-auto pr-1 thin-scrollbar">
                                                 {availablePlans.map((plan, idx) => (
                                                     <button
                                                         key={`plan-${idx}-${plan.id}`}
@@ -514,6 +491,29 @@ export default function BuyDataPage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Phone Number */}
+                            <div className="space-y-2">
+                                <Label htmlFor="phone" className="text-sm font-medium">
+                                    Phone Number
+                                </Label>
+                                <div className="relative">
+                                    <IonIcon
+                                        name="call-outline"
+                                        size="18px"
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <Input
+                                        id="phone"
+                                        type="tel"
+                                        placeholder="08012345678"
+                                        value={phoneNumber}
+                                        onChange={(e) => setPhoneNumber(e.target.value)}
+                                        className="pl-10 bg-background border-border"
+                                        required
+                                    />
+                                </div>
+                            </div>
 
 
                             {/* Summary */}
