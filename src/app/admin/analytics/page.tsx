@@ -286,7 +286,7 @@ export default function AnalyticsPage() {
                       />
                       <Tooltip
                         formatter={(value) => formatCurrency(Number(value) || 0)}
-                        labelFormatter={formatDate}
+                        labelFormatter={(label) => formatDate(String(label))}
                         contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                       />
                       <Legend />
@@ -312,7 +312,7 @@ export default function AnalyticsPage() {
                         <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9ca3af" fontSize={11} />
                         <YAxis stroke="#9ca3af" fontSize={11} />
                         <Tooltip
-                          labelFormatter={formatDate}
+                          labelFormatter={(label) => formatDate(String(label))}
                           contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                         />
                         <Bar dataKey="transactions" name="Transactions" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
                         <XAxis dataKey="date" tickFormatter={formatDate} stroke="#9ca3af" fontSize={11} />
                         <YAxis stroke="#9ca3af" fontSize={11} />
                         <Tooltip
-                          labelFormatter={formatDate}
+                          labelFormatter={(label) => formatDate(String(label))}
                           contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                         />
                         <Bar dataKey="users" name="New Users" fill="#06b6d4" radius={[4, 4, 0, 0]} />
@@ -457,7 +457,7 @@ export default function AnalyticsPage() {
                       <YAxis tickFormatter={(v) => `₦${(v / 1000).toFixed(0)}k`} stroke="#9ca3af" fontSize={11} />
                       <Tooltip
                         formatter={(value) => formatCurrency(Number(value) || 0)}
-                        labelFormatter={formatDate}
+                        labelFormatter={(label) => formatDate(String(label))}
                         contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }}
                       />
                       <Legend />
