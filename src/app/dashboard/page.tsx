@@ -41,7 +41,7 @@ const BankWithdrawalModal = dynamic(
   () => import("@/components/bank-withdrawal-modal").then(mod => ({ default: mod.BankWithdrawalModal })),
   { 
     ssr: false,
-    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><Spinner size={32} /></div>
+    loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><Spinner size="lg" /></div>
   }
 );
 
