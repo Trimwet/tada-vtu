@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useGreeting } from "@/hooks/useGreeting";
 import TextType from "./text-type";
 
@@ -30,13 +30,14 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function GreetingTypewriter({ className = "", speed = 65 }: GreetingTypewriterProps) {
   const greeting = useGreeting();
+  
+  // Create a stable shuffled order on initial render
+  const [shuffledPool] = useState(() => shuffleArray(TYPEWRITER_MESSAGES));
 
-  // Create shuffled messages array with greeting always first
+  // Create messages array with greeting always first
   const messages = useMemo(() => {
-    // Always put greeting first, then shuffle the rest
-    const shuffledPool = shuffleArray(TYPEWRITER_MESSAGES);
     return greeting ? [greeting, ...shuffledPool] : shuffledPool;
-  }, [greeting]);
+  }, [greeting, shuffledPool]);
 
   return (
     <span className={className}>
