@@ -26,6 +26,8 @@ import { supabaseFetcher } from "@/lib/swr-fetcher";
 import { toast } from "sonner";
 import { Spinner } from "@/components/loading-screen";
 import { LoadingIcon } from "@/components/loading-icons";
+import { EyeIcon } from "@/components/ui/eye-icon";
+import { EyeOffIcon } from "@/components/ui/eye-off-icon";
 
 // Clear old feature caches on app load
 import "@/lib/cache-invalidation";
@@ -280,11 +282,11 @@ export default function DashboardPage() {
                       className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                       title={hideBalance ? "Show balance" : "Hide balance"}
                     >
-                      <IonIcon
-                        name={hideBalance ? "eye-off-outline" : "eye-outline"}
-                        size="18px"
-                        color="white"
-                      />
+                      {hideBalance ? (
+                        <EyeOffIcon size={18} className="text-white" />
+                      ) : (
+                        <EyeIcon size={18} className="text-white" />
+                      )}
                     </button>
                   </div>
                 </div>

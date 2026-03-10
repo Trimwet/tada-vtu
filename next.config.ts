@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Set workspace root to silence lockfile warning
+  outputFileTracingRoot: "C:\\Users\\MAFUYAI\\Documents\\TADA VTU\\tada-vtu",
+  
   // Production optimizations
   poweredByHeader: false,
   compress: true,
