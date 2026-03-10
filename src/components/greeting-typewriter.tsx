@@ -28,7 +28,7 @@ export function GreetingTypewriter({ className = "", speed = 65 }: GreetingTypew
       <TextType 
         text={messages}
         typingSpeed={speed}
-        pauseDuration={2500}
+        pauseDuration={7000}
         showCursor
         cursorCharacter="▎"
         deletingSpeed={35}
