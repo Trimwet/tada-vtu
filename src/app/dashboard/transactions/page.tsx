@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal';
+type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'withdrawal';
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
 
 export default function TransactionsPage() {
@@ -74,9 +74,6 @@ export default function TransactionsPage() {
       deposit: 'arrow-down-circle',
       airtime: 'call',
       data: 'wifi',
-      cable: 'tv',
-      electricity: 'flash',
-      betting: 'football',
       withdrawal: 'arrow-up-circle',
       gift_room_create: 'gift-outline',
       gift_room_refund: 'arrow-undo-outline',
@@ -109,9 +106,6 @@ export default function TransactionsPage() {
     { key: 'deposit', label: 'Deposits' },
     { key: 'airtime', label: 'Airtime' },
     { key: 'data', label: 'Data' },
-    { key: 'cable', label: 'Cable' },
-    { key: 'electricity', label: 'Electricity' },
-    { key: 'betting', label: 'Betting' },
     { key: 'withdrawal', label: 'Withdrawals' },
   ];
 
