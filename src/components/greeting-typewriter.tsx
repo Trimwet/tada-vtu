@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useGreeting } from "@/hooks/useGreeting";
 import TextType from "./text-type";
 
@@ -8,7 +9,7 @@ interface GreetingTypewriterProps {
   speed?: number;
 }
 
-// Pool of messages to cycle through
+// Pool of messages to shuffle
 const TYPEWRITER_MESSAGES = [
   "Ready to recharge?",
   "Let's get you connected",
@@ -17,11 +18,25 @@ const TYPEWRITER_MESSAGES = [
   "Best rates guaranteed",
 ];
 
+// Fisher-Yates shuffle algorithm - proper random shuffling
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export function GreetingTypewriter({ className = "", speed = 65 }: GreetingTypewriterProps) {
   const greeting = useGreeting();
 
-  // Use the greeting from hook plus our pool of messages for cycling
-  const messages = greeting ? [greeting, ...TYPEWRITER_MESSAGES] : TYPEWRITER_MESSAGES;
+  // Create shuffled messages array with greeting always first
+  const messages = useMemo(() => {
+    // Always put greeting first, then shuffle the rest
+    const shuffledPool = shuffleArray(TYPEWRITER_MESSAGES);
+    return greeting ? [greeting, ...shuffledPool] : shuffledPool;
+  }, [greeting]);
 
   return (
     <span className={className}>
