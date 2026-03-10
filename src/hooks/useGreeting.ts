@@ -118,13 +118,13 @@ const LOW_BALANCE_MESSAGES = [
   "Wallet looking light today",
   "Ready for a top-up?",
   "Omo, your wallet don dry o",
-  "Abeg, make you add money small",
+  "Abeg, make you add money small na",
   "Wallet dey cry, fund am sharp",
   "E be like say money don finish",
   "Your wallet need urgent attention",
   "Make we load this wallet quick",
   "Shey you go fund wallet today?",
-  "Wallet balance dey on red alert",
+  "Wallet balance dey on red alert o",
 ];
 
 const HIGH_BALANCE_MESSAGES = [
@@ -177,7 +177,7 @@ const TYPEWRITER_MESSAGES = [
   "Cheap pass your neighbor's plug",
   "Make we help you save money",
   "Your wallet go thank you later",
-  "Reliable pass NEPA 😄",
+  "Reliable pass NEPA",
   "We no dey disappoint, I swear",
   "Your number one data dealer",
   "Shey you don chop? Buy data too",
