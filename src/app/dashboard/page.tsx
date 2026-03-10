@@ -247,7 +247,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Wallet Card - Premium Design */}
-        <Card className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 border-0 overflow-hidden shadow-lg shadow-green-500/20 animate-slide-up">
+        <Card className="bg-linear-to-br from-green-500 via-green-600 to-emerald-600 border-0 overflow-hidden shadow-lg shadow-green-500/20 animate-slide-up">
           <CardContent className="p-4 sm:p-6 relative">
             {/* Background pattern */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -329,7 +329,7 @@ export default function DashboardPage() {
                   className={`border-border hover:border-green-500/50 active:scale-95 transition-smooth cursor-pointer group bg-card animate-scale-in stagger-${index + 1} relative overflow-hidden`}
                 >
                   {"badge" in service && service.badge && (
-                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 sm:px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] sm:text-[9px] font-bold rounded-full">
+                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 sm:px-1.5 py-0.5 bg-linear-to-r from-amber-500 to-orange-500 text-white text-[8px] sm:text-[9px] font-bold rounded-full">
                       {service.badge}
                     </span>
                   )}
@@ -337,7 +337,7 @@ export default function DashboardPage() {
                     <div
                       className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${
                         "badge" in service && service.badge
-                          ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
+                          ? "bg-linear-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
                           : "bg-green-500/10 group-hover:bg-green-500"
                       }`}
                     >
@@ -345,7 +345,7 @@ export default function DashboardPage() {
                         name={service.icon}
                         size="22px"
                         color={("badge" in service && service.badge) ? "#f59e0b" : "#22c55e"}
-                        className="group-hover:!text-white transition-smooth"
+                        className="group-hover:text-white! transition-smooth"
                       />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-foreground">
@@ -653,7 +653,7 @@ export default function DashboardPage() {
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-linear-to-br from-amber-500/20 to-orange-500/20 rounded-lg flex items-center justify-center">
                     <IonIcon name="gift-outline" size="16px" className="text-amber-500" />
                   </div>
                   Referral Points
