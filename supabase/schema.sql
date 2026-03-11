@@ -80,12 +80,32 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(use
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
 CREATE INDEX IF NOT EXISTS idx_beneficiaries_user_id ON public.beneficiaries(user_id);
 
+-- 7. Reseller API Keys Table
+CREATE TABLE IF NOT EXISTS public.reseller_api_keys (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  api_key TEXT UNIQUE NOT NULL,
+  api_secret TEXT NOT NULL,
+  name TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  rate_limit INTEGER DEFAULT 60,
+  monthly_limit DECIMAL(12,2) DEFAULT 100000.00,
+  monthly_usage DECIMAL(12,2) DEFAULT 0.00,
+  last_used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_reseller_api_keys_user_id ON public.reseller_api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_reseller_api_keys_key ON public.reseller_api_keys(api_key);
+
 -- 7. Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.beneficiaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reseller_api_keys ENABLE ROW LEVEL SECURITY;
 
 -- 8. Create RLS Policies
 
@@ -129,6 +149,23 @@ CREATE POLICY "Users can update own notifications" ON public.notifications
 
 CREATE POLICY "Users can delete own notifications" ON public.notifications
   FOR DELETE USING (auth.uid() = user_id);
+
+-- Reseller API Keys policies
+CREATE POLICY "Users can view own API keys" ON public.reseller_api_keys
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own API keys" ON public.reseller_api_keys
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own API keys" ON public.reseller_api_keys
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own API keys" ON public.reseller_api_keys
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Allow service role to access all API keys (for validation)
+CREATE POLICY "Service role can access all API keys" ON public.reseller_api_keys
+  FOR ALL USING (auth.role() = 'service_role');
 
 -- 9. Create function to auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

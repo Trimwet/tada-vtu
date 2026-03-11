@@ -1,4 +1,4 @@
-# TADA VTU API Documentation
+# TADA VTU Reseller API Documentation
 
 Welcome to the TADA VTU Reseller API. This documentation helps developers integrate with our platform to resell data and airtime.
 
@@ -14,17 +14,30 @@ Production: https://www.tadavtu.com/api
 
 ## Authentication
 
-All API requests require authentication via Supabase. Include the user's JWT token in the Authorization header:
+### Option 1: API Key (Recommended)
+
+The easiest way to authenticate - just include your API key in the headers:
+
+```http
+X-API-Key: tada_live_xxxxxxxxxxxxx
+X-API-Secret: your_api_secret (optional but recommended)
+```
+
+### Option 2: JWT Token
+
+You can also use Supabase JWT tokens:
 
 ```http
 Authorization: Bearer <USER_JWT_TOKEN>
 ```
 
-### Getting Started
+### Getting Started (API Key)
 
 1. **Register** at [tadavtu.com](https://www.tadavtu.com)
-2. **Login** to get your JWT token
-3. **Fund wallet** to have balance for transactions
+2. **Login** to your dashboard
+3. **Go to API Settings** to generate your API key
+4. **Fund wallet** to have balance for transactions
+5. **Make API calls** using your API key
 
 ---
 
@@ -37,14 +50,19 @@ Authorization: Bearer <USER_JWT_TOKEN>
 
 ---
 
-## Endpoints
+## Endpoints (v1 - API Key Auth)
 
 ### 1. Get Data Plans
 
 Get available data plans for all networks.
 
 ```http
-GET /data/plans?network=MTN
+GET /v1/data/plans?network=MTN
+```
+
+**Headers:**
+```http
+X-API-Key: tada_live_xxxxxxxxxxxxx
 ```
 
 **Parameters:**
@@ -78,13 +96,14 @@ GET /data/plans?network=MTN
 ### 2. Purchase Data
 
 ```http
-POST /data/buy
+POST /v1/data/buy
 ```
 
 **Headers:**
 ```http
 Content-Type: application/json
-Authorization: Bearer <TOKEN>
+X-API-Key: tada_live_xxxxxxxxxxxxx
+X-API-Secret: your_api_secret
 ```
 
 **Request Body:**
@@ -94,9 +113,7 @@ Authorization: Bearer <TOKEN>
   "phone": "08012345678",
   "planId": "mtn-sme-1gb",
   "planName": "1GB",
-  "amount": 350,
-  "userId": "user-uuid-here",
-  "pin": "1234"
+  "amount": 350
 }
 ```
 
@@ -106,7 +123,7 @@ Authorization: Bearer <TOKEN>
   "status": true,
   "message": "1GB sent to 08012345678 successfully!",
   "data": {
-    "reference": "TADA_DATA_1234567890_abc123",
+    "reference": "TADA_V1_DATA_1234567890_abc123",
     "network": "mtn",
     "phone": "08012345678",
     "dataPlan": "1GB",
@@ -121,13 +138,14 @@ Authorization: Bearer <TOKEN>
 ### 3. Purchase Airtime
 
 ```http
-POST /airtime/buy
+POST /v1/airtime/buy
 ```
 
 **Headers:**
 ```http
 Content-Type: application/json
-Authorization: Bearer <TOKEN>
+X-API-Key: tada_live_xxxxxxxxxxxxx
+X-API-Secret: your_api_secret
 ```
 
 **Request Body:**
@@ -135,8 +153,7 @@ Authorization: Bearer <TOKEN>
 {
   "network": "mtn",
   "phone": "08012345678",
-  "amount": 1000,
-  "userId": "user-uuid-here"
+  "amount": 1000
 }
 ```
 
@@ -146,7 +163,7 @@ Authorization: Bearer <TOKEN>
   "status": true,
   "message": "₦1000 airtime sent to 08012345678 successfully!",
   "data": {
-    "reference": "TADA_AIR_1234567890_xyz789",
+    "reference": "TADA_V1_AIR_1234567890_xyz789",
     "network": "mtn",
     "phone": "08012345678",
     "amount": 1000,
@@ -160,7 +177,12 @@ Authorization: Bearer <TOKEN>
 ### 4. Check Wallet Balance
 
 ```http
-GET /wallet/balance?userId=USER_UUID
+GET /v1/wallet/balance
+```
+
+**Headers:**
+```http
+X-API-Key: tada_live_xxxxxxxxxxxxx
 ```
 
 **Response:**
@@ -169,73 +191,29 @@ GET /wallet/balance?userId=USER_UUID
   "status": true,
   "data": {
     "balance": 5000,
-    "currency": "NGN"
+    "currency": "NGN",
+    "apiKey": {
+      "monthlyLimit": 100000,
+      "monthlyUsage": 5000,
+      "availableLimit": 95000
+    }
   }
 }
 ```
 
 ---
 
-### 5. Check Transaction Status
+## Legacy Endpoints (JWT Auth)
 
-```http
-GET /transaction/{reference}
-```
+These endpoints use Supabase JWT authentication (for backward compatibility):
 
-**Response:**
-```json
-{
-  "status": true,
-  "data": {
-    "reference": "TADA_DATA_1234567890_abc123",
-    "status": "success",
-    "type": "data",
-    "amount": 350,
-    "phone": "08012345678",
-    "network": "MTN",
-    "createdAt": "2024-01-01T12:00:00Z"
-  }
-}
-```
-
----
-
-## Webhooks
-
-Receive real-time updates when transactions complete.
-
-### Endpoint
-```http
-POST /webhooks/tada
-```
-
-### Webhook Payload (Data)
-```json
-{
-  "event": "transaction.completed",
-  "reference": "TADA_DATA_1234567890_abc123",
-  "status": "success",
-  "type": "data",
-  "network": "mtn",
-  "phone": "08012345678",
-  "amount": 350,
-  "timestamp": "2024-01-01T12:00:00Z"
-}
-```
-
-### Webhook Payload (Airtime)
-```json
-{
-  "event": "transaction.completed",
-  "reference": "TADA_AIR_1234567890_xyz789",
-  "status": "success",
-  "type": "airtime",
-  "network": "mtn",
-  "phone": "08012345678",
-  "amount": 1000,
-  "timestamp": "2024-01-01T12:00:00Z"
-}
-```
+| Endpoint | Description |
+|----------|-------------|
+| `/data/plans` | Get data plans |
+| `/data/buy` | Purchase data |
+| `/airtime/buy` | Purchase airtime |
+| `/wallet/balance` | Check wallet balance |
+| `/transaction/{ref}` | Check transaction status |
 
 ---
 
@@ -244,9 +222,10 @@ POST /webhooks/tada
 | Code | Description |
 |------|-------------|
 | 400 | Invalid request |
-| 401 | Unauthorized |
+| 401 | Unauthorized (invalid API key) |
+| 403 | API key inactive or expired |
 | 404 | Not found |
-| 429 | Rate limited |
+| 429 | Rate limit or monthly limit exceeded |
 | 500 | Server error |
 
 ### Common Errors
@@ -268,7 +247,7 @@ POST /webhooks/tada
 ```json
 {
   "status": false,
-  "message": "Network not supported"
+  "message": "Monthly API key limit exceeded"
 }
 ```
 
@@ -288,49 +267,49 @@ POST /webhooks/tada
 
 ```javascript
 const API_URL = 'https://www.tadavtu.com/api';
+const API_KEY = 'tada_live_xxxxxxxxxxxxx';
+const API_SECRET = 'your_api_secret';
 
 // Purchase Data
-async function buyData(token, network, phone, planId, planName, amount, userId, pin) {
-  const response = await fetch(`${API_URL}/data/buy`, {
+async function buyData(network, phone, planId, planName, amount) {
+  const response = await fetch(`${API_URL}/v1/data/buy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'X-API-Key': API_KEY,
+      'X-API-Secret': API_SECRET
     },
-    body: JSON.stringify({ network, phone, planId, planName, amount, userId, pin })
+    body: JSON.stringify({ network, phone, planId, planName, amount })
   });
   return response.json();
 }
 
 // Get Data Plans
-async function getDataPlans(token, network) {
-  const response = await fetch(`${API_URL}/data/plans?network=${network}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
+async function getDataPlans(network) {
+  const response = await fetch(`${API_URL}/v1/data/plans?network=${network}`, {
+    headers: { 'X-API-Key': API_KEY }
   });
   return response.json();
 }
 
 // Purchase Airtime
-async function buyAirtime(token, network, phone, amount, userId) {
-  const response = await fetch(`${API_URL}/airtime/buy`, {
+async function buyAirtime(network, phone, amount) {
+  const response = await fetch(`${API_URL}/v1/airtime/buy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'X-API-Key': API_KEY,
+      'X-API-Secret': API_SECRET
     },
-    body: JSON.stringify({ network, phone, amount, userId })
+    body: JSON.stringify({ network, phone, amount })
   });
   return response.json();
 }
 
 // Check Balance
-async function getBalance(token, userId) {
-  const response = await fetch(`${API_URL}/wallet/balance?userId=${userId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
+async function getBalance() {
+  const response = await fetch(`${API_URL}/v1/wallet/balance`, {
+    headers: { 'X-API-Key': API_KEY }
   });
   return response.json();
 }
@@ -342,76 +321,43 @@ async function getBalance(token, userId) {
 import requests
 
 API_URL = 'https://www.tadavtu.com/api'
+API_KEY = 'tada_live_xxxxxxxxxxxxx'
+API_SECRET = 'your_api_secret'
 
-def buy_data(token, network, phone, plan_id, plan_name, amount, user_id, pin):
+headers = {
+    'X-API-Key': API_KEY,
+    'X-API-Secret': API_SECRET
+}
+
+def buy_data(network, phone, plan_id, plan_name, amount):
     response = requests.post(
-        f'{API_URL}/data/buy',
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {token}'
-        },
+        f'{API_URL}/v1/data/buy',
+        headers=headers,
         json={
             'network': network,
             'phone': phone,
             'planId': plan_id,
             'planName': plan_name,
-            'amount': amount,
-            'userId': user_id,
-            'pin': pin
+            'amount': amount
         }
     )
     return response.json()
 
-def get_data_plans(token, network):
+def get_data_plans(network):
     response = requests.get(
-        f'{API_URL}/data/plans',
+        f'{API_URL}/v1/data/plans',
         params={'network': network},
-        headers={'Authorization': f'Bearer {token}'}
+        headers={'X-API-Key': API_KEY}
     )
     return response.json()
 
-def buy_airtime(token, network, phone, amount, user_id):
+def buy_airtime(network, phone, amount):
     response = requests.post(
-        f'{API_URL}/airtime/buy',
-        headers={
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {token}'
-        },
-        json={
-            'network': network,
-            'phone': phone,
-            'amount': amount,
-            'userId': user_id
-        }
+        f'{API_URL}/v1/airtime/buy',
+        headers=headers,
+        json={'network': network, 'phone': phone, 'amount': amount}
     )
     return response.json()
-```
-
-### PHP
-
-```php
-<?php
-// Purchase Data
-$url = 'https://www.tadavtu.com/api/data/buy';
-$data = [
-    'network' => 'mtn',
-    'phone' => '08012345678',
-    'planId' => 'mtn-sme-1gb',
-    'planName' => '1GB',
-    'amount' => 350,
-    'userId' => 'user-uuid-here',
-    'pin' => '1234'
-];
-
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $token
-]);
-$response = curl_exec($ch);
-?>
 ```
 
 ---
@@ -428,3 +374,5 @@ $response = curl_exec($ch);
 - Minimum transaction: ₦100
 - All prices are in Naira (NGN)
 - Transactions are final once processed
+- API keys can be regenerated from dashboard
+- Monthly usage limits apply to each API key
