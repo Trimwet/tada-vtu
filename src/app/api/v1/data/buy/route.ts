@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
 import { validateResellerApiKey, updateApiKeyUsage } from '@/lib/api/reseller-auth';
+import { sendTransactionWebhook } from '@/lib/api/webhooks';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -142,6 +143,17 @@ export async function POST(request: NextRequest) {
         // Update API key monthly usage
         await updateApiKeyUsage(apiKeyRecord.id, numAmount);
 
+        // Send webhook notification (async, don't await)
+        sendTransactionWebhook(apiKeyRecord.user_id, {
+          reference: transaction.reference,
+          type: 'data',
+          status: 'success',
+          network,
+          phone: targetPhone,
+          amount: numAmount,
+          external_reference: result.data?.reference,
+        });
+
         return NextResponse.json({
           status: true,
           message: `${planName || 'Data'} sent to ${targetPhone} successfully!`,
@@ -177,6 +189,16 @@ export async function POST(request: NextRequest) {
           .from('transactions')
           .update({ status: 'failed' })
           .eq('id', transaction.id);
+
+        // Send webhook notification for failure (async, don't await)
+        sendTransactionWebhook(apiKeyRecord.user_id, {
+          reference: transaction.reference,
+          type: 'data',
+          status: 'failed',
+          network,
+          phone: targetPhone,
+          amount: numAmount,
+        });
 
         return NextResponse.json({
           status: false,

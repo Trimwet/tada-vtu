@@ -28,10 +28,24 @@ CREATE TABLE IF NOT EXISTS public.reseller_webhooks (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 2b. Create Webhook Logs Table
+CREATE TABLE IF NOT EXISTS public.reseller_webhook_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  webhook_id UUID REFERENCES public.reseller_webhooks(id) ON DELETE CASCADE NOT NULL,
+  event TEXT NOT NULL,
+  payload JSONB,
+  status TEXT NOT NULL CHECK (status IN ('success', 'failed', 'pending')),
+  status_code INTEGER,
+  error_message TEXT,
+  delivered_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 3. Create indexes
 CREATE INDEX IF NOT EXISTS idx_reseller_api_keys_user_id ON public.reseller_api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_reseller_api_keys_key ON public.reseller_api_keys(api_key);
 CREATE INDEX IF NOT EXISTS idx_reseller_webhooks_user_id ON public.reseller_webhooks(user_id);
+CREATE INDEX IF NOT EXISTS idx_reseller_webhook_logs_webhook_id ON public.reseller_webhook_logs(webhook_id);
+CREATE INDEX IF NOT EXISTS idx_reseller_webhook_logs_delivered_at ON public.reseller_webhook_logs(delivered_at DESC);
 
 -- 4. Enable Row Level Security
 ALTER TABLE public.reseller_api_keys ENABLE ROW LEVEL SECURITY;
@@ -74,6 +88,19 @@ CREATE POLICY "Users can update own webhooks" ON public.reseller_webhooks
 -- Users can delete their own webhooks
 CREATE POLICY "Users can delete own webhooks" ON public.reseller_webhooks
   FOR DELETE USING (auth.uid() = user_id);
+
+-- 7. Enable RLS for webhook logs
+ALTER TABLE public.reseller_webhook_logs ENABLE ROW LEVEL SECURITY;
+
+-- Users can view their own webhook logs
+CREATE POLICY "Users can view own webhook logs" ON public.reseller_webhook_logs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.reseller_webhooks 
+      WHERE public.reseller_webhooks.id = public.reseller_webhook_logs.webhook_id 
+      AND public.reseller_webhooks.user_id = auth.uid()
+    )
+  );
 
 -- 7. Add a function to generate API credentials (optional helper)
 CREATE OR REPLACE FUNCTION public.generate_reseller_api_credentials()
