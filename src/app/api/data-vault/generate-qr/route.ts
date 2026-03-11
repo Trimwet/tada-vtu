@@ -42,6 +42,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if QR code already exists for this vault and hasn't expired
+    const { data: existingQR } = await supabase
+      .from('vault_qr_codes')
+      .select('*')
+      .eq('vault_id', vaultId)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (existingQR) {
+      // Return existing QR code - check if qrCode is stored or needs regeneration
+      const storedQrCode = existingQR.qr_data?.qrCode;
+      
+      if (storedQrCode) {
+        // Return stored QR code
+        console.log('Returning stored QR code');
+        return NextResponse.json({
+          status: true,
+          data: {
+            qrCode: storedQrCode,
+            qrId: existingQR.qr_data.id,
+            expiresAt: existingQR.expires_at,
+            vaultInfo: {
+              network: vault.network,
+              plan_name: vault.plan_name,
+              amount: vault.amount,
+              phone_number: vault.phone_number,
+            },
+            isExisting: true,
+          },
+        });
+      }
+      
+      // Old QR code without stored image - regenerate from qr_data
+      console.log('Regenerating QR code from stored data');
+      const { qrCode } = await generatePersonalDataQR({
+        vaultId: vault.id,
+        userId: userId,
+        network: vault.network,
+        planSize: vault.plan_name,
+        planName: vault.plan_name,
+        amount: vault.amount,
+        validDays: 7,
+      });
+      
+      return NextResponse.json({
+        status: true,
+        data: {
+          qrCode,
+          qrId: existingQR.qr_data.id,
+          expiresAt: existingQR.expires_at,
+          vaultInfo: {
+            network: vault.network,
+            plan_name: vault.plan_name,
+            amount: vault.amount,
+            phone_number: vault.phone_number,
+          },
+          isExisting: true,
+        },
+      });
+    }
+
     // Generate QR code
     const { qrCode, qrData } = await generatePersonalDataQR({
       vaultId: vault.id,
@@ -54,13 +117,19 @@ export async function POST(request: NextRequest) {
     });
 
     // Store QR data in database for tracking
+    // Include qrCode in the qr_data for easy retrieval
+    const qrDataWithCode = {
+      ...qrData,
+      qrCode: qrCode // Store the image data for later retrieval
+    };
+    
     const { error: insertError } = await supabase
       .from('vault_qr_codes')
       .insert({
         id: qrData.id,
         vault_id: vault.id,
         user_id: userId,
-        qr_data: qrData,
+        qr_data: qrDataWithCode,
         expires_at: qrData.validUntil,
         created_at: new Date().toISOString(),
       });

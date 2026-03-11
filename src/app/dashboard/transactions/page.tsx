@@ -65,9 +65,19 @@ export default function TransactionsPage() {
   };
 
   const getTransactionIcon = (type: string, description?: string | null) => {
-    // Check description for bank transfer
-    if (description?.toLowerCase().includes('bank transfer')) {
+    // Check description for specific transaction types
+    const desc = description?.toLowerCase() || '';
+    
+    if (desc.includes('bank transfer')) {
       return 'business-outline';
+    }
+    
+    if (desc.includes('data vault')) {
+      return 'archive';
+    }
+    
+    if (desc.includes('qr code')) {
+      return 'qr-code';
     }
     
     const icons: Record<string, string> = {

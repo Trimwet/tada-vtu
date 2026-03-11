@@ -70,7 +70,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-              <IonIcon name="wallet-outline" size="16px" color="#22c55e" />
+              <IonIcon name="archive-outline" size="16px" color="#22c55e" />
             </div>
             Data Vault
           </CardTitle>
@@ -91,7 +91,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-              <IonIcon name="wallet-outline" size="16px" color="#22c55e" />
+              <IonIcon name="archive-outline" size="16px" color="#22c55e" />
             </div>
             Data Vault
           </CardTitle>
@@ -102,7 +102,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
         <CardContent className="pt-0">
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <IonIcon name="wallet-outline" size="32px" color="#22c55e" />
+              <IonIcon name="archive-outline" size="32px" color="#22c55e" />
             </div>
             <h3 className="font-bold text-foreground text-lg mb-1">Vault Empty</h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-[200px] mx-auto">
@@ -125,7 +125,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-            <IonIcon name="wallet-outline" size="16px" color="#22c55e" />
+            <IonIcon name="archive-outline" size="16px" color="#22c55e" />
           </div>
           Data Vault
           <span className="ml-auto text-xs bg-green-500/10 text-green-600 px-2 py-1 rounded-full font-medium">
@@ -145,7 +145,7 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-                  <IonIcon name="wallet-outline" size="18px" color="#22c55e" />
+                  <IonIcon name="archive-outline" size="18px" color="#22c55e" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">

@@ -41,7 +41,7 @@ export function useDataVault(userId?: string) {
 
   // Fetch vault data with pagination
   const { data, error, mutate } = useSWR<{ status: boolean; data: VaultData }>(
-    userId ? `/api/data-vault/list?userId=${userId}&limit=${ITEMS_PER_PAGE}` : null,
+    userId ? `/api/data-vault/list?userId=${userId}` : null,
     async (url) => {
       const response = await fetch(url);
       if (!response.ok) {
@@ -82,8 +82,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data immediately
-        await mutate();
+        // Refresh vault data immediately - force revalidation from server
+        await mutate(undefined, { revalidate: true });
       }
 
       return result;
@@ -113,8 +113,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data immediately
-        await mutate();
+        // Refresh vault data immediately - force revalidation from server
+        await mutate(undefined, { revalidate: true });
       }
 
       return result;
@@ -143,8 +143,8 @@ export function useDataVault(userId?: string) {
       const result = await response.json();
 
       if (result.status) {
-        // Refresh vault data immediately
-        await mutate();
+        // Refresh vault data immediately - force revalidation from server
+        await mutate(undefined, { revalidate: true });
       }
 
       return result;

@@ -180,7 +180,7 @@ export default function DashboardPage() {
   const services = useMemo(() => [
     { name: "Airtime", icon: "call-outline", href: "/dashboard/buy-airtime" },
     { name: "Data", icon: "wifi-outline", href: "/dashboard/buy-data" },
-    { name: "Data Vault", icon: "wallet-outline", href: "/dashboard/data-vault", badge: "NEW" },
+    { name: "Data Vault", icon: "archive-outline", href: "/dashboard/data-vault", badge: "NEW" },
   ], []);
 
   const timeGreeting = user
@@ -426,7 +426,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={transaction.id}
-                        className="group relative p-2.5 rounded-lg border border-border hover:border-green-500/50 transition-all duration-200 hover:shadow-sm cursor-pointer"
+                        className="relative p-2.5 rounded-lg border border-border"
                       >
                         <div className="flex items-center gap-2.5">
                           {/* Icon */}
@@ -445,9 +445,36 @@ export default function DashboardPage() {
                                 size="16px"
                                 color="#ef4444"
                               />
+                            ) : transaction.type === "data" ? (
+                              // Check description for Data Vault or QR delivery
+                              transaction.description?.toLowerCase().includes("data vault") ? (
+                                <IonIcon
+                                  name="archive"
+                                  size="16px"
+                                  color="#6b7280"
+                                />
+                              ) : transaction.description?.toLowerCase().includes("qr code") ? (
+                                <IonIcon
+                                  name="qr-code"
+                                  size="16px"
+                                  color="#22c55e"
+                                />
+                              ) : (
+                                <IonIcon
+                                  name="wifi"
+                                  size="16px"
+                                  color="#6b7280"
+                                />
+                              )
                             ) : transaction.amount > 0 ? (
-                              // Credit/Deposit transactions
-                              transaction.type === "deposit" ? (
+                              // Credit/Deposit transactions - check for bank transfer first
+                              transaction.description?.toLowerCase().includes('bank transfer') ? (
+                                <IonIcon
+                                  name="business-outline"
+                                  size="16px"
+                                  color="#22c55e"
+                                />
+                              ) : transaction.type === "deposit" ? (
                                 <IonIcon
                                   name="cash"
                                   size="16px"
@@ -460,12 +487,6 @@ export default function DashboardPage() {
                                   color="#22c55e"
                                 />
                               )
-                            ) : transaction.type === "data" ? (
-                              <IonIcon
-                                name="wifi"
-                                size="16px"
-                                color="#6b7280"
-                              />
                             ) : transaction.type === "airtime" ? (
                               <IonIcon
                                 name="call"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 import { IonIcon } from "@/components/ion-icon";
 import { toast } from "@/lib/toast";
 import { ButtonLoading } from "@/components/loading-icons";
+import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 
 interface VaultQRModalProps {
   isOpen: boolean;
@@ -26,19 +27,71 @@ interface VaultQRModalProps {
 }
 
 export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
+  const { user } = useSupabaseUser();
   const [qrCode, setQrCode] = useState<string>("");
   const [qrId, setQrId] = useState<string>("");
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
 
-  const generateQR = async () => {
+  const fetchExistingQR = async () => {
+    if (!user?.id) return;
+    
     setIsGenerating(true);
     try {
       const response = await fetch("/api/data-vault/generate-qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vaultId: vault.id }),
+        body: JSON.stringify({ vaultId: vault.id, userId: user.id }),
+      });
+
+      const result = await response.json();
+
+      console.log('QR API Response:', result);
+
+      if (result.status) {
+        console.log('QR Code data:', typeof result.data.qrCode, result.data.qrCode);
+        setQrCode(result.data.qrCode);
+        setQrId(result.data.qrId);
+        setExpiresAt(result.data.expiresAt);
+        setIsGenerated(true);
+      } else {
+        // No existing QR code - show generate screen
+        console.log('No QR code found, showing generate screen');
+        setQrCode("");
+        setQrId("");
+        setExpiresAt("");
+        setIsGenerated(false);
+      }
+    } catch (error) {
+      console.error("Error fetching QR:", error);
+      setQrCode("");
+      setQrId("");
+      setExpiresAt("");
+      setIsGenerated(false);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Fetch QR code when a different vault is selected
+  useEffect(() => {
+    if (!isOpen) return;
+    // Fetch QR code when modal opens
+    fetchExistingQR();
+  }, [vault.id]);
+
+  const generateQR = async () => {
+    if (!user?.id) {
+      toast.error('Please log in to generate QR code');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/data-vault/generate-qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vaultId: vault.id, userId: user.id }),
       });
 
       const result = await response.json();
@@ -48,7 +101,11 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         setQrId(result.data.qrId);
         setExpiresAt(result.data.expiresAt);
         setIsGenerated(true);
-        toast.success("QR code generated successfully!");
+        if (result.data.isExisting) {
+          toast.info("Found existing QR code!");
+        } else {
+          toast.success("QR code generated successfully!");
+        }
       } else {
         toast.error(result.message || "Failed to generate QR code");
       }
@@ -98,16 +155,13 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
   };
 
   const handleClose = () => {
-    setQrCode("");
-    setQrId("");
-    setExpiresAt("");
-    setIsGenerated(false);
+    // Don't clear QR code data when closing - user can view it again without regenerating
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
@@ -143,8 +197,15 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
             </div>
           </div>
 
-          {/* QR Code Generation */}
-          {!isGenerated ? (
+          {/* QR Code - Loading, Generated, or Generate */}
+          {isGenerating ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-sm text-muted-foreground">Loading your QR code...</p>
+            </div>
+          ) : !isGenerated ? (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <IonIcon name="qr-code-outline" size="32px" color="#22c55e" />
@@ -172,14 +233,25 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
             <div className="space-y-4">
               {/* QR Code Display */}
               <div className="bg-white p-4 rounded-xl border-2 border-green-200 text-center">
-                <img
-                  src={qrCode}
-                  alt="Data Vault QR Code"
-                  className="mx-auto mb-3 rounded-lg"
-                  style={{ maxWidth: "250px", width: "100%" }}
-                />
-                <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">
+                {qrCode ? (
+                  <img
+                    src={qrCode}
+                    alt="Data Vault QR Code"
+                    className="mx-auto mb-3 rounded-lg"
+                    style={{ maxWidth: "250px", width: "100%" }}
+                    onError={(e) => {
+                      console.error('QR Image load error:', e);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="py-8 text-gray-400">
+                    <IonIcon name="qr-code-outline" size="48px" className="mx-auto mb-2" />
+                    <p className="text-sm">QR code not available</p>
+                  </div>
+                )}
+                <div className="text-xs text-gray-700">
+                  <p className="font-medium text-gray-900 mb-1">
                     {vault.plan_name} {vault.network} Data
                   </p>
                   <p>QR ID: {qrId.slice(-8)}</p>
