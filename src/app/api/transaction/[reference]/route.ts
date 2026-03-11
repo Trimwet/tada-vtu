@@ -17,6 +17,28 @@ export async function GET(
   { params }: { params: Promise<{ reference: string }> }
 ) {
   try {
+    // Security: Require Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { status: false, message: 'Authorization required' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    
+    // Verify the token with Supabase
+    const supabase = getSupabaseAdmin();
+    const { data: { user: supabaseUser }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !supabaseUser) {
+      return NextResponse.json(
+        { status: false, message: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
     const { reference } = await params;
 
     if (!reference) {
@@ -25,8 +47,6 @@ export async function GET(
         { status: 400 }
       );
     }
-
-    const supabase = getSupabaseAdmin();
 
     const { data: transaction, error } = await supabase
       .from('transactions')
@@ -38,6 +58,14 @@ export async function GET(
       return NextResponse.json(
         { status: false, message: 'Transaction not found' },
         { status: 404 }
+      );
+    }
+
+    // Security: Ensure user can only view their own transactions
+    if (transaction.user_id !== supabaseUser.id) {
+      return NextResponse.json(
+        { status: false, message: 'Unauthorized access' },
+        { status: 403 }
       );
     }
 

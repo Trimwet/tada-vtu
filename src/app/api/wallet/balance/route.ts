@@ -14,22 +14,51 @@ function getSupabaseAdmin() {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const authHeader = request.headers.get('authorization');
+    
+    // Security: Require Authorization header
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { status: false, message: 'Authorization required' },
+        { status: 401 }
+      );
+    }
 
-    if (!userId) {
+    const token = authHeader.substring(7);
+    
+    // Verify the token with Supabase
+    const supabase = getSupabaseAdmin();
+    const { data: { user: supabaseUser }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !supabaseUser) {
+      return NextResponse.json(
+        { status: false, message: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const requestedUserId = searchParams.get('userId');
+
+    if (!requestedUserId) {
       return NextResponse.json(
         { status: false, message: 'userId parameter is required' },
         { status: 400 }
       );
     }
 
-    const supabase = getSupabaseAdmin();
+    // Security: Ensure user can only access their own balance
+    if (requestedUserId !== supabaseUser.id) {
+      return NextResponse.json(
+        { status: false, message: 'Unauthorized access' },
+        { status: 403 }
+      );
+    }
 
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('balance')
-      .eq('id', userId)
+      .eq('id', requestedUserId)
       .single();
 
     if (error || !profile) {
