@@ -8,60 +8,63 @@ Short, compelling copy for promoting the Data Vault feature on social media.
 ```
 🎁 Gift data in seconds!
 
-Download QR → Friend scans → They enter number → Data arrives instantly
+1. Create QR from your data
+2. Send image to friend
+3. They open camera → scan → enter number
 
-No codes. No stress. Just share.
+No app needed. Works on any phone!
 
 Try Data Vault now 💚
 ```
 
 ---
 
-## Option 2 (Question Hook)
+## Option 2 (No-Scan Alternative)
 ```
-Ever tried explaining how to buy data to someone?
+🎁 Send data to anyone!
 
-Just send them a QR code 👆
-They scan, enter their number, done!
+QR code or link - pick what works for you
 
-Data gifting made simple 🔥
+Your friend doesn't have an app?
+No problem! Just share the QR/image
+They scan with camera → type number → done!
+
+Try free 👇
 ```
 
 ---
 
-## Option 3 (Benefit-Focused)
+## Option 3 (Question Hook - Addressing the concern)
+```
+"My phone can't scan QR codes!"
+
+Actually... every smartphone camera can scan QR codes now 👆
+
+Point camera at QR → it automatically opens
+Then type number → get data
+
+No app. No scanner. Just your camera 📸
+```
+
+---
+
+## Option 4 (Benefit-Focused)
 ```
 Your data, your rules 🎯
 
-• Send to anyone via QR
+• Send to anyone via QR or link
 • They don't need your account
-• Just scan & receive
+• Works on ANY phone with camera
 
 Share data with family & friends instantly
 ```
 
 ---
 
-## Option 4 (Story Format)
-```
-Me: "How do I send you data?"
+## Key Points to Address:
+- ✅ Every smartphone camera can scan QR codes (no app needed)
+- ✅ Works on any phone with a camera
+- ✅ No account needed for receiver
+- ✅ Just scan → type number → get data
 
-TADA: "Here's a QR code"
-
-Friend scans → types number → gets data
-
-That's it. That's the whole process 😂
-
-Try it free 👇
-```
-
----
-
-## Key Takeaways from Ad Analysis:
-- Keep it SHORT (under 100 characters)
-- Lead with the problem, not the solution
-- Use emojis for visual break
-- Include clear call-to-action
-- Focus on outcomes, not features
-
-**Best for posting:** Option 1 or 3 - shortest, clearest, hits key benefit immediately.
+**Best for posting:** Option 1 or 2 - addresses the scanner concern directly.
