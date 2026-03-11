@@ -32,10 +32,8 @@ Authorization: Bearer <USER_JWT_TOKEN>
 
 | Service | Description |
 |---------|-------------|
-| Data | Purchase mobile data plans |
-| Airtime | Purchase airtime credit |
-| Cable TV | Subscribe to DSTV, GOtv, Startimes |
-| Betting | Fund betting accounts |
+| Data | Purchase mobile data plans for MTN, Airtel, Glo, 9mobile |
+| Airtime | Purchase airtime credit for all networks |
 
 ---
 
@@ -136,46 +134,6 @@ POST /inlomax/airtime
 
 ---
 
-### 4. Cable TV Subscription
-
-```http
-POST /inlomax/cable
-```
-
-**Request Body:**
-```json
-{
-  "network": "dstv",
-  "phone": "12345678901",
-  "planId": "dstv-confam",
-  "amount": 2100
-}
-```
-
-**Available Cable Networks:**
-- `dstv` - DSTV
-- `gotv` - GOtv
-- `startimes` - StarTimes
-
----
-
-### 5. Betting
-
-```http
-POST /inlomax/betting
-```
-
-**Request Body:**
-```json
-{
-  "network": "bet9ja",
-  "phone": "08012345678",
-  "amount": 1000
-}
-```
-
----
-
 ### 6. Check Transaction Status
 
 ```http
@@ -226,7 +184,7 @@ Receive real-time updates when transactions complete.
 POST /inlomax/webhook
 ```
 
-### Webhook Payload
+### Webhook Payload (Data)
 ```json
 {
   "event": "transaction.completed",
@@ -236,6 +194,20 @@ POST /inlomax/webhook
   "network": "mtn",
   "phone": "08012345678",
   "amount": 350,
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```
+
+### Webhook Payload (Airtime)
+```json
+{
+  "event": "transaction.completed",
+  "reference": "TXN_123456",
+  "status": "success",
+  "type": "airtime",
+  "network": "mtn",
+  "phone": "08012345678",
+  "amount": 1000,
   "timestamp": "2024-01-01T12:00:00Z"
 }
 ```
