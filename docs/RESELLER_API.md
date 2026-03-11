@@ -1,6 +1,6 @@
 # TADA VTU API Documentation
 
-Welcome to the TADA VTU API. This documentation helps developers integrate with our platform to resell data, airtime, cable TV, and more.
+Welcome to the TADA VTU Reseller API. This documentation helps developers integrate with our platform to resell data and airtime.
 
 ---
 
@@ -44,21 +44,32 @@ Authorization: Bearer <USER_JWT_TOKEN>
 Get available data plans for all networks.
 
 ```http
-GET /inlomax/data-plans
+GET /data/plans?network=MTN
 ```
+
+**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| network | string | Yes | Network name (MTN, AIRTEL, GLO, 9MOBILE) |
 
 **Response:**
 ```json
 {
-  "status": true,
-  "data": {
-    "mtn": [
-      { "id": "mtn-1gb", "size": "1GB", "price": 350, "validity": "30 days" }
-    ],
-    "airtel": [...],
-    "glo": [...],
-    "9mobile": [...]
-  }
+  "status": "success",
+  "data": [
+    {
+      "id": "mtn-1gb",
+      "serviceID": "mtn-sme-1gb",
+      "name": "1GB",
+      "size": "1GB",
+      "price": 350,
+      "validity": "30 days",
+      "type": "sme",
+      "network": "MTN"
+    }
+  ],
+  "network": "MTN",
+  "totalPlans": 10
 }
 ```
 
@@ -67,7 +78,7 @@ GET /inlomax/data-plans
 ### 2. Purchase Data
 
 ```http
-POST /inlomax/data
+POST /data/buy
 ```
 
 **Headers:**
@@ -81,8 +92,11 @@ Authorization: Bearer <TOKEN>
 {
   "network": "mtn",
   "phone": "08012345678",
-  "planId": "mtn-1gb",
-  "amount": 350
+  "planId": "mtn-sme-1gb",
+  "planName": "1GB",
+  "amount": 350,
+  "userId": "user-uuid-here",
+  "pin": "1234"
 }
 ```
 
@@ -90,13 +104,14 @@ Authorization: Bearer <TOKEN>
 ```json
 {
   "status": true,
-  "message": "Data purchased successfully",
+  "message": "1GB sent to 08012345678 successfully!",
   "data": {
-    "reference": "TXN_123456",
+    "reference": "TADA_DATA_1234567890_abc123",
     "network": "mtn",
     "phone": "08012345678",
+    "dataPlan": "1GB",
     "amount": 350,
-    "plan": "1GB"
+    "newBalance": 4650
   }
 }
 ```
@@ -106,7 +121,13 @@ Authorization: Bearer <TOKEN>
 ### 3. Purchase Airtime
 
 ```http
-POST /inlomax/airtime
+POST /airtime/buy
+```
+
+**Headers:**
+```http
+Content-Type: application/json
+Authorization: Bearer <TOKEN>
 ```
 
 **Request Body:**
@@ -114,7 +135,8 @@ POST /inlomax/airtime
 {
   "network": "mtn",
   "phone": "08012345678",
-  "amount": 1000
+  "amount": 1000,
+  "userId": "user-uuid-here"
 }
 ```
 
@@ -122,44 +144,23 @@ POST /inlomax/airtime
 ```json
 {
   "status": true,
-  "message": "Airtime purchased successfully",
+  "message": "₦1000 airtime sent to 08012345678 successfully!",
   "data": {
-    "reference": "TXN_123456",
+    "reference": "TADA_AIR_1234567890_xyz789",
     "network": "mtn",
     "phone": "08012345678",
-    "amount": 1000
+    "amount": 1000,
+    "newBalance": 4000
   }
 }
 ```
 
 ---
 
-### 6. Check Transaction Status
+### 4. Check Wallet Balance
 
 ```http
-GET /inlomax/transaction/{reference}
-```
-
-**Response:**
-```json
-{
-  "status": true,
-  "data": {
-    "reference": "TXN_123456",
-    "status": "success",
-    "network": "mtn",
-    "phone": "08012345678",
-    "amount": 350
-  }
-}
-```
-
----
-
-### 7. Get Wallet Balance
-
-```http
-GET /inlomax/balance
+GET /wallet/balance?userId=USER_UUID
 ```
 
 **Response:**
@@ -175,20 +176,44 @@ GET /inlomax/balance
 
 ---
 
+### 5. Check Transaction Status
+
+```http
+GET /transaction/{reference}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "data": {
+    "reference": "TADA_DATA_1234567890_abc123",
+    "status": "success",
+    "type": "data",
+    "amount": 350,
+    "phone": "08012345678",
+    "network": "MTN",
+    "createdAt": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+---
+
 ## Webhooks
 
 Receive real-time updates when transactions complete.
 
 ### Endpoint
 ```http
-POST /inlomax/webhook
+POST /webhooks/tada
 ```
 
 ### Webhook Payload (Data)
 ```json
 {
   "event": "transaction.completed",
-  "reference": "TXN_123456",
+  "reference": "TADA_DATA_1234567890_abc123",
   "status": "success",
   "type": "data",
   "network": "mtn",
@@ -202,7 +227,7 @@ POST /inlomax/webhook
 ```json
 {
   "event": "transaction.completed",
-  "reference": "TXN_123456",
+  "reference": "TADA_AIR_1234567890_xyz789",
   "status": "success",
   "type": "airtime",
   "network": "mtn",
@@ -265,14 +290,47 @@ POST /inlomax/webhook
 const API_URL = 'https://www.tadavtu.com/api';
 
 // Purchase Data
-async function buyData(token, network, phone, planId, amount) {
-  const response = await fetch(`${API_URL}/inlomax/data`, {
+async function buyData(token, network, phone, planId, planName, amount, userId, pin) {
+  const response = await fetch(`${API_URL}/data/buy`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ network, phone, planId, amount })
+    body: JSON.stringify({ network, phone, planId, planName, amount, userId, pin })
+  });
+  return response.json();
+}
+
+// Get Data Plans
+async function getDataPlans(token, network) {
+  const response = await fetch(`${API_URL}/data/plans?network=${network}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return response.json();
+}
+
+// Purchase Airtime
+async function buyAirtime(token, network, phone, amount, userId) {
+  const response = await fetch(`${API_URL}/airtime/buy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ network, phone, amount, userId })
+  });
+  return response.json();
+}
+
+// Check Balance
+async function getBalance(token, userId) {
+  const response = await fetch(`${API_URL}/wallet/balance?userId=${userId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
   });
   return response.json();
 }
@@ -285,9 +343,9 @@ import requests
 
 API_URL = 'https://www.tadavtu.com/api'
 
-def buy_data(token, network, phone, plan_id, amount):
+def buy_data(token, network, phone, plan_id, plan_name, amount, user_id, pin):
     response = requests.post(
-        f'{API_URL}/inlomax/data',
+        f'{API_URL}/data/buy',
         headers={
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {token}'
@@ -296,7 +354,34 @@ def buy_data(token, network, phone, plan_id, amount):
             'network': network,
             'phone': phone,
             'planId': plan_id,
-            'amount': amount
+            'planName': plan_name,
+            'amount': amount,
+            'userId': user_id,
+            'pin': pin
+        }
+    )
+    return response.json()
+
+def get_data_plans(token, network):
+    response = requests.get(
+        f'{API_URL}/data/plans',
+        params={'network': network},
+        headers={'Authorization': f'Bearer {token}'}
+    )
+    return response.json()
+
+def buy_airtime(token, network, phone, amount, user_id):
+    response = requests.post(
+        f'{API_URL}/airtime/buy',
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}'
+        },
+        json={
+            'network': network,
+            'phone': phone,
+            'amount': amount,
+            'userId': user_id
         }
     )
     return response.json()
@@ -306,12 +391,16 @@ def buy_data(token, network, phone, plan_id, amount):
 
 ```php
 <?php
-$url = 'https://www.tadavtu.com/api/inlomax/data';
+// Purchase Data
+$url = 'https://www.tadavtu.com/api/data/buy';
 $data = [
     'network' => 'mtn',
     'phone' => '08012345678',
-    'planId' => 'mtn-1gb',
-    'amount' => 350
+    'planId' => 'mtn-sme-1gb',
+    'planName' => '1GB',
+    'amount' => 350,
+    'userId' => 'user-uuid-here',
+    'pin' => '1234'
 ];
 
 $ch = curl_init($url);
