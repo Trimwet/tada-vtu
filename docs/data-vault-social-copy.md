@@ -8,63 +8,61 @@ Short, compelling copy for promoting the Data Vault feature on social media.
 ```
 🎁 Gift data in seconds!
 
-1. Create QR from your data
-2. Send image to friend
-3. They open camera → scan → enter number
+2 ways to share:
+📷 Scan QR code
+🔗 OR share a link
 
-No app needed. Works on any phone!
+Friend enters number → data arrives!
+No app needed.
 
 Try Data Vault now 💚
 ```
 
 ---
 
-## Option 2 (No-Scan Alternative)
+## Option 2 (Link Focus)
 ```
 🎁 Send data to anyone!
 
-QR code or link - pick what works for you
+Don't have a QR scanner?
+No problem! Just share a link 📱
 
-Your friend doesn't have an app?
-No problem! Just share the QR/image
-They scan with camera → type number → done!
+Friend clicks link → enters number → gets data
 
-Try free 👇
+Works for everyone 👇
 ```
 
 ---
 
-## Option 3 (Question Hook - Addressing the concern)
+## Option 3 (Question Hook)
 ```
-"My phone can't scan QR codes!"
+"How do I send you data?"
 
-Actually... every smartphone camera can scan QR codes now 👆
+Me: "Here's a link or QR code"
 
-Point camera at QR → it automatically opens
-Then type number → get data
+QR: Scan with camera
+Link: Click → enter number → done
 
-No app. No scanner. Just your camera 📸
+Data gifting made simple 🔥
 ```
 
 ---
 
-## Option 4 (Benefit-Focused)
+## Option 4 (Simple)
 ```
 Your data, your rules 🎯
 
-• Send to anyone via QR or link
-• They don't need your account
-• Works on ANY phone with camera
+• QR code OR link - pick what works
+• Friend doesn't need an app
+• Just enter their number
 
-Share data with family & friends instantly
+Share data with anyone instantly
 ```
 
 ---
 
-## Key Points to Address:
-- ✅ Every smartphone camera can scan QR codes (no app needed)
-- ✅ Works on any phone with a camera
+## Key Points:
+- ✅ Works with QR OR link (no scanner needed for link)
+- ✅ Works on ANY phone
 - ✅ No account needed for receiver
-- ✅ Just scan → type number → get data
-
-**Best for posting:** Option 1 or 2 - addresses the scanner concern directly.
+- ✅ Just click link → type number → get data

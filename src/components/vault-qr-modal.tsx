@@ -279,16 +279,38 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
                 </Button>
               </div>
 
+              {/* Shareable Link */}
+              <div className="bg-muted/50 rounded-xl p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Share via link (no QR scanner needed)</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrId}`}
+                    className="flex-1 text-xs bg-background border rounded-lg px-3 py-2 text-muted-foreground"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrId}`);
+                      toast.success("Link copied!");
+                    }}
+                    className="shrink-0"
+                  >
+                    Copy
+                  </Button>
+                </div>
+              </div>
+
               {/* Usage Instructions */}
               <div className="bg-blue-500/10 border border-blue-200/30 rounded-xl p-3">
                 <div className="flex gap-2">
                   <IonIcon name="information-circle" size="16px" color="#3b82f6" className="shrink-0 mt-0.5" />
                   <div className="text-xs text-blue-700">
-                    <p className="font-semibold mb-1">How to use:</p>
-                    <p>1. Save or screenshot this QR code</p>
-                    <p>2. When you need the data, scan it with any QR scanner</p>
-                    <p>3. Enter the phone number to receive the data</p>
-                    <p>4. Data will be delivered instantly!</p>
+                    <p className="font-semibold mb-1">2 ways to use:</p>
+                    <p className="mb-1">📷 <strong>QR:</strong> Scan with camera → Enter phone → Get data</p>
+                    <p>🔗 <strong>Link:</strong> Copy link above → Send to friend → They open link → Enter phone → Get data</p>
                   </div>
                 </div>
               </div>
