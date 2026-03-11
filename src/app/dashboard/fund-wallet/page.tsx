@@ -337,7 +337,7 @@ export default function FundWalletPage() {
                 <p className={`font-semibold text-sm ${paymentMethod === "bank" ? "text-green-500" : "text-foreground"}`}>
                   Bank Transfer
                 </p>
-                <p className="text-xs text-muted-foreground">₦25.50 fee</p>
+                <p className="text-xs text-muted-foreground">₦25 fee</p>
               </div>
             </div>
           </button>
@@ -356,7 +356,7 @@ export default function FundWalletPage() {
               </div>
               <div className="text-center">
                 <p className={`font-semibold text-sm ${paymentMethod === "card" ? "text-green-500" : "text-foreground"}`}>
-                  Card/USSD
+                  Card Payment
                 </p>
                 <p className="text-xs text-muted-foreground">1.4% fee</p>
               </div>
@@ -376,7 +376,7 @@ export default function FundWalletPage() {
                 Bank Transfer
               </CardTitle>
               <CardDescription>
-                Transfer to your dedicated account. ₦25.50 service fee + Flutterwave processing charges.
+                Transfer to your dedicated account. ₦25 service fee.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -427,7 +427,7 @@ export default function FundWalletPage() {
                           Transfer any amount from your bank app. Your wallet will be credited automatically within 1-2 minutes.
                         </p>
                         <p className="text-muted-foreground mt-1">
-                          <span className="text-green-500 font-semibold">₦25.50 service fee</span> - still cheaper than card payments!
+                          <span className="text-green-500 font-semibold">₦25 service fee</span> - cheaper than card payments!
                         </p>
                       </div>
                     </div>
@@ -579,9 +579,9 @@ export default function FundWalletPage() {
                   {!accountOption && !showBvnInput && !showTempOption && (
                     <div className="space-y-4">
                       <div className="text-center py-2">
-                        <h3 className="font-semibold text-foreground mb-2">Choose Account Type</h3>
+                        <h3 className="font-semibold text-foreground mb-2">How do you want to add money?</h3>
                         <p className="text-sm text-muted-foreground">
-                          Select how you want to fund your wallet via bank transfer
+                          Pick one option below
                         </p>
                       </div>
 
@@ -603,7 +603,7 @@ export default function FundWalletPage() {
                               <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full">Recommended</span>
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              No BVN required • Amount-specific • Expires in 1 hour
+                              Use once • No ID needed • Good for any amount
                             </p>
                           </div>
                         </div>
@@ -624,7 +624,7 @@ export default function FundWalletPage() {
                           <div>
                             <p className="font-semibold text-foreground">Permanent Account</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Requires BVN • Reusable • Transfer any amount anytime
+                              Need your BVN • Save for later • Use forever
                             </p>
                           </div>
                         </div>
@@ -803,9 +803,9 @@ export default function FundWalletPage() {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <IonIcon name="card" size="20px" color="#22c55e" />
-                Card / USSD Payment
+                Card Payment
               </CardTitle>
-              <CardDescription>Pay with card, bank transfer, or USSD via Flutterwave</CardDescription>
+              <CardDescription>Pay with your debit card. 1.4% fee.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -927,15 +927,15 @@ export default function FundWalletPage() {
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between p-2 rounded-lg bg-green-500/10">
-                <span className="text-muted-foreground">₦10,000 via Bank Transfer</span>
-                <span className="font-semibold text-green-500">₦10 fee</span>
+                <span className="text-muted-foreground">Bank Transfer (any amount)</span>
+                <span className="font-semibold text-green-500">₦25 fee</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                <span className="text-muted-foreground">₦10,000 via Card</span>
-                <span className="font-semibold text-orange-500">~₦189 fee</span>
+                <span className="text-muted-foreground">Card Payment</span>
+                <span className="font-semibold text-orange-500">1.4% fee</span>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                Save up to <span className="text-green-500 font-semibold">95%</span> on fees with bank transfer!
+                Bank transfer is <span className="text-green-500 font-semibold">cheaper</span> for amounts above ₦2,000
               </p>
             </div>
           </CardContent>
