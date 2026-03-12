@@ -58,7 +58,13 @@ export function useDataVault(userId?: string) {
       }
       const result = await response.json();
       console.log('[DATA-VAULT] API Response:', result);
-      return result;
+      
+      // Return the data part for SWR
+      if (result.status && result.data) {
+        return result;
+      } else {
+        throw new Error(result.message || 'API returned error');
+      }
     },
     {
       refreshInterval: 10000, // Refresh every 10 seconds for debugging
