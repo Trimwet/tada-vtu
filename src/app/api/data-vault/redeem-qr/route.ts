@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parsePersonalQRData } from '@/lib/qr-generator';
+import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,76 +65,119 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Deliver the data directly using Inlomax API
-    const planIdForPurchase = vault.plan_id;
+    // Deliver the data using Inlomax API
+    console.log(`[QR-REDEEM] Delivering: ${vault.network} ${vault.plan_name} to ${phoneNumber}`);
 
-    const inlomaxResponse = await fetch(`${process.env.INLOMAX_BASE_URL || 'https://inlomax.com'}/api/data`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.INLOMAX_API_KEY}`,
-      },
-      body: JSON.stringify({
-        network: vault.network,
-        phone: phoneNumber,
-        planId: planIdForPurchase,
-        amount: vault.amount,
-        planName: vault.plan_name,
-      }),
-    });
+    try {
+      const inlomaxResult = await purchaseDataInlomax({ 
+        serviceID: vault.plan_id, 
+        phone: phoneNumber 
+      });
 
-    const inlomaxResult = await inlomaxResponse.json();
+      console.log(`[QR-REDEEM] Inlomax response:`, inlomaxResult.status, inlomaxResult.message);
 
-    if (inlomaxResult.status) {
-      // Mark vault as delivered
-      await supabase
-        .from('data_vault')
-        .update({
-          status: 'delivered',
-          delivered_at: new Date().toISOString(),
-          recipient_phone: phoneNumber,
-        })
-        .eq('id', vault.id);
+      if (inlomaxResult.status === 'success') {
+        // Mark vault as delivered
+        await supabase
+          .from('data_vault')
+          .update({
+            status: 'delivered',
+            delivered_at: new Date().toISOString(),
+            delivery_reference: inlomaxResult.data?.reference,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', vault.id);
 
-      // Mark QR as used
-      await supabase
-        .from('vault_qr_codes')
-        .update({ 
-          used_at: new Date().toISOString(),
-          redeemed_phone: phoneNumber 
-        })
-        .eq('id', parsedQR.id);
+        // Mark QR as used
+        await supabase
+          .from('vault_qr_codes')
+          .update({ 
+            used_at: new Date().toISOString(),
+            redeemed_phone: phoneNumber 
+          })
+          .eq('id', parsedQR.id);
 
-      // Create transaction record
-      await supabase
-        .from('transactions')
-        .insert({
-          user_id: vault.user_id,
-          type: 'data',
-          amount: vault.amount,
-          phone_number: phoneNumber,
-          network: vault.network,
-          status: 'success',
-          reference: `qr_${parsedQR.id}_${Date.now()}`,
-          external_reference: inlomaxResult.reference,
-          description: `${vault.plan_name} ${vault.network} data delivered via QR code`,
-          response_data: inlomaxResult,
+        // Create transaction record
+        await supabase
+          .from('transactions')
+          .insert({
+            user_id: vault.user_id,
+            type: 'data',
+            amount: vault.amount,
+            phone_number: phoneNumber,
+            network: vault.network,
+            status: 'success',
+            reference: `qr_${parsedQR.id}_${Date.now()}`,
+            external_reference: inlomaxResult.data?.reference,
+            description: `${vault.plan_name} ${vault.network} data delivered via QR code`,
+            response_data: inlomaxResult,
+          });
+
+        return NextResponse.json({
+          status: true,
+          message: `${parsedQR.planSize} ${parsedQR.network} data delivered to ${phoneNumber}`,
+          data: {
+            network: parsedQR.network,
+            planSize: parsedQR.planSize,
+            phoneNumber: phoneNumber,
+            deliveredAt: new Date().toISOString(),
+            reference: inlomaxResult.data?.reference,
+          }
         });
 
-      return NextResponse.json({
-        status: true,
-        message: `${parsedQR.planSize} ${parsedQR.network} data delivered to ${phoneNumber}`,
-        data: {
-          network: parsedQR.network,
-          planSize: parsedQR.planSize,
-          phoneNumber: phoneNumber,
-          deliveredAt: new Date().toISOString(),
-          reference: inlomaxResult.reference,
-        }
-      });
-    } else {
+      } else if (inlomaxResult.status === 'processing') {
+        // Mark as delivered optimistically
+        await supabase
+          .from('data_vault')
+          .update({
+            status: 'delivered',
+            delivered_at: new Date().toISOString(),
+            delivery_reference: inlomaxResult.data?.reference,
+            metadata: { processing: true },
+          })
+          .eq('id', vault.id);
+
+        await supabase
+          .from('vault_qr_codes')
+          .update({ 
+            used_at: new Date().toISOString(),
+            redeemed_phone: phoneNumber 
+          })
+          .eq('id', parsedQR.id);
+
+        return NextResponse.json({
+          status: true,
+          message: 'Data delivery is processing. You will be notified when complete.',
+          data: {
+            network: parsedQR.network,
+            planSize: parsedQR.planSize,
+            phoneNumber: phoneNumber,
+            status: 'processing',
+            reference: inlomaxResult.data?.reference,
+          }
+        });
+
+      } else {
+        console.error('[QR-REDEEM] Delivery failed:', inlomaxResult.message);
+        return NextResponse.json(
+          { status: false, message: inlomaxResult.message || 'Failed to deliver data' },
+          { status: 500 }
+        );
+      }
+
+    } catch (apiError) {
+      console.error('[QR-REDEEM] API Error:', apiError);
+
+      if (apiError instanceof ServiceUnavailableError) {
+        return NextResponse.json(
+          { status: false, message: 'Service is temporarily unavailable. Please try again later.' },
+          { status: 503 }
+        );
+      }
+
+      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: inlomaxResult.message || 'Failed to deliver data' },
+        { status: false, message: errorMessage },
         { status: 500 }
       );
     }
