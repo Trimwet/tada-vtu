@@ -28,11 +28,18 @@ export async function POST(request: NextRequest) {
     // Parse and validate QR code
     const parsedQR = parsePersonalQRData(qrData);
     if (!parsedQR) {
+      console.error('[QR-REDEEM] Failed to parse QR data');
       return NextResponse.json(
         { status: false, message: 'Invalid or expired QR code' },
         { status: 400 }
       );
     }
+
+    console.log('[QR-REDEEM] Parsed QR successfully:', {
+      id: parsedQR.id,
+      vaultId: parsedQR.vaultId,
+      network: parsedQR.network
+    });
 
     const supabase = getSupabaseAdmin();
     
