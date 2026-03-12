@@ -51,17 +51,24 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
       console.log('QR API Response:', result);
 
       if (result.status) {
-        console.log('QR Code data:', typeof result.data.qrCode, result.data.qrCode);
+        console.log('QR API Response:', result);
         setQrCode(result.data.qrCode);
         setQrId(result.data.qrId);
         setExpiresAt(result.data.expiresAt);
         
-        // Extract base64 data from QR code image URL
-        // The QR code image contains the URL with base64 data
-        // We need to fetch the QR data from the API response
+        // Extract base64 data from QR data for shareable link
         if (result.data.qrData) {
-          const base64Data = Buffer.from(JSON.stringify(result.data.qrData)).toString('base64');
-          setQrDataBase64(base64Data);
+          try {
+            // Use btoa for browser-compatible base64 encoding
+            const jsonString = JSON.stringify(result.data.qrData);
+            const base64Data = btoa(jsonString);
+            console.log('[QR-MODAL] Encoded base64 data:', base64Data.substring(0, 50) + '...');
+            setQrDataBase64(base64Data);
+          } catch (error) {
+            console.error('[QR-MODAL] Failed to encode QR data:', error);
+          }
+        } else {
+          console.warn('[QR-MODAL] No qrData in API response');
         }
         
         setIsGenerated(true);
@@ -111,10 +118,19 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         setQrId(result.data.qrId);
         setExpiresAt(result.data.expiresAt);
         
-        // Extract base64 data from QR data
+        // Extract base64 data from QR data for shareable link
         if (result.data.qrData) {
-          const base64Data = Buffer.from(JSON.stringify(result.data.qrData)).toString('base64');
-          setQrDataBase64(base64Data);
+          try {
+            // Use btoa for browser-compatible base64 encoding
+            const jsonString = JSON.stringify(result.data.qrData);
+            const base64Data = btoa(jsonString);
+            console.log('[QR-MODAL] Generated - Encoded base64 data:', base64Data.substring(0, 50) + '...');
+            setQrDataBase64(base64Data);
+          } catch (error) {
+            console.error('[QR-MODAL] Failed to encode QR data:', error);
+          }
+        } else {
+          console.warn('[QR-MODAL] No qrData in generate API response');
         }
         
         setIsGenerated(true);
