@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getSupabase } from '@/lib/supabase/client';
@@ -54,9 +54,9 @@ export default function DeveloperPage() {
       fetchApiKeys();
       fetchWebhooks();
     }
-  }, [authLoading, profile?.id]);
+  }, [authLoading, profile?.id, fetchApiKeys, fetchWebhooks]);
 
-  async function fetchApiKeys() {
+  const fetchApiKeys = useCallback(async () => {
     if (!supabase || !profile?.id) return;
     
     const { data, error } = await supabase
@@ -69,9 +69,9 @@ export default function DeveloperPage() {
       setApiKeys(data as ApiKey[]);
     }
     setLoading(false);
-  }
+  }, [supabase, profile?.id]);
 
-  async function fetchWebhooks() {
+  const fetchWebhooks = useCallback(async () => {
     if (!supabase || !profile?.id) return;
     
     const { data, error } = await supabase
@@ -83,7 +83,7 @@ export default function DeveloperPage() {
     if (!error && data) {
       setWebhooks(data as Webhook[]);
     }
-  }
+  }, [supabase, profile?.id]);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);

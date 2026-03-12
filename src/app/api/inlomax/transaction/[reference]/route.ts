@@ -57,7 +57,7 @@ export async function GET(
       console.log(`[VERIFY] Status mismatch for ${reference}: Local=${localStatus}, Inlomax=${inlomaxStatus}`);
       
       // Update local transaction status
-      let updateData: any = {
+      const updateData: any = {
         status: inlomaxStatus === 'success' ? 'success' : 'failed',
         updated_at: new Date().toISOString(),
         response_data: {
