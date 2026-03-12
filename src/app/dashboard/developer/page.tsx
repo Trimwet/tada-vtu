@@ -49,13 +49,6 @@ export default function DeveloperPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && profile?.id) {
-      fetchApiKeys();
-      fetchWebhooks();
-    }
-  }, [authLoading, profile?.id, fetchApiKeys, fetchWebhooks]);
-
   const fetchApiKeys = useCallback(async () => {
     if (!supabase || !profile?.id) return;
     
@@ -84,6 +77,13 @@ export default function DeveloperPage() {
       setWebhooks(data as Webhook[]);
     }
   }, [supabase, profile?.id]);
+
+  useEffect(() => {
+    if (!authLoading && profile?.id) {
+      fetchApiKeys();
+      fetchWebhooks();
+    }
+  }, [authLoading, profile?.id, fetchApiKeys, fetchWebhooks]);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
