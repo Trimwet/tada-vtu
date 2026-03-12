@@ -41,7 +41,7 @@ export function useDataVault(userId?: string) {
 
   // Fetch vault data with pagination
   const { data, error, mutate } = useSWR<{ status: boolean; data: VaultData }>(
-    userId ? `/api/data-vault/list?userId=${userId}&_t=${Date.now()}` : null,
+    userId ? `/api/data-vault/list?userId=${userId}` : null,
     async (url) => {
       console.log('[DATA-VAULT] Fetching from:', url);
       const response = await fetch(url, {
@@ -67,10 +67,10 @@ export function useDataVault(userId?: string) {
       }
     },
     {
-      refreshInterval: 10000, // Refresh every 10 seconds for debugging
+      refreshInterval: 60000, // Refresh every 60 seconds
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 1000, // Very short deduping for debugging
+      dedupingInterval: 5000, // Prevent duplicate requests within 5 seconds
       errorRetryCount: 3,
       errorRetryInterval: 2000,
     }
