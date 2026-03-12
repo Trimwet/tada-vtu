@@ -187,6 +187,7 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
     }
 
     const seenIds = new Set<string>();
+    const duplicateLog: any[] = [];
     console.log('[DEBUG] Processing Inlomax data plans:', result.data.dataPlans.length, 'total plans');
 
     for (const plan of result.data.dataPlans) {
@@ -210,9 +211,23 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       // Use Inlomax cost price directly (no markup) to compete with OPay
       const price = costPrice;
 
-      // Create unique ID
-      const uniqueId = `${plan.serviceID}-${plan.dataType || 'default'}`;
-      if (seenIds.has(uniqueId)) continue;
+      // Create unique ID using serviceID only (Inlomax guarantees unique serviceIDs)
+      // Previously we used serviceID + dataType which caused false duplicates
+      const uniqueId = plan.serviceID;
+      if (seenIds.has(uniqueId)) {
+        // Log duplicate for debugging
+        if (targetNetwork === 'MTN') {
+          duplicateLog.push({
+            network: targetNetwork,
+            dataPlan: plan.dataPlan,
+            dataType: plan.dataType,
+            serviceID: plan.serviceID,
+            uniqueId,
+            reason: 'Duplicate serviceID'
+          });
+        }
+        continue;
+      }
       seenIds.add(uniqueId);
 
       const sizeInMB = extractSizeInMB(plan.dataPlan);
@@ -240,7 +255,7 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       const displayName = plan.dataPlan.trim();
 
       plans[targetNetwork].push({
-        id: uniqueId,
+        id: plan.serviceID, // Use serviceID directly as it's unique
         provider: 'inlomax',
         network: targetNetwork,
         name: displayName,
@@ -259,6 +274,15 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       plans[net].sort((a, b) => {
         if (a.sizeInMB !== b.sizeInMB) return a.sizeInMB - b.sizeInMB;
         return a.price - b.price;
+      });
+    }
+
+    // Log MTN plan count and any duplicates
+    console.log(`[DEBUG] MTN plans after processing: ${plans.MTN.length}`);
+    if (duplicateLog.length > 0) {
+      console.log(`[DEBUG] MTN duplicates removed: ${duplicateLog.length}`);
+      duplicateLog.forEach(dup => {
+        console.log(`  - ${dup.dataPlan} (${dup.dataType}) - ID: ${dup.serviceID}`);
       });
     }
 
