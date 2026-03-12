@@ -41,18 +41,26 @@ export function useDataVault(userId?: string) {
 
   // Fetch vault data with pagination
   const { data, error, mutate } = useSWR<{ status: boolean; data: VaultData }>(
-    userId ? `/api/data-vault/list?userId=${userId}` : null,
+    userId ? `/api/data-vault/list?userId=${userId}&t=${Date.now()}` : null,
     async (url) => {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch vault data');
       }
       return response.json();
     },
     {
-      refreshInterval: 60000, // Refresh every 60 seconds (reduced from 30s)
+      refreshInterval: 30000, // Refresh every 30 seconds
       revalidateOnFocus: true,
-      dedupingInterval: 30000, // Prevent duplicate requests within 30s
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000, // Reduce deduping to 5s for more frequent updates
     }
   );
 

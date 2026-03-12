@@ -177,7 +177,7 @@ export default function Home() {
             <p className="text-gray-400 max-w-xl mx-auto">One platform for all your VTU needs. Fast, reliable, and affordable.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Airtime */}
             <Link href="/register" className="group">
               <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 hover:bg-white/[0.06] hover:border-green-500/50 transition-all duration-300">
@@ -203,34 +203,6 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-white mb-2">Data Bundles</h3>
                 <p className="text-gray-400 text-sm mb-4">Affordable data plans for browsing, streaming, and more.</p>
                 <span className="text-green-500 text-sm font-medium group-hover:underline">Buy Now →</span>
-              </div>
-            </Link>
-
-            {/* Cable TV */}
-            <Link href="/register" className="group">
-              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 hover:bg-white/[0.06] hover:border-green-500/50 transition-all duration-300">
-                <div className="w-14 h-14 bg-green-500/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-green-500/20 transition-colors">
-                  <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Cable TV</h3>
-                <p className="text-gray-400 text-sm mb-4">Pay for DStv, GOtv, and Startimes subscriptions instantly.</p>
-                <span className="text-green-500 text-sm font-medium group-hover:underline">Pay Now →</span>
-              </div>
-            </Link>
-
-            {/* Electricity */}
-            <Link href="/register" className="group">
-              <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 hover:bg-white/[0.06] hover:border-green-500/50 transition-all duration-300">
-                <div className="w-14 h-14 bg-green-500/10 rounded-xl flex items-center justify-center mb-5 group-hover:bg-green-500/20 transition-colors">
-                  <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Electricity</h3>
-                <p className="text-gray-400 text-sm mb-4">Buy prepaid and postpaid electricity tokens easily.</p>
-                <span className="text-green-500 text-sm font-medium group-hover:underline">Pay Now →</span>
               </div>
             </Link>
           </div>

@@ -162,22 +162,6 @@ function WifiIcon() {
   );
 }
 
-function TvIcon() {
-  return (
-    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  );
-}
-
-function BoltIcon() {
-  return (
-    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-    </svg>
-  );
-}
-
 function CheckIcon() {
   return (
     <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,8 +173,6 @@ function CheckIcon() {
 const TypeIconComponent: Record<string, () => React.ReactNode> = {
   Airtime: PhoneIcon,
   Data: WifiIcon,
-  "Cable TV": TvIcon,
-  Electricity: BoltIcon,
 };
 
 // Live transaction ticker - Dark theme optimized with ECG border
@@ -205,16 +187,12 @@ export function LiveTransactionTicker() {
     phone: string;
   }>>([]);
 
-  // Realistic transaction templates with correct type-network-amount combinations
+  // Realistic transaction templates - Airtime and Data only
   const transactionTemplates = [
     // Airtime - mobile networks only, realistic amounts (₦100-₦5000)
     { type: "Airtime", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [100, 200, 500, 1000, 2000, 3000, 5000] },
     // Data - mobile networks only, realistic data prices
     { type: "Data", networks: ["MTN", "Airtel", "GLO", "9mobile"], amounts: [300, 500, 1000, 1500, 2000, 3000, 5000] },
-    // Cable TV - DStv/GOtv only, subscription amounts
-    { type: "Cable TV", networks: ["DStv", "GOtv"], amounts: [1850, 2950, 4150, 7900, 12500, 15700, 21000] },
-    // Electricity - disco companies, token amounts
-    { type: "Electricity", networks: ["IKEDC", "EKEDC"], amounts: [1000, 2000, 3000, 5000, 10000, 15000, 20000] },
   ];
 
   const generateTransaction = () => {
