@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
           data: {
             qrCode: storedQrCode,
             qrId: existingQR.qr_data.id,
+            qrData: existingQR.qr_data, // Include the full QR data
             expiresAt: existingQR.expires_at,
             vaultInfo: {
               network: vault.network,
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         data: {
           qrCode,
           qrId: existingQR.qr_data.id,
+          qrData: existingQR.qr_data, // Include the full QR data
           expiresAt: existingQR.expires_at,
           vaultInfo: {
             network: vault.network,
@@ -144,6 +146,7 @@ export async function POST(request: NextRequest) {
       data: {
         qrCode,
         qrId: qrData.id,
+        qrData: qrData, // Include the full QR data for base64 encoding
         expiresAt: qrData.validUntil,
         vaultInfo: {
           network: vault.network,

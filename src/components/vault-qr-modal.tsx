@@ -30,6 +30,7 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
   const { user } = useSupabaseUser();
   const [qrCode, setQrCode] = useState<string>("");
   const [qrId, setQrId] = useState<string>("");
+  const [qrDataBase64, setQrDataBase64] = useState<string>("");
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
@@ -54,6 +55,15 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         setQrCode(result.data.qrCode);
         setQrId(result.data.qrId);
         setExpiresAt(result.data.expiresAt);
+        
+        // Extract base64 data from QR code image URL
+        // The QR code image contains the URL with base64 data
+        // We need to fetch the QR data from the API response
+        if (result.data.qrData) {
+          const base64Data = Buffer.from(JSON.stringify(result.data.qrData)).toString('base64');
+          setQrDataBase64(base64Data);
+        }
+        
         setIsGenerated(true);
       } else {
         // No existing QR code - show generate screen
@@ -100,6 +110,13 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         setQrCode(result.data.qrCode);
         setQrId(result.data.qrId);
         setExpiresAt(result.data.expiresAt);
+        
+        // Extract base64 data from QR data
+        if (result.data.qrData) {
+          const base64Data = Buffer.from(JSON.stringify(result.data.qrData)).toString('base64');
+          setQrDataBase64(base64Data);
+        }
+        
         setIsGenerated(true);
         if (result.data.isExisting) {
           toast.info("Found existing QR code!");
@@ -286,14 +303,14 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
                   <input
                     type="text"
                     readOnly
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrId}`}
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrDataBase64 || qrId}`}
                     className="flex-1 text-xs bg-background border rounded-lg px-3 py-2 text-muted-foreground"
                   />
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={async () => {
-                      await navigator.clipboard.writeText(`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrId}`);
+                      await navigator.clipboard.writeText(`${typeof window !== 'undefined' ? window.location.origin : ''}/vault/qr/${qrDataBase64 || qrId}`);
                       toast.success("Link copied!");
                     }}
                     className="shrink-0"
