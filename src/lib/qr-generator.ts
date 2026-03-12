@@ -18,13 +18,20 @@ export interface PersonalDataQR {
 function generateSignature(data: any): string {
   const secret = process.env.QR_SECRET_KEY || 'tada-vtu-qr-secret';
   const payload = JSON.stringify(data);
-  return createHash('sha256').update(payload + secret).digest('hex').substring(0, 16);
+  const signature = createHash('sha256').update(payload + secret).digest('hex').substring(0, 16);
+  console.log('[QR-SIG] Generating signature with secret length:', secret.length, 'payload length:', payload.length);
+  return signature;
 }
 
 // Verify QR code signature
 export function verifyQRSignature(qrData: any): boolean {
   const { signature, ...data } = qrData;
   const expectedSignature = generateSignature(data);
+  console.log('[QR-SIG] Verifying signature:', {
+    received: signature,
+    expected: expectedSignature,
+    match: signature === expectedSignature
+  });
   return signature === expectedSignature;
 }
 
