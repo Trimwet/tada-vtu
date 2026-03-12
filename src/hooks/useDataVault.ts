@@ -41,8 +41,9 @@ export function useDataVault(userId?: string) {
 
   // Fetch vault data with pagination
   const { data, error, mutate } = useSWR<{ status: boolean; data: VaultData }>(
-    userId ? `/api/data-vault/list?userId=${userId}&t=${Date.now()}` : null,
+    userId ? `/api/data-vault/list?userId=${userId}&_t=${Date.now()}` : null,
     async (url) => {
+      console.log('[DATA-VAULT] Fetching from:', url);
       const response = await fetch(url, {
         cache: 'no-store',
         headers: {
@@ -52,15 +53,20 @@ export function useDataVault(userId?: string) {
         }
       });
       if (!response.ok) {
+        console.error('[DATA-VAULT] API Error:', response.status, response.statusText);
         throw new Error('Failed to fetch vault data');
       }
-      return response.json();
+      const result = await response.json();
+      console.log('[DATA-VAULT] API Response:', result);
+      return result;
     },
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
+      refreshInterval: 10000, // Refresh every 10 seconds for debugging
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 5000, // Reduce deduping to 5s for more frequent updates
+      dedupingInterval: 1000, // Very short deduping for debugging
+      errorRetryCount: 3,
+      errorRetryInterval: 2000,
     }
   );
 

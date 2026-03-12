@@ -18,10 +18,14 @@ import Link from "next/link";
 
 export default function DataVaultPage() {
   const { user } = useSupabaseUser();
-  const { vaultData, loading, isDelivering, deliverData } = useDataVault(user?.id);
+  const { vaultData, loading, isDelivering, deliverData, refresh } = useDataVault(user?.id);
   const [activeTab, setActiveTab] = useState<'ready' | 'delivered' | 'expired'>('ready');
   const [selectedVault, setSelectedVault] = useState<any>(null);
   const [showQRModal, setShowQRModal] = useState(false);
+
+  console.log('[DATA-VAULT-PAGE] Vault data:', vaultData);
+  console.log('[DATA-VAULT-PAGE] Loading:', loading);
+  console.log('[DATA-VAULT-PAGE] User ID:', user?.id);
 
   const handleDeliver = async (vaultId: string) => {
     if (!user?.id) {
