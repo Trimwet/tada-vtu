@@ -87,27 +87,55 @@ export async function generatePersonalDataQR(params: {
 // Parse QR code data for personal vault
 export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
   try {
+    console.log('[QR-PARSE] Attempting to parse QR data, length:', base64Data?.length);
+    
     const jsonString = Buffer.from(base64Data, 'base64').toString('utf-8');
     const qrData = JSON.parse(jsonString) as PersonalDataQR;
     
+    console.log('[QR-PARSE] Decoded QR data:', {
+      id: qrData.id,
+      type: qrData.type,
+      vaultId: qrData.vaultId,
+      network: qrData.network,
+      validUntil: qrData.validUntil,
+      hasSignature: !!qrData.signature
+    });
+    
     // Verify it's a personal data QR
     if (qrData.type !== 'personal_data') {
+      console.error('[QR-PARSE] Invalid QR type:', qrData.type);
       throw new Error('Invalid QR code type');
     }
 
     // Verify signature
-    if (!verifyQRSignature(qrData)) {
+    const signatureValid = verifyQRSignature(qrData);
+    console.log('[QR-PARSE] Signature verification:', signatureValid);
+    
+    if (!signatureValid) {
+      console.error('[QR-PARSE] Signature verification failed');
       throw new Error('Invalid QR code signature');
     }
 
     // Check expiry
-    if (new Date() > new Date(qrData.validUntil)) {
+    const now = new Date();
+    const expiryDate = new Date(qrData.validUntil);
+    const isExpired = now > expiryDate;
+    
+    console.log('[QR-PARSE] Expiry check:', {
+      now: now.toISOString(),
+      validUntil: expiryDate.toISOString(),
+      isExpired
+    });
+    
+    if (isExpired) {
+      console.error('[QR-PARSE] QR code has expired');
       throw new Error('QR code has expired');
     }
 
+    console.log('[QR-PARSE] QR validation successful');
     return qrData;
   } catch (error) {
-    console.error('Failed to parse personal QR data:', error);
+    console.error('[QR-PARSE] Failed to parse personal QR data:', error);
     return null;
   }
 }
