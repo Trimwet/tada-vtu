@@ -226,8 +226,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('[V1-AIRTIME] Unexpected error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[V1-AIRTIME] Error details:', errorMessage);
     return NextResponse.json(
-      { status: false, message: 'An unexpected error occurred. Please try again.' },
+      { status: false, message: 'An unexpected error occurred. Please try again.', debug: errorMessage },
       { status: 500 }
     );
   }

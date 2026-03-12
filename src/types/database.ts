@@ -1,5 +1,3 @@
-export type LoyaltyTier = 'bronze' | 'silver' | 'gold' | 'platinum';
-
 // Gift Cards Types (defined before Database interface for use in Tables)
 export type GiftOccasion = 'birthday' | 'anniversary' | 'thanks' | 'love' | 'apology' | 'ramadan' | 'christmas' | 'eid' | 'graduation' | 'custom';
 export type GiftStatus = 'pending' | 'scheduled' | 'delivered' | 'opened' | 'credited' | 'expired' | 'cancelled';
@@ -23,17 +21,6 @@ export interface Database {
           is_active: boolean;
           created_at: string;
           updated_at: string;
-          // Loyalty fields
-          loyalty_points: number;
-          loyalty_tier: LoyaltyTier;
-          total_points_earned: number;
-          login_streak: number;
-          longest_streak: number;
-          last_login_date: string | null;
-          spin_available: boolean;
-          last_spin_date: string | null;
-          birthday: string | null;
-          total_spent: number;
         };
         Insert: {
           id: string;
@@ -50,16 +37,6 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
-          loyalty_points?: number;
-          loyalty_tier?: LoyaltyTier;
-          total_points_earned?: number;
-          login_streak?: number;
-          longest_streak?: number;
-          last_login_date?: string | null;
-          spin_available?: boolean;
-          last_spin_date?: string | null;
-          birthday?: string | null;
-          total_spent?: number;
         };
         Update: {
           id?: string;
@@ -76,77 +53,6 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
-          loyalty_points?: number;
-          loyalty_tier?: LoyaltyTier;
-          total_points_earned?: number;
-          login_streak?: number;
-          longest_streak?: number;
-          last_login_date?: string | null;
-          spin_available?: boolean;
-          last_spin_date?: string | null;
-          birthday?: string | null;
-          total_spent?: number;
-        };
-      };
-      loyalty_transactions: {
-        Row: {
-          id: string;
-          user_id: string;
-          points: number;
-          type: 'earn' | 'redeem' | 'bonus' | 'expire';
-          source: string;
-          description: string | null;
-          reference_id: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          points: number;
-          type: 'earn' | 'redeem' | 'bonus' | 'expire';
-          source: string;
-          description?: string | null;
-          reference_id?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          points?: number;
-          type?: 'earn' | 'redeem' | 'bonus' | 'expire';
-          source?: string;
-          description?: string | null;
-          reference_id?: string | null;
-          created_at?: string;
-        };
-      };
-      spin_history: {
-        Row: {
-          id: string;
-          user_id: string;
-          prize_type: 'points' | 'discount' | 'cashback' | 'nothing';
-          prize_value: number;
-          expires_at: string | null;
-          is_claimed: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          prize_type: 'points' | 'discount' | 'cashback' | 'nothing';
-          prize_value: number;
-          expires_at?: string | null;
-          is_claimed?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          prize_type?: 'points' | 'discount' | 'cashback' | 'nothing';
-          prize_value?: number;
-          expires_at?: string | null;
-          is_claimed?: boolean;
-          created_at?: string;
         };
       };
       achievements: {
@@ -498,17 +404,6 @@ export interface Database {
           points_earned: number;
           is_new_day: boolean;
         };
-      };
-      award_loyalty_points: {
-        Args: {
-          p_user_id: string;
-          p_points: number;
-          p_type: string;
-          p_source: string;
-          p_description?: string;
-          p_reference_id?: string;
-        };
-        Returns: void;
       };
     };
   };

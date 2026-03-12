@@ -466,6 +466,24 @@ export default function SettingsPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               <Link
+                href="/dashboard/developer"
+                className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth"
+              >
+                <div className="flex items-center gap-3">
+                  <IonIcon
+                    name="code-slash-outline"
+                    size="20px"
+                    className="text-muted-foreground"
+                  />
+                  <span className="text-foreground">Developer API</span>
+                </div>
+                <IonIcon
+                  name="chevron-forward-outline"
+                  size="18px"
+                  className="text-muted-foreground"
+                />
+              </Link>
+              <Link
                 href="/dashboard/support"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth"
               >

@@ -18,7 +18,6 @@ import {
   useSupabaseUser,
   useSupabaseTransactions,
 } from "@/hooks/useSupabaseUser";
-import { getUserTier } from "@/lib/pricing-tiers";
 import { useNotifications, checkAndNotifyMissingPhone } from "@/hooks/useNotifications";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
@@ -45,11 +44,6 @@ const BankWithdrawalModal = dynamic(
     ssr: false,
     loading: () => <div className="fixed inset-0 bg-black/50 flex items-center justify-center"><Spinner size="lg" /></div>
   }
-);
-
-const TierBadge = dynamic(
-  () => import("@/components/tier-badge").then(mod => ({ default: mod.TierBadge })),
-  { ssr: false }
 );
 
 const GreetingTypewriter = dynamic(
@@ -241,7 +235,6 @@ export default function DashboardPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
               {timeGreeting}
             </h1>
-            {user && <TierBadge tier={getUserTier(user.total_spent || 0)} size="sm" />}
           </div>
           <div className="text-muted-foreground h-6">
             <GreetingTypewriter speed={40} />

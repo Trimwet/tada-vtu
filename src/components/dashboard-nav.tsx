@@ -21,6 +21,7 @@ const secondaryItems = [
   { name: "Referrals", href: "/dashboard/referrals", icon: "people-outline" },
   { name: "Profile", href: "/dashboard/profile", icon: "person-outline" },
   { name: "Settings", href: "/dashboard/settings", icon: "settings-outline" },
+  { name: "Developer", href: "/dashboard/developer", icon: "code-slash-outline" },
 ];
 
 export function DashboardSidebar() {

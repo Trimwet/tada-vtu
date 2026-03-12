@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
 import { browserCache } from "@/lib/cache";
-import { FAVORITE_AMOUNTS } from "@/lib/loyalty";
+
+// Favorite amounts for quick recharge
+const FAVORITE_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 interface QuickRechargeItem {
   id: string;
