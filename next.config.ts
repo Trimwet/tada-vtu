@@ -5,9 +5,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // Enable React Compiler for automatic optimizations
+  // React Compiler (moved from experimental in Next.js 16)
+  reactCompiler: true,
+
   experimental: {
-    reactCompiler: true,
     optimizePackageImports: [
       '@phosphor-icons/react',
       'sonner',
