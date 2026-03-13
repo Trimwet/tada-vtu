@@ -92,18 +92,23 @@ export default function BuyDataPage() {
 
         const types = [...new Set(dataPlans.map((plan) => plan.type))];
 
-        // Auto-select first available type if none selected
-        if (types.length > 0 && !selectedType) {
-            setTimeout(() => setSelectedType(types[0]), 0);
-        }
-
         return types.map((type) => ({
             value: type,
             label: DATA_TYPE_LABELS[type.toLowerCase()]?.label || type.replace(/_/g, ' ').toUpperCase(),
             description: DATA_TYPE_LABELS[type.toLowerCase()]?.description || "Data Plan",
             count: dataPlans.filter((p) => p.type === type).length,
         }));
-    }, [dataPlans, selectedType]);
+    }, [dataPlans]);
+
+    // Auto-select first available type when plans load and no type is selected
+    useEffect(() => {
+        if (!loadingPlans && dataPlans.length > 0 && !selectedType) {
+            const types = [...new Set(dataPlans.map((plan) => plan.type))];
+            if (types.length > 0) {
+                setSelectedType(types[0]);
+            }
+        }
+    }, [dataPlans, loadingPlans, selectedType]);
 
     // Filter plans by selected type
     const availablePlans = useMemo(() => {
@@ -378,7 +383,7 @@ export default function BuyDataPage() {
                                     ) : availableTypes.length > 0 ? (
                                         <Select
                                             value={selectedType}
-                                            onValueChange={(value) => {
+                                            onValueChange={(value: string) => {
                                                 setSelectedType(value);
                                                 setSelectedPlan("");
                                             }}
