@@ -388,11 +388,14 @@ export default function BuyDataPage() {
                                                 setSelectedPlan("");
                                             }}
                                         >
+                                            {/* @ts-expect-error - Radix UI Select types issue with children prop */}
                                             <SelectTrigger className="h-12">
                                                 <SelectValue placeholder="Choose data type" />
                                             </SelectTrigger>
+                                            {/* @ts-expect-error - Radix UI Select types issue with children prop */}
                                             <SelectContent>
                                                 {availableTypes.map((type) => (
+                                                    // @ts-expect-error - Radix UI Select types issue with children prop
                                                     <SelectItem key={type.value} value={type.value}>
                                                         <div className="flex items-center justify-between w-full gap-3">
                                                             <span className="font-medium">{type.label}</span>
