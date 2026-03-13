@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,9 +23,22 @@ export default function DataVaultPage() {
   const [selectedVault, setSelectedVault] = useState<any>(null);
   const [showQRModal, setShowQRModal] = useState(false);
 
-  console.log('[DATA-VAULT-PAGE] Vault data:', vaultData);
-  console.log('[DATA-VAULT-PAGE] Loading:', loading);
-  console.log('[DATA-VAULT-PAGE] User ID:', user?.id);
+  // Memoize derived data to prevent unnecessary recalculations
+  const readyItems = useMemo(() => vaultData?.ready || [], [vaultData?.ready]);
+  const deliveredItems = useMemo(() => vaultData?.delivered || [], [vaultData?.delivered]);
+  const expiredItems = useMemo(() => vaultData?.expired || [], [vaultData?.expired]);
+  const stats = useMemo(() => vaultData?.stats, [vaultData?.stats]);
+
+  const tabs = useMemo(() => [
+    { key: 'ready' as const, label: 'Ready', count: readyItems.length, items: readyItems },
+    { key: 'delivered' as const, label: 'Delivered', count: deliveredItems.length, items: deliveredItems },
+    { key: 'expired' as const, label: 'Expired', count: expiredItems.length, items: expiredItems },
+  ], [readyItems, deliveredItems, expiredItems]);
+
+  const activeItems = useMemo(() => 
+    tabs.find(tab => tab.key === activeTab)?.items || [], 
+    [tabs, activeTab]
+  );
 
   const handleDeliver = async (vaultId: string) => {
     if (!user?.id) {
@@ -83,19 +96,6 @@ export default function DataVaultPage() {
       </div>
     );
   }
-
-  const readyItems = vaultData?.ready || [];
-  const deliveredItems = vaultData?.delivered || [];
-  const expiredItems = vaultData?.expired || [];
-  const stats = vaultData?.stats;
-
-  const tabs = [
-    { key: 'ready' as const, label: 'Ready', count: readyItems.length, items: readyItems },
-    { key: 'delivered' as const, label: 'Delivered', count: deliveredItems.length, items: deliveredItems },
-    { key: 'expired' as const, label: 'Expired', count: expiredItems.length, items: expiredItems },
-  ];
-
-  const activeItems = tabs.find(tab => tab.key === activeTab)?.items || [];
 
   return (
     <div className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-7xl lg:mx-auto">
@@ -282,7 +282,7 @@ export default function DataVaultPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeItems.map((item) => (
+              {activeItems.map((item: any) => (
                 <div
                   key={item.id}
                   className="border border-border rounded-xl p-3 sm:p-4 hover:border-green-500/50 transition-smooth"

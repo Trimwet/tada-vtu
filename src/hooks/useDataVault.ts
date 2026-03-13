@@ -44,14 +44,7 @@ export function useDataVault(userId?: string) {
     userId ? `/api/data-vault/list?userId=${userId}` : null,
     async (url) => {
       console.log('[DATA-VAULT] Fetching from:', url);
-      const response = await fetch(url, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
+      const response = await fetch(url);
       if (!response.ok) {
         console.error('[DATA-VAULT] API Error:', response.status, response.statusText);
         throw new Error('Failed to fetch vault data');
@@ -67,12 +60,13 @@ export function useDataVault(userId?: string) {
       }
     },
     {
-      refreshInterval: 60000, // Refresh every 60 seconds
-      revalidateOnFocus: true,
+      refreshInterval: 0, // Disable auto-refresh, only refresh on user action
+      revalidateOnFocus: false, // Disable revalidation on focus to prevent unnecessary fetches
       revalidateOnReconnect: true,
-      dedupingInterval: 5000, // Prevent duplicate requests within 5 seconds
-      errorRetryCount: 3,
-      errorRetryInterval: 2000,
+      dedupingInterval: 10000, // Prevent duplicate requests within 10 seconds
+      errorRetryCount: 2,
+      errorRetryInterval: 3000,
+      keepPreviousData: true, // Keep previous data while revalidating
     }
   );
 
