@@ -100,8 +100,10 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
   const mountedRef = useRef(true);
 
   const fetchPlans = useCallback(async (forceRefresh = false) => {
+    const currentNetwork = network; // Capture network at call time
+    
     // Don't fetch if no network selected
-    if (!network) {
+    if (!currentNetwork) {
       setState(prev => ({
         ...prev,
         plans: [],
@@ -117,7 +119,7 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
     fetchingRef.current = true;
 
     try {
-      const url = `/api/data-plans?network=${network}${forceRefresh ? '&refresh=true' : ''}`;
+      const url = `/api/data-plans?network=${currentNetwork}${forceRefresh ? '&refresh=true' : ''}`;
 
       // Create abort controller with 10 second timeout
       const controller = new AbortController();
@@ -140,6 +142,13 @@ export function useDataPlans({ network, autoRefresh = true, refreshInterval = 60
       const data = await response.json();
 
       if (!mountedRef.current) return;
+
+      // Verify network hasn't changed before updating state
+      if (network !== currentNetwork) {
+        console.log('[useDataPlans] Network changed, discarding stale response');
+        fetchingRef.current = false;
+        return;
+      }
 
       if (data.success) {
         // Ensure plans is always an array

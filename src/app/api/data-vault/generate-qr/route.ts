@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
               network: vault.network,
               plan_name: vault.plan_name,
               amount: vault.amount,
-              phone_number: vault.phone_number,
+              phone_number: vault.recipient_phone,
             },
             isExisting: true,
           },
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
             network: vault.network,
             plan_name: vault.plan_name,
             amount: vault.amount,
-            phone_number: vault.phone_number,
+            phone_number: vault.recipient_phone,
           },
           isExisting: true,
         },
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           network: vault.network,
           planSize: vault.plan_name,
           amount: vault.amount,
-          phone: vault.phone_number,
+          phone: vault.recipient_phone,
         }
       }
     });
