@@ -95,7 +95,7 @@ export default function ProfilePage() {
       const supabase = getSupabase();
       const { error } = await supabase
         .from("profiles")
-        .update({ avatar_url: file })
+        .update({ avatar_url: file } as never)
         .eq("id", user.id);
       if (error) throw error;
       setSelectedAvatar(file);
