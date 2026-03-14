@@ -1,11 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="text-center space-y-6 max-w-md">
-        <img src="/undraw_page-not-found_6wni.svg" alt="Page not found" className="w-72 h-72 mx-auto" />
+        <Image src="/undraw_page-not-found_6wni.svg" alt="Page not found" width={288} height={288} className="mx-auto" />
         <div className="space-y-2">
           <h2 className="text-2xl font-bold text-foreground">Page Not Found</h2>
           <p className="text-muted-foreground">

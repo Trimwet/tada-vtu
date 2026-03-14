@@ -1,17 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-// Use main-thread renderer — DotLottieWorkerReact causes OffscreenCanvas
-// transfer errors on remount and can't resolve relative URLs in worker scope.
-const DotLottieReact = dynamic(
-  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
-  {
-    ssr: false,
-    loading: () => <CSSRing size={72} />,
-  }
-);
-
 function CSSRing({ size = 72 }: { size?: number }) {
   return (
     <div
@@ -29,12 +17,7 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <DotLottieReact
-          src="/loading-circle.lottie"
-          loop
-          autoplay
-          style={{ width: 96, height: 96 }}
-        />
+        <CSSRing size={96} />
         {message && (
           <p className="text-muted-foreground text-sm font-medium">{message}</p>
         )}
@@ -45,14 +28,7 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
 
 export function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const px = { sm: 24, md: 36, lg: 48 }[size];
-  return (
-    <DotLottieReact
-      src="/loading-circle.lottie"
-      loop
-      autoplay
-      style={{ width: px, height: px }}
-    />
-  );
+  return <CSSRing size={px} />;
 }
 
 export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
