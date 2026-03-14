@@ -1,20 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { setWasmUrl } from "@lottiefiles/dotlottie-react";
 
-// Point WASM at our public folder so it's cached by the browser after first load
-if (typeof window !== "undefined") {
-  setWasmUrl("/dotlottie-player.wasm");
-}
-
-// Worker-based renderer — runs off the main thread, no jank
-const DotLottieWorkerReact = dynamic(
-  () =>
-    import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieWorkerReact),
+// Use main-thread renderer — DotLottieWorkerReact causes OffscreenCanvas
+// transfer errors on remount and can't resolve relative URLs in worker scope.
+const DotLottieReact = dynamic(
+  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
   {
     ssr: false,
-    // Instant CSS ring shown while the JS chunk loads (~first visit only)
     loading: () => <CSSRing size={72} />,
   }
 );
@@ -36,7 +29,7 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <DotLottieWorkerReact
+        <DotLottieReact
           src="/loading-circle.lottie"
           loop
           autoplay
@@ -50,11 +43,10 @@ export function LoadingScreen({ message }: LoadingScreenProps) {
   );
 }
 
-// Small inline spinner (buttons, modals, etc.)
 export function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const px = { sm: 24, md: 36, lg: 48 }[size];
   return (
-    <DotLottieWorkerReact
+    <DotLottieReact
       src="/loading-circle.lottie"
       loop
       autoplay
@@ -63,7 +55,6 @@ export function Spinner({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   );
 }
 
-// Skeleton rows for card/section loading
 export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3 animate-pulse">

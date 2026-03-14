@@ -88,7 +88,52 @@ export default function DataVaultPage() {
   };
 
   if (loading) {
-    return null;
+    return (
+      <div className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-7xl lg:mx-auto animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted rounded-xl" />
+            <div className="space-y-2">
+              <div className="h-6 w-32 bg-muted rounded" />
+              <div className="h-3 w-48 bg-muted rounded" />
+            </div>
+          </div>
+          <div className="h-9 w-24 bg-muted rounded-lg" />
+        </div>
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border border-border rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted rounded-lg" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-3 w-24 bg-muted rounded" />
+                  <div className="h-5 w-16 bg-muted rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Tabs skeleton */}
+        <div className="h-12 w-full sm:w-80 bg-muted rounded-xl" />
+        {/* Items skeleton */}
+        <div className="border border-border rounded-xl p-4 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border border-border rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-muted rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-40 bg-muted rounded" />
+                  <div className="h-3 w-28 bg-muted rounded" />
+                  <div className="h-3 w-16 bg-muted rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
