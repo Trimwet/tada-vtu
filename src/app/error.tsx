@@ -19,9 +19,7 @@ export default function Error({
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="text-center space-y-6 max-w-md">
-        <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
-          <IonIcon name="alert-circle-outline" size="40px" color="#ef4444" />
-        </div>
+        <img src="/undraw_warning_tl76.svg" alt="Error" className="w-48 h-48 mx-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-foreground">Something went wrong</h1>

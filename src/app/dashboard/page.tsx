@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { IonIcon } from "@/components/ion-icon";
-import { LogoInline } from "@/components/logo";
 import Link from "next/link";
 import { getTimeBasedGreeting } from "@/hooks/useGreeting";
 import {
@@ -201,7 +200,21 @@ export default function DashboardPage() {
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border lg:hidden safe-top">
         <div className="flex items-center justify-between h-14 px-4">
-          <LogoInline size="sm" />
+          <Link href="/dashboard/profile">
+            <div className="w-9 h-9 rounded-full bg-green-500/10 border-2 border-green-500/30 overflow-hidden flex items-center justify-center">
+              {user.avatar_url ? (
+                <img
+                  src={`/${user.avatar_url}`}
+                  alt="Avatar"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              ) : (
+                <span className="text-green-600 font-bold text-sm">
+                  {(user.full_name || "U").charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+          </Link>
           <div className="flex items-center gap-1">
             <Link href="/dashboard/notifications">
               <Button
@@ -231,11 +244,9 @@ export default function DashboardPage() {
       <main className="px-4 lg:px-8 py-4 lg:py-6 space-y-5 lg:space-y-6 lg:max-w-7xl lg:mx-auto">
         {/* Greeting */}
         <div className="space-y-1">
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
-              {timeGreeting}
-            </h1>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground animate-fade-in">
+            {timeGreeting}
+          </h1>
           <div className="text-muted-foreground h-6">
             <GreetingTypewriter speed={40} />
           </div>

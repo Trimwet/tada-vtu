@@ -320,6 +320,19 @@ export default function FundWalletPage() {
         </Card>
 
         {/* Payment Method Selector */}
+        <div className="hidden sm:flex items-center gap-4 p-4 rounded-2xl bg-muted/50 border border-border">
+          <img
+            src="/undraw_pay-online_806n.svg"
+            alt="Fund your wallet"
+            className="w-24 h-24 object-contain shrink-0"
+          />
+          <div>
+            <p className="font-semibold text-foreground">Fund Your Wallet</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Choose how you want to add money. Bank transfer is cheaper — just ₦25 flat fee.</p>
+          </div>
+        </div>
+
+        {/* Payment Method Selector */}
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setPaymentMethod("bank")}
@@ -363,9 +376,6 @@ export default function FundWalletPage() {
             </div>
           </button>
         </div>
-
-        {/* Deposit Calculator - shown only for permanent accounts (BVN connected) */}
-        {paymentMethod === "bank" && virtualAccount && <DepositCalculator currentBalance={user?.balance || 0} />}
 
         {/* Bank Transfer Section */}
         {paymentMethod === "bank" && (
@@ -444,6 +454,9 @@ export default function FundWalletPage() {
 
                   {/* Check Deposits Button */}
                   <CheckDepositsButton />
+
+                  {/* Deposit Calculator - only for BVN-connected users */}
+                  <DepositCalculator currentBalance={user?.balance || 0} />
                 </>
               ) : tempAccount ? (
                 <>

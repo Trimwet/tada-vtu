@@ -206,10 +206,12 @@ export default function NotificationsPage() {
           </Card>
         ) : filteredNotifications.length === 0 ? (
           <Card className="border-border">
-            <CardContent className="py-16 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <IonIcon name="notifications-off-outline" size="32px" className="text-muted-foreground" />
-              </div>
+            <CardContent className="py-12 text-center">
+              <img
+                src="/undraw_my-notifications_fy5v.svg"
+                alt="No notifications"
+                className="w-40 h-40 mx-auto mb-5 opacity-80"
+              />
               <h3 className="font-semibold text-foreground mb-1">No notifications</h3>
               <p className="text-sm text-muted-foreground">
                 {filter === 'unread' ? "You're all caught up!" : "You don't have any notifications yet"}

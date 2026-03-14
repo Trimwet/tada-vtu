@@ -224,10 +224,12 @@ export default function TransactionsPage() {
             <LoadingIcon type="loading" size={32} />
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <IonIcon name="receipt-outline" size="32px" className="text-muted-foreground" />
-            </div>
+          <div className="text-center py-16">
+            <img
+              src="/undraw_wallet_diag.svg"
+              alt="No transactions"
+              className="w-44 h-44 mx-auto mb-6 opacity-80"
+            />
             <p className="text-foreground font-medium mb-1">No transactions found</p>
             <p className="text-sm text-muted-foreground">
               {typeFilter !== 'all' || statusFilter !== 'all'

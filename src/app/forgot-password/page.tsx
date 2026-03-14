@@ -127,20 +127,20 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       </div>
-      <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-950 relative hidden lg:block">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center p-8">
-            <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Zap size={40} className="text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Reset Your Password
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md">
-              Don't worry, it happens to the best of us. We'll help you get back into your account quickly and securely.
-            </p>
-          </div>
-        </div>
+      <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-950 relative hidden lg:flex flex-col items-center justify-center p-12">
+        <img
+          src={isSubmitted ? "/undraw_confirmed_c5lo.svg" : "/undraw_enter-password_1kl4.svg"}
+          alt={isSubmitted ? "Email sent" : "Reset password"}
+          className="w-72 h-72 object-contain mb-8 transition-all duration-500"
+        />
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+          {isSubmitted ? "Check Your Inbox" : "Reset Your Password"}
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md text-center">
+          {isSubmitted
+            ? "We've sent a reset link to your email. It should arrive within a minute."
+            : "Don't worry, it happens to the best of us. We'll get you back in quickly and securely."}
+        </p>
       </div>
     </div>
   )

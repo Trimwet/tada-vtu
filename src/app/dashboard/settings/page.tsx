@@ -138,17 +138,26 @@ export default function SettingsPage() {
         {/* Security */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <IonIcon
-                name="shield-checkmark-outline"
-                size="20px"
-                color="#22c55e"
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <IonIcon
+                    name="shield-checkmark-outline"
+                    size="20px"
+                    color="#22c55e"
+                  />
+                  Security
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  Protect your account
+                </CardDescription>
+              </div>
+              <img
+                src="/undraw_security_0ubl.svg"
+                alt="Security"
+                className="w-16 h-16 object-contain opacity-80"
               />
-              Security
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Protect your account
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
@@ -298,17 +307,26 @@ export default function SettingsPage() {
         {/* Notifications */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <IonIcon
-                name="notifications-outline"
-                size="20px"
-                color="#22c55e"
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <IonIcon
+                    name="notifications-outline"
+                    size="20px"
+                    color="#22c55e"
+                  />
+                  Notifications
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  Manage how you receive alerts
+                </CardDescription>
+              </div>
+              <img
+                src="/undraw_my-notifications_fy5v.svg"
+                alt="Notifications"
+                className="w-16 h-16 object-contain opacity-80"
               />
-              Notifications
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Manage how you receive alerts
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -394,13 +412,22 @@ export default function SettingsPage() {
         {/* App Preferences */}
         <Card className="border-border">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <IonIcon name="options-outline" size="20px" color="#22c55e" />
-              App Preferences
-            </CardTitle>
-            <CardDescription className="text-sm">
-              Customize your experience
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <IonIcon name="options-outline" size="20px" color="#22c55e" />
+                  App Preferences
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  Customize your experience
+                </CardDescription>
+              </div>
+              <img
+                src="/undraw_set-preferences_pca7.svg"
+                alt="App Preferences"
+                className="w-16 h-16 object-contain opacity-80"
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

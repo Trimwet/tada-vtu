@@ -49,32 +49,40 @@ export default function ContactPage() {
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-green-950">
-        <div className="container mx-auto text-center">
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-4 py-2 rounded-full mb-6">
-              <MessageCircle size={16} />
-              <span className="text-sm font-medium">We're Here to Help</span>
+        <div className="container mx-auto">
+          <div className="max-w-5xl mx-auto flex flex-col lg:flex-row items-center gap-10">
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-4 py-2 rounded-full mb-6">
+                <MessageCircle size={16} />
+                <span className="text-sm font-medium">We're Here to Help</span>
+              </div>
+              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+                Get in <span className="text-green-600 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Touch</span>
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl leading-relaxed">
+                Have questions about our services? Our friendly support team is available 24/7 to assist you.
+              </p>
+              <div className="flex items-center justify-center lg:justify-start space-x-8 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <span>24/7 Support</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <span>Response in Minutes</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <span>100% Satisfaction</span>
+                </div>
+              </div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              Get in <span className="text-green-600 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Touch</span>
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Have questions about our services? Our friendly support team is available 24/7 to assist you. 
-              Reach out and experience our award-winning customer service.
-            </p>
-            <div className="flex items-center justify-center space-x-8 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-center space-x-2">
-                <CheckCircle size={16} className="text-green-600" />
-                <span>24/7 Support</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle size={16} className="text-green-600" />
-                <span>Response in Minutes</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle size={16} className="text-green-600" />
-                <span>100% Satisfaction</span>
-              </div>
+            <div className="hidden lg:block shrink-0">
+              <img
+                src="/undraw_contact-us_kcoa.svg"
+                alt="Contact us"
+                className="w-80 h-80 object-contain"
+              />
             </div>
           </div>
         </div>

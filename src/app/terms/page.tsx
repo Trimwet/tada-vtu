@@ -15,6 +15,9 @@ export default function TermsPage() {
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
         <p className="text-muted-foreground mb-8">Last updated: March 2025</p>
+        <div className="hidden sm:flex justify-center mb-8">
+          <img src="/undraw_terms_sx63.svg" alt="Terms of Service" className="w-48 h-48 object-contain opacity-90" />
+        </div>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
           <section>

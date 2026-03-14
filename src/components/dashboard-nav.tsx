@@ -58,8 +58,18 @@ export function DashboardSidebar() {
       {!isCollapsed && user && (
         <div className="px-4 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-semibold text-sm">
-              {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+            <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/30 overflow-hidden flex items-center justify-center shrink-0">
+              {user.avatar_url ? (
+                <img
+                  src={`/${user.avatar_url}`}
+                  alt="Avatar"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              ) : (
+                <span className="text-green-600 font-semibold text-sm">
+                  {user.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">

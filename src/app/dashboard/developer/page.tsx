@@ -254,6 +254,20 @@ export default function DeveloperPage() {
       </header>
 
       <main className="container mx-auto px-4 lg:px-8 py-6 space-y-6 max-w-2xl">
+        {/* Hero Banner */}
+        <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/5 border border-green-500/20">
+          <img
+            src="/undraw_developer-avatar_f6ac.svg"
+            alt="Developer"
+            className="w-20 h-20 object-contain shrink-0"
+          />
+          <div>
+            <h2 className="font-semibold text-foreground">TADA Developer API</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Integrate airtime & data top-up into your app with our REST API
+            </p>
+          </div>
+        </div>
         {/* API Keys Section */}
         <Card className="border-border">
           <CardHeader className="pb-3">

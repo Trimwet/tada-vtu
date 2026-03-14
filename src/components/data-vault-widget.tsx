@@ -100,10 +100,12 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <IonIcon name="archive-outline" size="32px" color="#22c55e" />
-            </div>
+          <div className="text-center py-4">
+            <img
+              src="/undraw_vault_tyfh.svg"
+              alt="Vault empty"
+              className="w-36 h-36 object-contain mx-auto mb-4"
+            />
             <h3 className="font-bold text-foreground text-lg mb-1">Vault Empty</h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-[200px] mx-auto">
               Deduct money now, deliver data later with 1 tap.

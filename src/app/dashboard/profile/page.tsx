@@ -23,6 +23,39 @@ import { formatDate } from "@/lib/date-utils";
 import { LoadingScreen } from "@/components/loading-screen";
 import { ButtonLoading } from "@/components/loading-icons";
 
+const AVATARS = [
+  {
+    group: "Female",
+    items: [
+      { file: "undraw_a-woman-avatar_ifsl.svg", label: "Woman" },
+      { file: "undraw_businesswoman-avatar_ktl2.svg", label: "Businesswoman" },
+      { file: "undraw_cool-girl-avatar_fifz.svg", label: "Cool Girl" },
+      { file: "undraw_female-avatar_7t6k.svg", label: "Female" },
+      { file: "undraw_professional-woman-avatar_ivds.svg", label: "Professional" },
+      { file: "undraw_social-girl_gytt.svg", label: "Social" },
+    ],
+  },
+  {
+    group: "Male",
+    items: [
+      { file: "undraw_chill-guy-avatar_tqsm.svg", label: "Chill Guy" },
+      { file: "undraw_cool-guy-avatar_qjc4.svg", label: "Cool Guy" },
+      { file: "undraw_developer-avatar_f6ac.svg", label: "Developer" },
+      { file: "undraw_finance-guy-avatar_vhop.svg", label: "Finance" },
+      { file: "undraw_fitness-guy-avatar_50y6.svg", label: "Fitness" },
+      { file: "undraw_friendly-guy-avatar_dqp5.svg", label: "Friendly" },
+      { file: "undraw_male-avatar_zkzx.svg", label: "Male" },
+      { file: "undraw_young-man-avatar_wgbd.svg", label: "Young Man" },
+    ],
+  },
+  {
+    group: "Other",
+    items: [
+      { file: "undraw_avatar-traveler_ljy2.svg", label: "Traveler" },
+    ],
+  },
+];
+
 export default function ProfilePage() {
   const { user, loading, refreshUser } = useSupabaseUser();
   const { signOut } = useAuth();
@@ -34,6 +67,10 @@ export default function ProfilePage() {
     phoneNumber: "",
   });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>("");
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avatarInitialized, setAvatarInitialized] = useState(false);
 
   // Initialize form data when user loads
   useEffect(() => {
@@ -42,8 +79,35 @@ export default function ProfilePage() {
         fullName: user.full_name || "",
         phoneNumber: user.phone_number || "",
       });
+      // Only sync avatar from DB on first load, not after every refresh
+      if (!avatarInitialized) {
+        setSelectedAvatar(user.avatar_url || "");
+        setAvatarInitialized(true);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const handleAvatarSelect = async (file: string) => {
+    if (!user?.id) return;
+    setSavingAvatar(true);
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: file })
+        .eq("id", user.id);
+      if (error) throw error;
+      setSelectedAvatar(file);
+      setShowAvatarPicker(false);
+      await refreshUser();
+      toast.success("Avatar updated!");
+    } catch {
+      toast.error("Failed to save avatar");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -161,30 +225,46 @@ export default function ProfilePage() {
       </header>
 
       <main className="container mx-auto px-4 lg:px-8 py-6 space-y-6 max-w-2xl">
-        {/* Profile Header */}
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-            <span className="text-green-600 font-bold text-3xl">
-              {(user.full_name || "U")
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .slice(0, 2)}
-            </span>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">
-              {user.full_name || "User"}
-            </h2>
-            <p className="text-muted-foreground text-sm">{user.email}</p>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 rounded-full">
-            <IonIcon name="checkmark-circle" size="16px" color="#16a34a" />
-            <span className="text-green-600 text-sm font-medium">
-              Verified Account
-            </span>
-          </div>
-        </div>
+        {/* Profile Header Card */}
+        <Card className="border-border">
+          <CardContent className="pt-6 pb-6">
+            <div className="flex flex-col items-center text-center gap-4">
+              {/* Avatar */}
+              <div className="relative inline-block">
+                <div className="w-28 h-28 rounded-full bg-green-500/10 border-2 border-green-500/30 overflow-hidden flex items-center justify-center">
+                  {selectedAvatar ? (
+                    <img
+                      src={`/${selectedAvatar}`}
+                      alt="Avatar"
+                      className="w-full h-full object-contain p-1"
+                    />
+                  ) : (
+                    <span className="text-green-600 font-bold text-3xl">
+                      {(user.full_name || "U").split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowAvatarPicker(true)}
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition-colors"
+                >
+                  <IonIcon name="camera-outline" size="16px" color="white" />
+                </button>
+              </div>
+
+              {/* Name & email */}
+              <div>
+                <h2 className="text-xl font-bold text-foreground">{user.full_name || "User"}</h2>
+                <p className="text-muted-foreground text-sm mt-0.5">{user.email}</p>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <IonIcon name="checkmark-circle" size="16px" color="#16a34a" />
+                <span className="text-green-600 text-sm font-medium">Verified Account</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Personal Information */}
         <Card className="border-border">
@@ -412,6 +492,81 @@ export default function ProfilePage() {
         open={showLogoutDialog}
         onOpenChange={setShowLogoutDialog}
       />
+
+      {/* Avatar Picker Modal */}
+      {showAvatarPicker && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-card w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border max-h-[85vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+              <div>
+                <h3 className="font-semibold text-foreground">Choose Avatar</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Pick one that represents you</p>
+              </div>
+              <button
+                onClick={() => setShowAvatarPicker(false)}
+                className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+              >
+                <IonIcon name="close-outline" size="20px" />
+              </button>
+            </div>
+
+            {/* Avatar Groups */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-6">
+              {AVATARS.map((group) => (
+                <div key={group.group}>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    {group.group}
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {group.items.map((avatar) => {
+                      const isSelected = selectedAvatar === avatar.file;
+                      return (
+                        <button
+                          key={avatar.file}
+                          onClick={() => handleAvatarSelect(avatar.file)}
+                          disabled={savingAvatar}
+                          className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                            isSelected
+                              ? "border-green-500 bg-green-500/10"
+                              : "border-border hover:border-green-500/50 hover:bg-muted/50"
+                          }`}
+                        >
+                          <img
+                            src={`/${avatar.file}`}
+                            alt={avatar.label}
+                            className="w-16 h-16 object-contain"
+                          />
+                          <span className="text-xs text-muted-foreground text-center leading-tight">
+                            {avatar.label}
+                          </span>
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                              <IonIcon name="checkmark" size="12px" color="white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Remove avatar option */}
+            {selectedAvatar && (
+              <div className="px-5 py-3 border-t border-border shrink-0">
+                <button
+                  onClick={() => handleAvatarSelect("")}
+                  className="w-full text-sm text-muted-foreground hover:text-red-500 transition-colors py-1"
+                >
+                  Remove avatar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

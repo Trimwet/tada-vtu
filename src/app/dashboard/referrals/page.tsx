@@ -68,13 +68,20 @@ export default function ReferralsPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Referral Program
-          </h1>
-          <p className="text-muted-foreground">
-            Invite friends and earn points for free airtime & data
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Referral Program
+            </h1>
+            <p className="text-muted-foreground">
+              Invite friends and earn points for free airtime & data
+            </p>
+          </div>
+          <img
+            src="/undraw_share-link_y9oh.svg"
+            alt="Share referral link"
+            className="w-36 h-36 object-contain shrink-0 hidden sm:block"
+          />
         </div>
 
         {/* Stats Cards */}
