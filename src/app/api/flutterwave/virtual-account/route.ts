@@ -43,6 +43,15 @@ export async function GET(request: NextRequest) {
 
     // Fall back to x-user-id header if session auth fails (handles race conditions on page load)
     const headerUserId = request.headers.get('x-user-id');
+
+    // If session auth succeeded, validate header matches (prevent spoofing)
+    if (user && headerUserId && headerUserId !== user.id) {
+      return NextResponse.json(
+        { status: 'error', message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const userId = user?.id || headerUserId;
 
     if (!userId) {

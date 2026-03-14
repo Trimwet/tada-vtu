@@ -9,20 +9,21 @@ export function useRealtimeNotifications() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     const supabase = getSupabase();
+    const userId = user.id;
 
     // Subscribe to new transactions
     const transactionChannel = supabase
-      .channel('transactions-changes')
+      .channel(`transactions-changes:${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'transactions',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload: { new: Record<string, unknown> }) => {
           const transaction = payload.new as {
@@ -53,14 +54,14 @@ export function useRealtimeNotifications() {
 
     // Subscribe to notifications table
     const notificationChannel = supabase
-      .channel('notifications-changes')
+      .channel(`notifications-changes:${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload: { new: Record<string, unknown> }) => {
           const notification = payload.new as {
@@ -85,14 +86,14 @@ export function useRealtimeNotifications() {
 
     // Subscribe to balance changes
     const profileChannel = supabase
-      .channel('profile-changes')
+      .channel(`profile-changes:${userId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'profiles',
-          filter: `id=eq.${user.id}`,
+          filter: `id=eq.${userId}`,
         },
         (payload: { old: Record<string, unknown>; new: Record<string, unknown> }) => {
           const oldBalance = (payload.old as { balance: number }).balance;
@@ -113,5 +114,5 @@ export function useRealtimeNotifications() {
       supabase.removeChannel(notificationChannel);
       supabase.removeChannel(profileChannel);
     };
-  }, [user]);
+  }, [user?.id]);
 }

@@ -115,49 +115,41 @@ export async function GET(request: NextRequest) {
 
               // Only pay bonus on first deposit
               if (depositCount === 1) {
-                const REFERRAL_POINTS = 100; // 100 points per referral
+                const REFERRAL_POINTS = 100;
+                const bonusRef = `REF_POINTS_${profile.referred_by.slice(0, 8)}_${userId.slice(0, 8)}`;
 
-                // Get referrer's current points
-                const { data: referrer } = await supabase
-                  .from('profiles')
-                  .select('balance, referral_points, referral_count, full_name')
-                  .eq('id', profile.referred_by)
-                  .single();
-
-                if (referrer) {
-                  // Add points to referrer (using raw SQL to ensure it works)
-                  const newPoints = (referrer.referral_points || 0) + REFERRAL_POINTS;
-                  const newCount = (referrer.referral_count || 0) + 1;
-                  
-                  await supabase
-                    .from('profiles')
-                    .update({ 
-                      referral_points: newPoints,
-                      referral_count: newCount,
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('id', profile.referred_by);
-
-                  // Create referral points transaction
-                  await supabase.from('transactions').insert({
+                // Atomic upsert — prevents duplicate bonus if two requests race
+                const { error: bonusError } = await supabase
+                  .from('transactions')
+                  .upsert({
                     user_id: profile.referred_by,
                     type: 'deposit',
                     amount: REFERRAL_POINTS,
                     status: 'success',
                     description: `Referral points earned - ${userId.slice(0, 8)}`,
-                    reference: `REF_POINTS_${Date.now()}_${userId.slice(0, 8)}`,
+                    reference: bonusRef,
+                  }, { onConflict: 'reference', ignoreDuplicates: true });
+
+                if (!bonusError) {
+                  // Only update profile if transaction was actually inserted
+                  await supabase.rpc('increment_referral_stats', {
+                    p_user_id: profile.referred_by,
+                    p_points: REFERRAL_POINTS,
+                  }).catch(() => {
+                    // Fallback if RPC doesn't exist
+                    supabase.from('profiles').update({
+                      referral_points: supabase.rpc('coalesce_add', { col: 'referral_points', val: REFERRAL_POINTS }),
+                    }).eq('id', profile.referred_by);
                   });
 
-                  // Create notification for referrer
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  await (supabase as any).from('notifications').insert({
+                  await supabase.from('notifications').insert({
                     user_id: profile.referred_by,
                     type: 'success',
                     title: 'Referral Points Earned! 🎉',
                     message: `You earned ${REFERRAL_POINTS} points because someone you referred made their first deposit!`,
+                  }).then(() => {
+                    console.log('Referral points awarded:', { referrerId: profile.referred_by, points: REFERRAL_POINTS });
                   });
-
-                  console.log('Referral points awarded:', { referrerId: profile.referred_by, points: REFERRAL_POINTS });
                 }
               }
             }
