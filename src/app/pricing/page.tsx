@@ -165,7 +165,7 @@ export default function PricingPage() {
                           </div>
                           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                              <Wifi weight="bold" />
+                              <Wifi strokeWidth={2.5} />
                               <span>{plan.size} Bundle</span>
                             </div>
                             <Button size="sm" className="h-8 px-3 bg-white/5 hover:bg-green-500 hover:text-black text-xs font-bold transition-all rounded-lg" asChild>
