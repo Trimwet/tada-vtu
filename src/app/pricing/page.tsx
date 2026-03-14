@@ -30,10 +30,10 @@ export default function PricingPage() {
   )
 
   const tiers = [
-    { name: "Bronze", spend: "Γéª0 - Γéª9,999", color: "text-orange-400", bg: "bg-orange-400/10" },
-    { name: "Silver", spend: "Γéª10k - Γéª49,999", color: "text-gray-300", bg: "bg-gray-300/10" },
-    { name: "Gold", spend: "Γéª50k - Γéª199,999", color: "text-yellow-400", bg: "bg-yellow-400/10" },
-    { name: "Platinum", spend: "Γéª200k+", color: "text-cyan-400", bg: "bg-cyan-400/10" },
+    { name: "Bronze", spend: "₦0 - ₦9,999", color: "text-orange-400", bg: "bg-orange-400/10" },
+    { name: "Silver", spend: "₦10k - ₦49,999", color: "text-gray-300", bg: "bg-gray-300/10" },
+    { name: "Gold", spend: "₦50k - ₦199,999", color: "text-yellow-400", bg: "bg-yellow-400/10" },
+    { name: "Platinum", spend: "₦200k+", color: "text-cyan-400", bg: "bg-cyan-400/10" },
   ]
 
   return (
@@ -161,7 +161,7 @@ export default function PricingPage() {
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
                           <div className="flex items-baseline gap-1 mt-1">
-                            <span className="text-2xl font-bold text-white">Γéª{plan.price.toLocaleString()}</span>
+                            <span className="text-2xl font-bold text-white">₦{plan.price.toLocaleString()}</span>
                           </div>
                           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -182,7 +182,7 @@ export default function PricingPage() {
               {/* Footer Note */}
               <div className="p-4 bg-green-500/5 text-center border-t border-white/10">
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest font-medium">
-                  Prices updated 5 minutes ago ΓÇó All plans include 24/7 priority delivery
+                  Prices updated 5 minutes ago · All plans include 24/7 priority delivery
                 </p>
               </div>
             </div>
@@ -195,7 +195,7 @@ export default function PricingPage() {
         <div className="container mx-auto text-center">
           <LogoInline size="sm" className="opacity-50 grayscale hover:grayscale-0 transition-all" />
           <p className="text-gray-600 text-sm mt-4">
-            ┬⌐ {new Date().getFullYear()} TADA VTU. Empowering your digital lifestyle.
+            © {new Date().getFullYear()} TADA VTU. Empowering your digital lifestyle.
           </p>
         </div>
       </footer>

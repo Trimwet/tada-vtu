@@ -35,33 +35,15 @@ export function LogoutDialog({
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      console.log("Starting logout process...");
-
-      // Close the dialog first to provide immediate feedback
-      setIsOpen(false);
-
-      // Perform logout
       await signOut();
-
-      // Show success toast
       toast.success("Logged out successfully");
-
-      // Use push instead of replace for better navigation
-      // Add a small delay to ensure auth state is cleared
-      setTimeout(() => {
-        router.push("/login");
-      }, 250);
+      router.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("Failed to logout completely");
-
-      // Even if signOut fails, redirect to login
-      // The auth state should be cleared locally
-      setTimeout(() => {
-        router.push("/login");
-      }, 250);
+      router.replace("/login");
     } finally {
       setIsLoading(false);
+      setIsOpen(false);
     }
   };
 

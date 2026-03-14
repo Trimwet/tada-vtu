@@ -20,7 +20,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/date-utils";
-import { LoadingScreen } from "@/components/loading-screen";
 import { ButtonLoading } from "@/components/loading-icons";
 
 const AVATARS = [
@@ -57,7 +56,7 @@ const AVATARS = [
 ];
 
 export default function ProfilePage() {
-  const { user, loading, refreshUser } = useSupabaseUser();
+  const { user, loading, refreshUser, isProfileLoaded } = useSupabaseUser();
   const { signOut } = useAuth();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -79,14 +78,14 @@ export default function ProfilePage() {
         fullName: user.full_name || "",
         phoneNumber: user.phone_number || "",
       });
-      // Only sync avatar from DB on first load, not after every refresh
-      if (!avatarInitialized) {
+      // Only sync avatar from DB once the real profile (not fallback) has loaded
+      if (!avatarInitialized && isProfileLoaded) {
         setSelectedAvatar(user.avatar_url || "");
         setAvatarInitialized(true);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, isProfileLoaded]);
 
   const handleAvatarSelect = async (file: string) => {
     if (!user?.id) return;
@@ -111,11 +110,11 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await signOut();
-    router.push("/login");
+    router.replace("/login");
   };
 
   if (loading && !user) {
-    return <LoadingScreen message="Loading profile..." />;
+    return null;
   }
 
   if (!user) {

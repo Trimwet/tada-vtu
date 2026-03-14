@@ -96,16 +96,6 @@ export default function Home() {
         <div className="absolute top-40 right-1/4 w-64 h-64 bg-green-400/10 rounded-full blur-[100px] animate-float-delayed" />
         <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow" />
 
-        {/* Illustration — absolutely positioned upper right, desktop only */}
-        <div className="hidden lg:block absolute top-16 right-0 w-80 xl:w-96 pointer-events-none select-none z-0">
-          <div className="absolute inset-0 bg-green-500/10 rounded-full blur-[60px]" />
-          <img
-            src="/illustration-video-park.svg"
-            alt=""
-            className="relative w-full h-full object-contain opacity-70 animate-float"
-          />
-        </div>
-
         <div className="container mx-auto relative">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
@@ -354,9 +344,6 @@ export default function Home() {
                 <Button size="lg" className="bg-black hover:bg-gray-900 text-white font-semibold px-8 h-14 text-lg" asChild>
                   <Link href="/register">Create Free Account</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-black/30 text-black hover:bg-black/10 px-8 h-14 text-lg" asChild>
-                  <Link href="/contact">Contact Sales</Link>
-                </Button>
               </div>
             </div>
           </div>
@@ -378,14 +365,11 @@ export default function Home() {
               <ul className="space-y-2 text-sm">
                 <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Buy Airtime</Link></li>
                 <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Buy Data</Link></li>
-                <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Cable TV</Link></li>
-                <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Electricity</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
                 <li><Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/register" className="text-gray-400 hover:text-white transition-colors">Referral Program</Link></li>
               </ul>

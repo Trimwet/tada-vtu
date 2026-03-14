@@ -88,13 +88,7 @@ export default function DataVaultPage() {
   };
 
   if (loading) {
-    return (
-      <div className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-7xl lg:mx-auto">
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

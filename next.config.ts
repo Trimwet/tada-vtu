@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       'sonner',
       'recharts',
       '@supabase/supabase-js',
+      '@lottiefiles/dotlottie-react',
     ],
   },
 
@@ -107,7 +108,7 @@ const nextConfig: NextConfig = {
     return [
       {
         // Cache static assets for 1 year
-        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|woff|woff2|ttf|otf)',
+        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|woff|woff2|ttf|otf|wasm|lottie)',
         headers: [
           {
             key: 'Cache-Control',

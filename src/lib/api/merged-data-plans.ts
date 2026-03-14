@@ -59,6 +59,11 @@ interface PlanSizeInfo {
   sizeInMB: number;
 }
 
+function fixEncoding(str: string): string {
+  // Fix Windows-1252 mojibake for ₦ (Naira sign)
+  return str.replace(/Γéª/g, '₦').replace(/ΓÇó/g, '·');
+}
+
 function extractPlanSize(name: string): PlanSizeInfo {
   const upperName = name.toUpperCase();
 
@@ -252,14 +257,15 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
 
       // Format the plan name to show both dataPlan and dataType clearly
       const planType = plan.dataType || normalizeDataType(plan.dataType || '', plan.dataPlan);
-      const displayName = plan.dataPlan.trim();
+      const displayName = fixEncoding(plan.dataPlan.trim());
+      const fixedDescription = cleanDescription ? fixEncoding(cleanDescription) : undefined;
 
       plans[targetNetwork].push({
         id: plan.serviceID, // Use serviceID directly as it's unique
         provider: 'inlomax',
         network: targetNetwork,
         name: displayName,
-        description: cleanDescription || undefined,
+        description: fixedDescription,
         size: extractedSize,
         sizeInMB,
         price,
