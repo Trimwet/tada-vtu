@@ -216,6 +216,8 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   // Plus Circle
   "add-circle": PlusCircle,
   "add-circle-outline": PlusCircle,
+  "add-outline": Plus,
+  "add": Plus,
 
   // Arrow Circle Up
   "arrow-up-circle": ArrowUpCircle,
@@ -491,8 +493,7 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   trash: Trash,
   "trash-outline": Trash,
 
-  // Plus
-  add: Plus,
+  // Plus (additional aliases)
   plus: Plus,
   "plus-outline": Plus,
 

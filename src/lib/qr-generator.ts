@@ -91,12 +91,15 @@ export async function generatePersonalDataQR(params: {
   return { qrCode, qrData };
 }
 
-// Parse QR code data for personal vault
+// Parse QR code data for personal vault (browser-safe)
 export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
   try {
     console.log('[QR-PARSE] Attempting to parse QR data, length:', base64Data?.length);
     
-    const jsonString = Buffer.from(base64Data, 'base64').toString('utf-8');
+    // Use atob for browser compatibility, fallback to Buffer for server
+    const jsonString = typeof window !== 'undefined'
+      ? decodeURIComponent(escape(atob(base64Data)))
+      : Buffer.from(base64Data, 'base64').toString('utf-8');
     const qrData = JSON.parse(jsonString) as PersonalDataQR;
     
     console.log('[QR-PARSE] Decoded QR data:', {
