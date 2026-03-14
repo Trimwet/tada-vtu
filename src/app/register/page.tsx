@@ -92,15 +92,49 @@ export default function RegisterPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-black relative flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen bg-black relative flex overflow-hidden">
       {/* Animated Background */}
       <AnimatedBackgroundWrapper />
-      
+
+      {/* Left panel — illustration (desktop only) */}
+      <div className="hidden lg:flex flex-col items-center justify-center flex-1 relative px-12 bg-gradient-to-br from-green-500/10 via-transparent to-transparent border-r border-white/5">
+        <div className="absolute top-0 left-0 w-full h-full bg-green-500/5 blur-[120px] pointer-events-none" />
+        <div className="relative z-10 max-w-sm text-center">
+          <img
+            src="/illustration-shopping.svg"
+            alt="Person shopping on phone"
+            className="w-72 h-72 mx-auto mb-8 opacity-90 drop-shadow-[0_0_60px_rgba(34,197,94,0.15)]"
+          />
+          <h2 className="text-2xl font-bold text-white mb-3">Join TADA VTU</h2>
+          <p className="text-gray-400 text-sm leading-relaxed">
+            Get instant airtime & data at the best rates. Earn ₦100 for every friend you refer.
+          </p>
+          <div className="flex items-center justify-center gap-6 mt-6">
+            <div className="text-center">
+              <p className="text-lg font-bold text-green-500">1.8K+</p>
+              <p className="text-xs text-gray-500">Users</p>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div className="text-center">
+              <p className="text-lg font-bold text-green-500">₦100</p>
+              <p className="text-xs text-gray-500">Referral Bonus</p>
+            </div>
+            <div className="w-px h-8 bg-white/10" />
+            <div className="text-center">
+              <p className="text-lg font-bold text-green-500">99.8%</p>
+              <p className="text-xs text-gray-500">Uptime</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex flex-col items-center justify-center flex-1 lg:flex-none lg:w-[480px] p-6 relative z-10">
       {/* Green gradient accents */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-green-500/20 rounded-full blur-[128px] pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
-      
-      <div className="w-full max-w-md space-y-6 relative z-10">
+
+      <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
           <Logo size="lg" href="/" />
         </div>
@@ -212,6 +246,7 @@ export default function RegisterPage() {
             <Link href="/login" className="text-green-500 hover:text-green-400 font-medium transition-colors">Sign in</Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

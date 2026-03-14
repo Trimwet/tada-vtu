@@ -97,7 +97,9 @@ export default function Home() {
         <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow" />
 
         <div className="container mx-auto relative">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            {/* Text content */}
+            <div className="flex-1 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-sm text-gray-300">Trusted by 1,800+ Nigerians</span>
@@ -110,12 +112,12 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
               Experience lightning-fast VTU services with unbeatable rates.
               Recharge any network, pay bills, and earn rewards.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Button size="lg" className="bg-green-500 hover:bg-green-400 text-black font-semibold px-8 h-14 text-lg" asChild>
                 <Link href="/register">
                   Start for Free
@@ -129,8 +131,8 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Stats - More realistic figures */}
-            <div className="flex items-center justify-center gap-6 md:gap-12 mb-12">
+            {/* Stats */}
+            <div className="flex items-center justify-center lg:justify-start gap-6 md:gap-12 mb-12">
               <div className="text-center px-4">
                 <p className="text-2xl md:text-3xl font-bold text-white">1.8K+</p>
                 <p className="text-xs md:text-sm text-gray-500">Active Users</p>
@@ -148,8 +150,21 @@ export default function Home() {
             </div>
 
             {/* Live Transaction Ticker */}
-            <div className="flex justify-center">
+            <div className="flex justify-center lg:justify-start">
               <LiveTransactionTicker />
+            </div>
+            </div>
+
+            {/* Hero illustration — desktop only */}
+            <div className="hidden lg:flex flex-shrink-0 items-center justify-center w-[420px]">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-[80px]" />
+                <img
+                  src="/illustration-call-waiting.svg"
+                  alt="Person using TADA VTU on phone"
+                  className="relative w-[380px] h-[380px] object-contain opacity-90 animate-float"
+                />
+              </div>
             </div>
           </div>
         </div>
