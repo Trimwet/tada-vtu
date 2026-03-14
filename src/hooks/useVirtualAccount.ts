@@ -47,8 +47,9 @@ export function useVirtualAccount() {
       const timestamp = Date.now();
       const response = await fetch(`/api/flutterwave/virtual-account?t=${timestamp}`, {
         cache: 'no-store',
+        credentials: 'include',
         headers: {
-          'x-user-id': user.id, // Kept for backward compatibility but server now uses session
+          'x-user-id': user.id,
         },
       });
 

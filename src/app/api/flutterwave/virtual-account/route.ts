@@ -41,23 +41,30 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // Fall back to x-user-id header if session auth fails (handles race conditions on page load)
+    const headerUserId = request.headers.get('x-user-id');
+    const userId = user?.id || headerUserId;
+
+    if (!userId) {
       return NextResponse.json(
         { status: 'error', message: 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    // Use admin client when falling back to header auth
+    const db = user ? supabase : getSupabaseAdmin();
+
     // Check if user already has a PERMANENT virtual account (only show permanent accounts)
-    const { data: existingAccount, error } = await supabase
+    const { data: existingAccount, error } = await db
       .from('virtual_accounts')
       .select('account_number, bank_name, account_name, created_at')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('is_active', true)
-      .eq('is_temporary', false) // CRITICAL: Only return permanent accounts
+      .eq('is_temporary', false)
       .single();
 
-    console.log('Virtual account fetch for user:', user.id, 'Found account:', !!existingAccount, 'Error:', error?.code);
+    console.log('Virtual account fetch for user:', userId, 'Found account:', !!existingAccount, 'Error:', error?.code);
 
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching virtual account:', error);
@@ -68,14 +75,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (existingAccount) {
-      console.log('Returning permanent virtual account for user:', user.id);
+      console.log('Returning permanent virtual account for user:', userId);
       return NextResponse.json({
         status: 'success',
         data: existingAccount,
       });
     }
 
-    console.log('No permanent virtual account found for user:', user.id);
+    console.log('No permanent virtual account found for user:', userId);
 
     return NextResponse.json({
       status: 'success',
