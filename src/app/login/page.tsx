@@ -90,10 +90,8 @@ export default function LoginPage() {
           <Logo size="lg" href="/" />
         </div>
 
-        {/* Glassmorphism card with liquid shine */}
+        {/* Glassmorphism card */}
         <div className="relative overflow-hidden bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl shadow-green-500/5">
-          {/* Liquid shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine pointer-events-none" />
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome Back</h1>
             <p className="text-gray-400 text-sm">Sign in to your account to continue</p>

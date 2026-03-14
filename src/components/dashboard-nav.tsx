@@ -10,7 +10,7 @@ import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useState } from "react";
 
 const navItems = [
-  { name: "Overview", href: "/dashboard", icon: "grid-outline", exact: true },
+  { name: "Overview", href: "/dashboard", icon: "home-outline", exact: true },
   { name: "Buy Airtime", href: "/dashboard/buy-airtime", icon: "call-outline" },
   { name: "Buy Data", href: "/dashboard/buy-data", icon: "wifi-outline" },
   { name: "Data Vault", href: "/dashboard/data-vault", icon: "archive-outline" },
@@ -19,7 +19,7 @@ const navItems = [
 
 const secondaryItems = [
   { name: "Referrals", href: "/dashboard/referrals", icon: "people-outline" },
-  { name: "Profile", href: "/dashboard/profile", icon: "person-outline" },
+  { name: "Profile", href: "/dashboard/profile", icon: "person-circle-outline" },
   { name: "Settings", href: "/dashboard/settings", icon: "settings-outline" },
   { name: "Developer", href: "/dashboard/developer", icon: "code-slash-outline" },
 ];
@@ -210,11 +210,11 @@ export function DashboardBottomNav() {
   const pathname = usePathname();
 
   const mobileNavItems = [
-    { name: "Home", href: "/dashboard", icon: "grid-outline", exact: true },
+    { name: "Home", href: "/dashboard", icon: "home-outline", exact: true },
     { name: "Airtime", href: "/dashboard/buy-airtime", icon: "call-outline" },
     { name: "Data", href: "/dashboard/buy-data", icon: "wifi-outline" },
     { name: "Vault", href: "/dashboard/data-vault", icon: "archive-outline" },
-    { name: "More", href: "/dashboard/profile", icon: "person-outline" },
+    { name: "Profile", href: "/dashboard/profile", icon: "person-circle-outline" },
   ];
 
   return (

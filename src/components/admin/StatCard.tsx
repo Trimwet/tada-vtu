@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowUp, ArrowDown, Minus, Info } from '@phosphor-icons/react';
+import { ArrowUp, ArrowDown, Minus, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReactNode, useState } from 'react';
 
@@ -43,7 +43,6 @@ export function StatCard({
                             {tooltip && (
                                 <div className="relative">
                                     <Info
-                                        weight="fill"
                                         className="w-4 h-4 text-gray-500 hover:text-green-400 cursor-help transition-colors"
                                         onMouseEnter={() => setShowTooltip(true)}
                                         onMouseLeave={() => setShowTooltip(false)}
@@ -77,9 +76,9 @@ export function StatCard({
                                 trend.direction === 'down' && "text-red-400 bg-red-500/10",
                                 trend.direction === 'neutral' && "text-gray-400 bg-gray-500/10",
                             )}>
-                                {trend.direction === 'up' && <ArrowUp weight="bold" className="w-3 h-3" />}
-                                {trend.direction === 'down' && <ArrowDown weight="bold" className="w-3 h-3" />}
-                                {trend.direction === 'neutral' && <Minus weight="bold" className="w-3 h-3" />}
+                                {trend.direction === 'up' && <ArrowUp className="w-3 h-3" />}
+                                {trend.direction === 'down' && <ArrowDown className="w-3 h-3" />}
+                                {trend.direction === 'neutral' && <Minus className="w-3 h-3" />}
                                 <span>{Math.abs(trend.value)}%</span>
                             </div>
                         )}

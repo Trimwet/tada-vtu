@@ -1,51 +1,48 @@
 "use client";
 
 import { memo } from "react";
-
 import {
   Phone,
   PhoneCall,
   Archive,
-  Envelope,
-  EnvelopeSimple,
+  Mail,
   Lock,
-  LockSimple,
   Eye,
-  EyeSlash,
+  EyeOff,
   User,
   UserCircle,
   Gift,
   CheckCircle,
   Bell,
-  Gear,
+  Settings,
   Wallet,
   CreditCard,
   PlusCircle,
-  ArrowCircleUp,
+  ArrowUpCircle,
+  ArrowDownCircle,
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  WifiHigh,
-  Television,
-  Lightning,
-  SoccerBall,
+  Wifi,
+  Tv,
+  Zap,
   Receipt,
-  TrendUp,
+  TrendingUp,
   Clock,
   House,
-  HouseLine,
-  SignOut,
-  CaretDown,
-  CaretUp,
-  CaretRight,
-  CaretLeft,
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  ChevronLeft,
   X,
   Check,
   Copy,
   Share,
   Download,
-  Warning,
+  AlertCircle,
+  AlertTriangle,
   Info,
   ShieldCheck,
   Star,
@@ -53,124 +50,107 @@ import {
   Sparkle,
   Heart,
   ThumbsUp,
-  ChatCircle,
-  MagnifyingGlass,
-  Funnel,
+  MessageCircle,
+  Search,
+  Filter,
   Calendar,
   MapPin,
-  Bank,
-  Money,
+  Building2,
+  Coins,
   Tag,
   Ticket,
-  GameController,
-  DotsThree,
+  Gamepad2,
+  MoreHorizontal,
   List,
-  SquaresFour,
+  LayoutGrid,
   Image,
   Camera,
   FileText,
   Clipboard,
-  PencilSimple,
+  Pencil,
   Trash,
   Plus,
-  Question,
-  Prohibit,
-  CloudSlash,
-  Broadcast,
+  HelpCircle,
+  Ban,
+  CloudOff,
+  Radio,
   Users,
   UserPlus,
-  Link as LinkIcon,
+  Link,
   QrCode,
   Barcode,
   Fingerprint,
   Key,
-  LockOpen,
+  Unlock,
   Power,
   Moon,
   Sun,
   Palette,
   Globe,
-  Headset,
-  Lifebuoy,
+  Headphones,
+  LifeBuoy,
   BookOpen,
   Newspaper,
   Megaphone,
   Flag,
   Medal,
-  Coin,
-  Coins,
-  ChartLine,
-  ChartBar,
-  Pulse,
+  BarChart3,
+  Activity,
   Timer,
   Hourglass,
   Repeat,
-  ArrowsClockwise,
-  ArrowClockwise,
+  RefreshCw,
+  RotateCcw,
   Play,
   Pause,
-  Stop,
+  Square,
   SkipForward,
   SkipBack,
-  SpeakerHigh,
-  SpeakerSlash,
-  DeviceMobile,
-  Desktop,
+  Volume2,
+  VolumeX,
+  Smartphone,
+  Monitor,
   Laptop,
   Cloud,
-  CloudArrowUp,
-  CloudArrowDown,
+  CloudUpload,
+  CloudDownload,
   Folder,
   FolderOpen,
   Files,
-  Chats,
-  ListBullets,
-  GridFour,
+  ListOrdered,
+  Grid2X2,
   Code,
-  CodeBlock,
   Bug,
   Wrench,
   Hammer,
   Sliders,
   Circle,
-  Square,
   Triangle,
-  NumberCircleZero,
-  NumberCircleOne,
-  NumberCircleTwo,
-  NumberCircleThree,
-  NumberCircleFour,
-  NumberCircleFive,
-  NumberCircleSix,
-  NumberCircleSeven,
-  NumberCircleEight,
-  NumberCircleNine,
-  // Gift card occasion icons
-  Balloon,
-  Diamond,
-  HandPalm,
+  CircleDot,
+  CircleDashed,
+  Gem,
+  Hand,
   Snowflake,
   GraduationCap,
-  Flower,
-  Smiley,
-  FlowerLotus,
-  HandWaving,
-  NumberSquareNine,
-  Fire,
-  ArrowsLeftRight,
-  PaperPlaneTilt,
-  ChatCircleDots,
-  FileDoc,
-  IdentificationCard,
+  Flower2,
+  Flame,
+  ArrowLeftRight,
+  Send,
+  File,
   ShoppingCart,
-  ShoppingCartSimple,
   Calculator,
   Package,
-  type IconProps,
-} from "@phosphor-icons/react";
+  Signal,
+  type LucideProps,
+} from "lucide-react";
 
-// Map Ionicon names to Phosphor components
-const iconMap: Record<string, React.ComponentType<IconProps>> = {
+type IconName = string;
+
+interface IonIconProps extends Omit<LucideProps, "ref"> {
+  name: IconName;
+}
+
+const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   // Phone/Call
   call: PhoneCall,
   "call-outline": Phone,
@@ -178,174 +158,191 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
   "phone-outline": Phone,
 
   // Mail
-  mail: EnvelopeSimple,
-  "mail-outline": Envelope,
+  mail: Mail,
+  "mail-outline": Mail,
+  envelope: Mail,
+  "envelope-outline": Mail,
 
-  // Lock/Security
-  "lock-closed": LockSimple,
+  // Lock
+  lock: Lock,
+  "lock-outline": Lock,
+  lockClosed: Lock,
+  "lock-closed": Lock,
   "lock-closed-outline": Lock,
-  "lock-open": LockOpen,
-  "lock-open-outline": LockOpen,
-  shield: ShieldCheck,
-  "shield-outline": ShieldCheck,
-  "shield-checkmark": ShieldCheck,
-  "shield-checkmark-outline": ShieldCheck,
-  key: Key,
-  "key-outline": Key,
-  "finger-print": Fingerprint,
-  "finger-print-outline": Fingerprint,
 
   // Eye
   eye: Eye,
   "eye-outline": Eye,
-  "eye-off": EyeSlash,
-  "eye-off-outline": EyeSlash,
+  eyeSlash: EyeOff,
+  "eye-slash-outline": EyeOff,
 
-  // User/Person
-  person: UserCircle,
+  // User
+  person: User,
   "person-outline": User,
-  "person-circle": IdentificationCard,
-  "person-circle-outline": IdentificationCard,
-  "person-add": UserPlus,
-  "person-add-outline": UserPlus,
-  people: Users,
-  "people-outline": Users,
-
-  // Archive/Vault
-  archive: Archive,
-  "archive-outline": Archive,
-  package: Package,
-  "package-outline": Package,
+  user: UserCircle,
+  "user-outline": UserCircle,
+  "person-circle": UserCircle,
+  "person-circle-outline": UserCircle,
 
   // Gift
   gift: Gift,
   "gift-outline": Gift,
 
-  // Keypad
-  keypad: NumberSquareNine,
-  "keypad-outline": NumberSquareNine,
-
-  // Flame/Fire
-  flame: Fire,
-  "flame-outline": Fire,
-
-  // Construct/Build
-  construct: Wrench,
-  "construct-outline": Wrench,
-
-  // Check/Success
-  checkmark: Check,
-  "checkmark-outline": Check,
+  // Check Circle
   "checkmark-circle": CheckCircle,
   "checkmark-circle-outline": CheckCircle,
 
-  // Notifications
+  // Bell
   notifications: Bell,
   "notifications-outline": Bell,
+  bell: Bell,
+  "bell-outline": Bell,
 
   // Settings
-  settings: Gear,
-  "settings-outline": Gear,
-  options: Sliders,
-  "options-outline": Sliders,
+  settings: Settings,
+  "settings-outline": Settings,
+  gear: Settings,
 
-  // Wallet/Money
+  // Wallet
   wallet: Wallet,
   "wallet-outline": Wallet,
+
+  // Credit Card
+  "credit-card": CreditCard,
+  "credit-card-outline": CreditCard,
   card: CreditCard,
   "card-outline": CreditCard,
-  cash: Money,
-  "cash-outline": Money,
 
-  // Add/Plus
-  add: Plus,
-  "add-outline": Plus,
+  // Plus Circle
   "add-circle": PlusCircle,
   "add-circle-outline": PlusCircle,
 
-  // Arrows
+  // Arrow Circle Up
+  "arrow-up-circle": ArrowUpCircle,
+  "arrow-circle-up": ArrowUpCircle,
+  "arrow-up-circle-outline": ArrowUpCircle,
+
+  // Arrow Circle Down
+  "arrow-down-circle": ArrowDownCircle,
+  "arrow-down-circle-outline": ArrowDownCircle,
+  "arrow-circle-down": ArrowDownCircle,
+
+  // Arrow Up
+  arrowUp: ArrowUp,
   "arrow-up": ArrowUp,
   "arrow-up-outline": ArrowUp,
+
+  // Arrow Down
+  arrowDown: ArrowDown,
   "arrow-down": ArrowDown,
   "arrow-down-outline": ArrowDown,
+
+  // Arrow Left
+  arrowLeft: ArrowLeft,
+  "arrow-left": ArrowLeft,
+  "arrow-left-outline": ArrowLeft,
   "arrow-back": ArrowLeft,
   "arrow-back-outline": ArrowLeft,
+
+  // Arrow Right
+  arrowRight: ArrowRight,
+  "arrow-right": ArrowRight,
+  "arrow-right-outline": ArrowRight,
   "arrow-forward": ArrowRight,
   "arrow-forward-outline": ArrowRight,
-  "arrow-up-circle": ArrowCircleUp,
-  "arrow-up-circle-outline": ArrowCircleUp,
 
-  // Chevrons/Carets
-  "chevron-down": CaretDown,
-  "chevron-down-outline": CaretDown,
-  "chevron-up": CaretUp,
-  "chevron-up-outline": CaretUp,
-  "chevron-forward": CaretRight,
-  "chevron-forward-outline": CaretRight,
-  "chevron-back": CaretLeft,
-  "chevron-back-outline": CaretLeft,
+  // Wifi
+  wifi: Wifi,
+  "wifi-outline": Wifi,
+  wifiHigh: Wifi,
 
-  // Close/X
+  // TV
+  tv: Tv,
+  television: Tv,
+
+  // Lightning/Zap
+  lightning: Zap,
+  "lightning-outline": Zap,
+  flash: Zap,
+
+  // Soccer Ball - using Zap as placeholder
+  soccerBall: Zap,
+  football: Zap,
+
+  // Receipt
+  receipt: Receipt,
+  "receipt-outline": Receipt,
+
+  // Trend Up
+  trendingUp: TrendingUp,
+  "trending-up": TrendingUp,
+  trendUp: TrendingUp,
+  "trend-up-outline": TrendingUp,
+
+  // Clock
+  time: Clock,
+  clock: Clock,
+  "clock-outline": Clock,
+  "time-outline": Clock,
+
+  // House/Home
+  home: House,
+  house: House,
+  "house-outline": House,
+  "home-outline": House,
+
+  // Sign Out
+  signOut: LogOut,
+  "sign-out": LogOut,
+  logOut: LogOut,
+  "log-out": LogOut,
+  "log-out-outline": LogOut,
+
+  // Caret Down
+  caretDown: ChevronDown,
+  "caret-down": ChevronDown,
+  "caret-down-outline": ChevronDown,
+
+  // Caret Up
+  caretUp: ChevronUp,
+  "caret-up": ChevronUp,
+  "caret-up-outline": ChevronUp,
+
+  // Caret Right
+  caretRight: ChevronRight,
+  "caret-right": ChevronRight,
+  "caret-right-outline": ChevronRight,
+  "chevron-forward": ChevronRight,
+  "chevron-forward-outline": ChevronRight,
+
+  // Caret Left
+  caretLeft: ChevronLeft,
+  "caret-left": ChevronLeft,
+  "caret-left-outline": ChevronLeft,
+  "chevron-back": ChevronLeft,
+  "chevron-back-outline": ChevronLeft,
+
+  // X/Close
   close: X,
+  x: X,
+  "x-outline": X,
   "close-outline": X,
   "close-circle": X,
   "close-circle-outline": X,
 
-  // WiFi/Data
-  wifi: WifiHigh,
-  "wifi-outline": WifiHigh,
-  cellular: Broadcast,
-  "cellular-outline": Broadcast,
+  // Check
+  check: Check,
+  checkmark: Check,
+  "check-outline": Check,
+  "checkmark-outline": Check,
+  "checkmark-done": CheckCircle,
+  "checkmark-done-outline": CheckCircle,
 
-  // TV
-  tv: Television,
-  "tv-outline": Television,
-
-  // Lightning/Flash
-  flash: Lightning,
-  "flash-outline": Lightning,
-
-  // Sports/Games
-  football: SoccerBall,
-  "football-outline": SoccerBall,
-  "game-controller": GameController,
-  "game-controller-outline": GameController,
-
-  // Receipt/Transactions
-  receipt: Receipt,
-  "receipt-outline": Receipt,
-
-  // Trending
-  "trending-up": TrendUp,
-  "trending-up-outline": TrendUp,
-
-  // Time
-  time: Clock,
-  "time-outline": Clock,
-  timer: Timer,
-  "timer-outline": Timer,
-  hourglass: Hourglass,
-  "hourglass-outline": Hourglass,
-
-  // Home
-  home: House,
-  "home-outline": HouseLine,
-
-  // Logout
-  "log-out": SignOut,
-  "log-out-outline": SignOut,
-  exit: SignOut,
-  "exit-outline": SignOut,
-
-  // Copy/Share
+  // Copy
   copy: Copy,
   "copy-outline": Copy,
 
-  // Paper Plane / Send
-  "paper-plane": PaperPlaneTilt,
-  "paper-plane-outline": PaperPlaneTilt,
-  send: PaperPlaneTilt,
-  "send-outline": PaperPlaneTilt,
+  // Share
   share: Share,
   "share-outline": Share,
   "share-social": Share,
@@ -354,377 +351,527 @@ const iconMap: Record<string, React.ComponentType<IconProps>> = {
   // Download
   download: Download,
   "download-outline": Download,
-  "cloud-download": CloudArrowDown,
-  "cloud-download-outline": CloudArrowDown,
 
-  // Warning/Info
-  warning: Warning,
-  "warning-outline": Warning,
-  alert: Warning,
-  "alert-outline": Warning,
-  "alert-circle": Warning,
-  "alert-circle-outline": Warning,
+  // Warning
+  warning: AlertTriangle,
+  alert: AlertTriangle,
+  "warning-outline": AlertTriangle,
+  "alert-circle": AlertCircle,
+  "alert-circle-outline": AlertCircle,
+
+  // Info
   information: Info,
-  "information-outline": Info,
+  info: Info,
   "information-circle": Info,
   "information-circle-outline": Info,
-  help: Question,
-  "help-outline": Question,
-  "help-circle": Question,
-  "help-circle-outline": Question,
 
-  // Star/Rating
+  // Shield Check
+  shieldCheck: ShieldCheck,
+  "shield-check": ShieldCheck,
+  "shield-check-outline": ShieldCheck,
+  "shield-checkmark": ShieldCheck,
+  "shield-checkmark-outline": ShieldCheck,
+
+  // Logos (mapped to closest lucide equivalent)
+  "logo-whatsapp": MessageCircle,
+
+  // Star
   star: Star,
   "star-outline": Star,
 
-  // Trophy/Awards
+  // Trophy
   trophy: Trophy,
   "trophy-outline": Trophy,
-  medal: Medal,
-  "medal-outline": Medal,
-  ribbon: Medal,
-  "ribbon-outline": Medal,
 
-  // Sparkle/Effects
-  sparkles: Sparkle,
-  "sparkles-outline": Sparkle,
+  // Sparkle
+  sparkle: Sparkle,
+  "sparkle-outline": Sparkle,
 
-  // Heart/Like
+  // Heart
   heart: Heart,
   "heart-outline": Heart,
-  "thumbs-up": ThumbsUp,
-  "thumbs-up-outline": ThumbsUp,
 
-  // Chat/Message
-  chatbubble: ChatCircle,
-  "chatbubble-outline": ChatCircle,
-  "chatbubble-ellipses": ChatCircleDots,
-  "chatbubble-ellipses-outline": ChatCircleDots,
-  chatbubbles: Chats,
-  "chatbubbles-outline": Chats,
+  // Thumbs Up
+  thumbsUp: ThumbsUp,
+  "thumbs-up": ThumbsUp,
+
+  // Chat Circle
+  chat: MessageCircle,
+  "chat-outline": MessageCircle,
+  chatbubble: MessageCircle,
+  "chatbubble-outline": MessageCircle,
+  "chatbubble-ellipses": MessageCircle,
+  "chatbubble-ellipses-outline": MessageCircle,
 
   // Search
-  search: MagnifyingGlass,
-  "search-outline": MagnifyingGlass,
+  search: Search,
+  "search-outline": Search,
+  magnifyingGlass: Search,
 
-  // Filter
-  filter: Funnel,
-  "filter-outline": Funnel,
-  funnel: Funnel,
-  "funnel-outline": Funnel,
+  // Funnel/Filter
+  filter: Filter,
+  funnel: Filter,
+  "filter-outline": Filter,
 
   // Calendar
   calendar: Calendar,
   "calendar-outline": Calendar,
 
-  // Location
+  // Map Pin
   location: MapPin,
   "location-outline": MapPin,
-  pin: MapPin,
-  "pin-outline": MapPin,
+  mapPin: MapPin,
 
   // Bank
-  business: Bank,
-  "business-outline": Bank,
+  bank: Building2,
+  "bank-outline": Building2,
+  building: Building2,
+  business: Building2,
+  "business-outline": Building2,
+  "business-sharp": Building2,
 
-  // Percent/Discount
-  pricetag: Tag,
-  "pricetag-outline": Tag,
-  pricetags: Tag,
-  "pricetags-outline": Tag,
+  // Money - using Coins
+  money: Coins,
+  moneyOutline: Coins,
+
+  // Tag
+  tag: Tag,
+  "tag-outline": Tag,
+  priceTag: Tag,
 
   // Ticket
   ticket: Ticket,
   "ticket-outline": Ticket,
 
-  // Spinner/Loading
-  sync: ArrowsClockwise,
-  "sync-outline": ArrowsClockwise,
-  refresh: ArrowClockwise,
-  "refresh-outline": ArrowClockwise,
-  reload: ArrowClockwise,
-  "reload-outline": ArrowClockwise,
+  // Game Controller
+  game: Gamepad2,
+  gameController: Gamepad2,
 
-  // Menu/List
-  menu: List,
-  "menu-outline": List,
-  list: ListBullets,
-  "list-outline": ListBullets,
-  grid: GridFour,
-  "grid-outline": SquaresFour,
-  apps: SquaresFour,
-  "apps-outline": SquaresFour,
+  // Dots Three - using MoreHorizontal
+  dotsThree: MoreHorizontal,
+  "dots-three": MoreHorizontal,
+  ellipsis: MoreHorizontal,
 
-  // Image/Camera
+  // List
+  list: List,
+  "list-outline": List,
+
+  // Squares Four
+  squaresFour: LayoutGrid,
+  grid: LayoutGrid,
+  "squares-four": LayoutGrid,
+  "grid-outline": LayoutGrid,
+  "grid-sharp": LayoutGrid,
+
+  // Image
   image: Image,
   "image-outline": Image,
-  images: Image,
-  "images-outline": Image,
+  photo: Image,
+
+  // Camera
   camera: Camera,
   "camera-outline": Camera,
 
-  // Document/File
+  // File Text
   document: FileText,
-  "document-outline": FileText,
-  "document-text": FileDoc,
-  "document-text-outline": FileDoc,
-  documents: Files,
-  "documents-outline": Files,
+  doc: FileText,
+  "document-text": FileText,
+  "document-text-outline": FileText,
+
+  // Clipboard
   clipboard: Clipboard,
   "clipboard-outline": Clipboard,
 
-  // Edit/Write
-  create: PencilSimple,
-  "create-outline": PencilSimple,
-  pencil: PencilSimple,
-  "pencil-outline": PencilSimple,
+  // Pencil
+  pencil: Pencil,
+  "pencil-outline": Pencil,
+  edit: Pencil,
 
-  // Delete/Trash
+  // Trash
   trash: Trash,
   "trash-outline": Trash,
 
-  // Link
-  link: LinkIcon,
-  "link-outline": LinkIcon,
+  // Plus
+  add: Plus,
+  plus: Plus,
+  "plus-outline": Plus,
 
-  // QR/Barcode
+  // Question
+  question: HelpCircle,
+  "question-outline": HelpCircle,
+  help: HelpCircle,
+  "help-circle": HelpCircle,
+  "help-circle-outline": HelpCircle,
+
+  // Prohibit/Ban
+  ban: Ban,
+  prohibition: Ban,
+  "ban-outline": Ban,
+
+  // Cloud Slash
+  cloudOff: CloudOff,
+  "cloud-off": CloudOff,
+  "cloud-slash": CloudOff,
+  "cloud-offline": CloudOff,
+  "cloud-offline-outline": CloudOff,
+
+  // Broadcast/Radio
+  broadcast: Radio,
+  radio: Radio,
+  "radio-outline": Radio,
+
+  // Users
+  people: Users,
+  users: Users,
+  "users-outline": Users,
+  "people-outline": Users,
+  "people-sharp": Users,
+
+  // User Plus
+  personAdd: UserPlus,
+  "person-add": UserPlus,
+  userPlus: UserPlus,
+
+  // Link
+  link: Link,
+  "link-outline": Link,
+
+  // QR Code
+  qrCode: QrCode,
   "qr-code": QrCode,
-  "qr-code-outline": QrCode,
+  qrcode: QrCode,
+
+  // Barcode
   barcode: Barcode,
   "barcode-outline": Barcode,
+
+  // Fingerprint
+  fingerprint: Fingerprint,
+  "fingerprint-outline": Fingerprint,
+
+  // Key
+  key: Key,
+  "key-outline": Key,
+
+  // Lock Open
+  lockOpen: Unlock,
+  "lock-open": Unlock,
+  unlock: Unlock,
 
   // Power
   power: Power,
   "power-outline": Power,
 
-  // Theme
+  // Moon
   moon: Moon,
   "moon-outline": Moon,
-  sunny: Sun,
-  "sunny-outline": Sun,
-  contrast: Palette,
-  "contrast-outline": Palette,
 
-  // Globe/Language
+  // Sun
+  sun: Sun,
+  "sun-outline": Sun,
+
+  // Palette
+  palette: Palette,
+  "palette-outline": Palette,
+  colorPalette: Palette,
+
+  // Globe
   globe: Globe,
   "globe-outline": Globe,
-  earth: Globe,
-  "earth-outline": Globe,
-  language: Globe,
-  "language-outline": Globe,
+  world: Globe,
 
-  // Support
-  headset: Headset,
-  "headset-outline": Headset,
-  "help-buoy": Lifebuoy,
-  "help-buoy-outline": Lifebuoy,
+  // Headset
+  headset: Headphones,
+  headphones: Headphones,
+  "headset-outline": Headphones,
 
-  // Book/Learn
+  // Lifebuoy
+  lifebuoy: LifeBuoy,
+  "lifebuoy-outline": LifeBuoy,
+  support: LifeBuoy,
+
+  // Book Open
+  bookOpen: BookOpen,
+  "book-open": BookOpen,
   book: BookOpen,
-  "book-outline": BookOpen,
+
+  // Newspaper
   newspaper: Newspaper,
   "newspaper-outline": Newspaper,
 
-  // Megaphone/Announce
+  // Megaphone
   megaphone: Megaphone,
   "megaphone-outline": Megaphone,
+  announcement: Megaphone,
 
   // Flag
   flag: Flag,
   "flag-outline": Flag,
 
-  // Coins/Money
-  "logo-usd": Coin,
+  // Medal
+  medal: Medal,
+  "medal-outline": Medal,
+
+  // Coin
+  coin: Coins,
+  "coin-outline": Coins,
+
+  // Coins
   coins: Coins,
+  "coins-outline": Coins,
 
-  // Chart/Stats
-  "stats-chart": ChartLine,
-  "stats-chart-outline": ChartLine,
-  "bar-chart": ChartBar,
-  "bar-chart-outline": ChartBar,
-  analytics: ChartLine,
-  "analytics-outline": ChartLine,
-  pulse: Pulse,
-  "pulse-outline": Pulse,
+  // Chart Line
+  chartLine: TrendingUp,
+  "chart-line": TrendingUp,
+  "line-chart": TrendingUp,
 
-  // Repeat/Refresh
+  // Chart Bar
+  chartBar: BarChart3,
+  "chart-bar": BarChart3,
+  "bar-chart": BarChart3,
+
+  // Pulse
+  pulse: Activity,
+  "pulse-outline": Activity,
+  heartbeat: Activity,
+
+  // Timer
+  timer: Timer,
+  "timer-outline": Timer,
+
+  // Hourglass
+  hourglass: Hourglass,
+  "hourglass-outline": Hourglass,
+
+  // Repeat
   repeat: Repeat,
   "repeat-outline": Repeat,
 
-  // Swap
-  "swap-horizontal": ArrowsLeftRight,
-  "swap-horizontal-outline": ArrowsLeftRight,
-  "swap-vertical": ArrowsLeftRight,
-  "swap-vertical-outline": ArrowsLeftRight,
+  // Arrows Clockwise
+  arrowsClockwise: RefreshCw,
+  "arrows-clockwise": RefreshCw,
+  sync: RefreshCw,
+  refresh: RefreshCw,
+  "refresh-outline": RefreshCw,
 
-  // Play/Media
+  // Arrow Clockwise
+  arrowClockwise: RotateCcw,
+  "arrow-clockwise": RotateCcw,
+
+  // Play
   play: Play,
   "play-outline": Play,
+
+  // Pause
   pause: Pause,
   "pause-outline": Pause,
-  stop: Stop,
-  "stop-outline": Stop,
-  "play-forward": SkipForward,
-  "play-forward-outline": SkipForward,
-  "play-back": SkipBack,
-  "play-back-outline": SkipBack,
 
-  // Volume
-  "volume-high": SpeakerHigh,
-  "volume-high-outline": SpeakerHigh,
-  "volume-mute": SpeakerSlash,
-  "volume-mute-outline": SpeakerSlash,
+  // Stop
+  stop: Square,
+  stopOutline: Square,
 
-  // Device
-  "phone-portrait": DeviceMobile,
-  "phone-portrait-outline": DeviceMobile,
-  desktop: Desktop,
-  "desktop-outline": Desktop,
+  // Skip Forward
+  skipForward: SkipForward,
+  "skip-forward": SkipForward,
+  "skip-forward-outline": SkipForward,
+
+  // Skip Back
+  skipBack: SkipBack,
+  "skip-back": SkipBack,
+  "skip-back-outline": SkipBack,
+
+  // Speaker High
+  volumeHigh: Volume2,
+  "volume-high": Volume2,
+  speaker: Volume2,
+
+  // Speaker Slash
+  volumeMute: VolumeX,
+  "volume-mute": VolumeX,
+  volumeSlash: VolumeX,
+
+  // Device Mobile
+  deviceMobile: Smartphone,
+  "device-mobile": Smartphone,
+  mobile: Smartphone,
+  phonePortrait: Smartphone,
+
+  // Cellular/Signal
+  cellular: Signal,
+  "cellular-outline": Signal,
+  signal: Signal,
+
+  // Desktop
+  desktop: Monitor,
+  "desktop-outline": Monitor,
+  computer: Monitor,
+
+  // Laptop
   laptop: Laptop,
   "laptop-outline": Laptop,
 
   // Cloud
   cloud: Cloud,
   "cloud-outline": Cloud,
-  "cloud-upload": CloudArrowUp,
-  "cloud-upload-outline": CloudArrowUp,
 
-  // Folder/File
+  // Cloud Arrow Up
+  cloudUpload: CloudUpload,
+  "cloud-upload": CloudUpload,
+  "cloud-arrow-up": CloudUpload,
+
+  // Cloud Arrow Down
+  cloudDownload: CloudDownload,
+  "cloud-download": CloudDownload,
+  "cloud-arrow-down": CloudDownload,
+
+  // Folder
   folder: Folder,
   "folder-outline": Folder,
+
+  // Archive
+  archive: Archive,
+  "archive-outline": Archive,
+  "archive-sharp": Archive,
+
+  // Folder Open
+  folderOpen: FolderOpen,
   "folder-open": FolderOpen,
-  "folder-open-outline": FolderOpen,
 
-  // Ellipsis/More
-  "ellipsis-horizontal": DotsThree,
-  "ellipsis-horizontal-outline": DotsThree,
-  "ellipsis-vertical": DotsThree,
-  "ellipsis-vertical-outline": DotsThree,
+  // Files
+  files: Files,
+  "files-outline": Files,
+  documents: Files,
 
-  // Prohibit/Block
-  ban: Prohibit,
-  "ban-outline": Prohibit,
+  // Chats
+  chats: MessageCircle,
+  "chats-outline": MessageCircle,
 
-  // Offline
-  "cloud-offline": CloudSlash,
-  "cloud-offline-outline": CloudSlash,
+  // List Bullets
+  listBullets: ListOrdered,
+  "list-bullets": ListOrdered,
+
+  // Grid Four
+  gridFour: Grid2X2,
+  "grid-four": Grid2X2,
+
+  // Keypad
+  keypad: LayoutGrid,
+  "keypad-outline": LayoutGrid,
 
   // Code
   code: Code,
   "code-outline": Code,
-  "code-slash": CodeBlock,
-  "code-slash-outline": CodeBlock,
+  "code-slash": Code,
+  "code-slash-outline": Code,
+
+  // Code Block
+  codeBlock: Bug,
+  "code-block": Bug,
 
   // Bug
   bug: Bug,
   "bug-outline": Bug,
 
-  // Build/Tools
-  build: Wrench,
-  "build-outline": Wrench,
+  // Wrench
+  wrench: Wrench,
+  "wrench-outline": Wrench,
+
+  // Hammer
   hammer: Hammer,
   "hammer-outline": Hammer,
 
-  // Shapes
+  // Sliders
+  sliders: Sliders,
+  "sliders-outline": Sliders,
+  options: Sliders,
+  "options-outline": Sliders,
+
+  // Circle
+  circle: Circle,
+  "circle-outline": Circle,
+
+  // Square
   square: Square,
   "square-outline": Square,
+
+  // Triangle
   triangle: Triangle,
   "triangle-outline": Triangle,
 
+  // Zero
+  zero: CircleDot,
+  numberZero: CircleDot,
+
+  // One
+  one: CircleDashed,
+  numberOne: CircleDashed,
+
+  // Two - using Circle as placeholder
+  two: Circle,
+  numberTwo: Circle,
+
+  // Three - using Circle as placeholder
+  three: Circle,
+  numberThree: Circle,
+
+  // Four - using Circle as placeholder
+  four: Circle,
+  numberFour: Circle,
+
+  // Five - using Circle as placeholder
+  five: Circle,
+  numberFive: Circle,
+
+  // Six - using Circle as placeholder
+  six: Circle,
+  numberSix: Circle,
+
+  // Seven - using Circle as placeholder
+  seven: Circle,
+  numberSeven: Circle,
+
+  // Eight - using Circle as placeholder
+  eight: Circle,
+  numberEight: Circle,
+
+  // Nine - using Circle as placeholder
+  nine: Circle,
+  numberNine: Circle,
+
   // Gift card occasion icons
-  balloon: Balloon,
-  "balloon-outline": Balloon,
-  diamond: Diamond,
-  "diamond-outline": Diamond,
-  "hand-left": HandPalm,
-  "hand-left-outline": HandPalm,
-  snow: Snowflake,
-  "snow-outline": Snowflake,
-  school: GraduationCap,
-  "school-outline": GraduationCap,
-  flower: Flower,
-  "flower-outline": Flower,
-  rose: FlowerLotus,
-  "rose-outline": FlowerLotus,
-  happy: Smiley,
-  "happy-outline": Smiley,
-  "hand-right": HandWaving,
-  "hand-right-outline": HandWaving,
-
-  // Social/Logo icons (map to closest Phosphor equivalent)
-  "logo-whatsapp": ChatCircle,
-  "logo-facebook": Globe,
-  "logo-twitter": Globe,
-  "logo-instagram": Camera,
-  "logo-google": Globe,
-  "logo-apple": DeviceMobile,
-  "logo-android": DeviceMobile,
-
-  // Additional commonly used icons
-  "checkmark-done": Check,
-  "checkmark-done-outline": Check,
-  sad: Smiley,
-  "sad-outline": Smiley,
-
-  // Cart/Shopping
-  cart: ShoppingCart,
-  "cart-outline": ShoppingCartSimple,
-  bag: ShoppingCart,
-  "bag-outline": ShoppingCartSimple,
-
-  // Numbers
-  "0": NumberCircleZero,
-  "1": NumberCircleOne,
-  "2": NumberCircleTwo,
-  "3": NumberCircleThree,
-  "4": NumberCircleFour,
-  "5": NumberCircleFive,
-  "6": NumberCircleSix,
-  "7": NumberCircleSeven,
-  "8": NumberCircleEight,
-  "9": NumberCircleNine,
-
-  // Calculator
+  balloon: Gem,
+  diamond: Gem,
+  handPalm: Hand,
+  snowflake: Snowflake,
+  graduationCap: GraduationCap,
+  flower: Flower2,
+  smiley: Flower2,
+  flowerLotus: Flower2,
+  handWaving: Hand,
+  fire: Flame,
+  arrowsLeftRight: ArrowLeftRight,
+  paperPlaneTilt: Send,
+  send: Send,
+  "send-outline": Send,
+  chatCircleDots: MessageCircle,
+  fileDoc: File,
+  idCard: CreditCard,
+  shoppingCart: ShoppingCart,
   calculator: Calculator,
-  "calculator-outline": Calculator,
+  package: Package,
 };
 
-// Fallback icon for unmapped names
-const FallbackIcon = Circle;
+function IonIcon({ name, ...props }: IonIconProps) {
+  const Icon = iconMap[name];
 
-interface IonIconProps {
-  name: string;
-  size?: string;
-  color?: string;
-  className?: string;
-  weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
+  if (!Icon) {
+    console.warn(`Icon "${name}" not found in ion-icon mapping.`);
+    return null;
+  }
+
+  return <Icon {...props} />;
 }
 
-export const IonIcon = memo(function IonIcon({
-  name,
-  size = "20px",
-  color,
-  className = "",
-  weight = "regular",
-}: IonIconProps) {
-  const iconName = name.trim();
-  const IconComponent = iconMap[iconName] || FallbackIcon;
-  const sizeNum = parseInt(size.replace("px", ""), 10) || 20;
-
-  return (
-    <span
-      className={className}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        lineHeight: 1,
-        width: size,
-        height: size,
-        color,
-      }}
-    >
-      <IconComponent size={sizeNum} weight={weight} />
-    </span>
-  );
-});
+export default memo(IonIcon);
+export { IonIcon };
+export type { IonIconProps };

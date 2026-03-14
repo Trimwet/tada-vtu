@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Users, Lightning, Clock, Shield } from "@phosphor-icons/react";
+import { Users, Zap, Clock, Shield } from 'lucide-react';
 
 interface CounterProps {
   end: number;
@@ -76,7 +76,7 @@ const STATS = [
     bgColor: "bg-green-100 dark:bg-green-900/50",
   },
   {
-    icon: Lightning,
+    icon: Zap,
     value: 125,
     prefix: "₦",
     suffix: "M+",

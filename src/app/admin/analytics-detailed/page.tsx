@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, TrendUp, TrendDown, Download } from "@phosphor-icons/react";
+import { ArrowLeft, TrendingUp, TrendingDown, Download } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface Analytics {
@@ -271,7 +271,7 @@ export default function DetailedAnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-white/80 text-sm">Net Profit</p>
-                <TrendUp className="w-5 h-5 text-white" weight="bold" />
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <p className="text-3xl font-bold text-white">
                 ₦{analytics.revenue.netProfit.toLocaleString()}
@@ -284,7 +284,7 @@ export default function DetailedAnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-white/80 text-sm">Total Revenue</p>
-                <TrendUp className="w-5 h-5 text-white" weight="bold" />
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <p className="text-3xl font-bold text-white">
                 ₦{analytics.revenue.totalRevenue.toLocaleString()}
@@ -299,7 +299,7 @@ export default function DetailedAnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-white/80 text-sm">Total Deposits</p>
-                <TrendUp className="w-5 h-5 text-white" weight="bold" />
+                <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <p className="text-3xl font-bold text-white">
                 ₦{analytics.revenue.totalDeposits.toLocaleString()}
@@ -314,7 +314,7 @@ export default function DetailedAnalyticsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-white/80 text-sm">Total Costs</p>
-                <TrendDown className="w-5 h-5 text-white" weight="bold" />
+                <TrendingDown className="w-5 h-5 text-white" />
               </div>
               <p className="text-3xl font-bold text-white">
                 ₦{analytics.costs.totalCosts.toLocaleString()}

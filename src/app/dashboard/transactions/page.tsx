@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { IonIcon } from "@/components/ion-icon";
 import Link from "next/link";
@@ -18,13 +18,23 @@ import {
 type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'withdrawal';
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
 
+const PAGE_SIZE = 20;
+
 export default function TransactionsPage() {
-  const { transactions, loading } = useSupabaseTransactions(100);
+  const { transactions, loading } = useSupabaseTransactions(200);
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [isPending, startTransition] = useTransition();
 
+  const changePage = (newPage: number) => {
+    startTransition(() => {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
     return transactions.filter(txn => {
@@ -33,6 +43,13 @@ export default function TransactionsPage() {
       return matchesType && matchesStatus;
     });
   }, [transactions, typeFilter, statusFilter]);
+
+  // Reset to page 1 when filters change
+  const handleTypeFilter = (value: FilterType) => { setTypeFilter(value); setPage(1); };
+  const handleStatusFilter = (value: StatusFilter) => { setStatusFilter(value); setPage(1); };
+
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
+  const paginatedTransactions = filteredTransactions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const stats = useMemo(() => {
     if (!transactions) return { total: 0, success: 0, pending: 0, failed: 0 };
@@ -164,7 +181,7 @@ export default function TransactionsPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           {/* Type Filter with shadcn Select */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as FilterType)}>
+            <Select value={typeFilter} onValueChange={(value) => handleTypeFilter(value as FilterType)}>
               <SelectTrigger className="w-[180px] h-10">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -182,7 +199,7 @@ export default function TransactionsPage() {
               {(['all', 'success', 'pending', 'failed'] as StatusFilter[]).map((status) => (
                 <button
                   key={status}
-                  onClick={() => setStatusFilter(status)}
+                  onClick={() => handleStatusFilter(status)}
                   className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     statusFilter === status
                       ? 'bg-background text-foreground shadow-sm'
@@ -219,8 +236,12 @@ export default function TransactionsPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filteredTransactions.map((transaction) => (
+          <div
+            key={page}
+            className={`space-y-2 transition-opacity duration-200 ${isPending ? 'opacity-40' : 'opacity-100'}`}
+            style={{ animation: 'fade-in 0.2s ease-out' }}
+          >
+            {paginatedTransactions.map((transaction) => (
               <div
                 key={transaction.id}
                 onClick={() => handleTransactionClick(transaction)}
@@ -311,6 +332,66 @@ export default function TransactionsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6">
+            <p className="text-sm text-muted-foreground">
+              Page {page} of {totalPages} · {filteredTransactions.length} transactions
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => changePage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="h-9 px-3 gap-1"
+              >
+                <IonIcon name="chevron-back-outline" size="16px" />
+                Prev
+              </Button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                  .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => changePage(p as number)}
+                        className={`w-9 h-9 rounded-md text-sm font-medium transition-colors ${
+                          page === p
+                            ? 'bg-green-500 text-white'
+                            : 'hover:bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => changePage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="h-9 px-3 gap-1"
+              >
+                Next
+                <IonIcon name="chevron-forward-outline" size="16px" />
+              </Button>
+            </div>
           </div>
         )}
 

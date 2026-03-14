@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import {
-  Lightning,
-  MagnifyingGlass,
+  Zap,
+  Search,
   Crown,
-  WifiHigh,
+  Wifi,
   Info
-} from "@phosphor-icons/react"
+} from "lucide-react"
 import Link from "next/link"
 import { useAllDataPlans } from "@/hooks/useDataPlans"
 import { LogoInline } from "@/components/logo"
@@ -64,7 +64,7 @@ export default function PricingPage() {
           {/* Hero Header */}
           <div className="max-w-4xl mx-auto text-center mb-16">
             <Badge variant="outline" className="mb-4 border-green-500/50 text-green-400 py-1.5 px-4 rounded-full bg-green-500/5">
-              <Lightning weight="fill" className="mr-2" />
+              <Zap fill="currentColor" className="mr-2" />
               Live Pricing Engine
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
@@ -114,7 +114,7 @@ export default function PricingPage() {
                   ))}
                 </div>
                 <div className="relative w-full md:w-80">
-                  <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                   <Input
                     placeholder="Search plans (e.g. 1GB)..."
                     value={searchQuery}
@@ -139,7 +139,7 @@ export default function PricingPage() {
                   </div>
                 ) : filteredPlans.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center">
-                    <MagnifyingGlass size={40} className="text-gray-600 mb-4" />
+                    <Search size={40} className="text-gray-600 mb-4" />
                     <p className="text-gray-500">No plans found matching &quot;{searchQuery}&quot;</p>
                   </div>
                 ) : (
@@ -165,7 +165,7 @@ export default function PricingPage() {
                           </div>
                           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                              <WifiHigh weight="bold" />
+                              <Wifi weight="bold" />
                               <span>{plan.size} Bundle</span>
                             </div>
                             <Button size="sm" className="h-8 px-3 bg-white/5 hover:bg-green-500 hover:text-black text-xs font-bold transition-all rounded-lg" asChild>

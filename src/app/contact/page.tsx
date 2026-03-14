@@ -8,18 +8,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { 
   Phone, 
-  Envelope, 
+  Mail, 
   MapPin, 
   Clock, 
-  ChatCircle, 
-  PaperPlaneTilt, 
+  MessageCircle, 
+  Send, 
   Shield, 
   Users, 
   Trophy,
   CheckCircle,
-  Lightning,
+  Zap,
   Star
-} from "@phosphor-icons/react"
+} from "lucide-react"
 import Link from "next/link"
 
 export default function ContactPage() {
@@ -31,7 +31,7 @@ export default function ContactPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <Lightning size={20} className="text-white" />
+                <Zap size={20} className="text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900 dark:text-white">TADA VTU</span>
             </div>
@@ -52,7 +52,7 @@ export default function ContactPage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-4 py-2 rounded-full mb-6">
-              <ChatCircle size={16} />
+              <MessageCircle size={16} />
               <span className="text-sm font-medium">We're Here to Help</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
@@ -104,7 +104,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Envelope size={32} className="text-blue-600" />
+                  <Mail size={32} className="text-blue-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Email Support</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Get detailed responses</CardDescription>
@@ -121,7 +121,7 @@ export default function ContactPage() {
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ChatCircle size={32} className="text-purple-600" />
+                  <MessageCircle size={32} className="text-purple-600" />
                 </div>
                 <CardTitle className="text-gray-900 dark:text-white">Live Chat</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Instant assistance</CardDescription>
@@ -236,7 +236,7 @@ export default function ContactPage() {
                   </div>
                   
                   <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                    <PaperPlaneTilt size={16} className="mr-2" />
+                    <Send size={16} className="mr-2" />
                     Send Message
                   </Button>
                 </form>
@@ -353,7 +353,7 @@ export default function ContactPage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                  <Lightning size={20} className="text-white" />
+                  <Zap size={20} className="text-white" />
                 </div>
                 <span className="text-xl font-bold">TADA VTU</span>
               </div>

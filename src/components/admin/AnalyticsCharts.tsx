@@ -13,7 +13,7 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendUp, TrendDown, CurrencyNgn, CreditCard, Broadcast } from '@phosphor-icons/react';
+import { TrendingUp, TrendingDown, CreditCard, Radio, Currency } from 'lucide-react';
 import { useState } from 'react';
 
 // --- Types ---
@@ -90,12 +90,12 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                 <CardHeader className="border-b border-gray-700/30 pb-4">
                     <div className="flex justify-between items-center">
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <CurrencyNgn className="text-green-500 w-5 h-5" weight="bold" />
+                            <Currency className="text-green-500 w-5 h-5" />
                             Earnings & Deposits Trend
                         </CardTitle>
                         <div className="flex gap-2">
                             <span className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${isPositive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
-                                {isPositive ? <TrendUp weight="bold" /> : <TrendDown weight="bold" />}
+                                {isPositive ? <TrendingUp /> : <TrendingDown />}
                                 {earningsTrend > 0 ? '+' : ''}{earningsTrend}% vs last period
                             </span>
                         </div>
@@ -172,7 +172,7 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                 <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <CreditCard className="text-purple-500 w-5 h-5" weight="bold" />
+                            <CreditCard className="text-purple-500 w-5 h-5" />
                             Transaction Volume
                         </CardTitle>
                     </CardHeader>
@@ -212,7 +212,7 @@ export function AnalyticsCharts({ data, serviceBreakdown, loading, trends }: Ana
                 <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle className="text-white text-lg flex items-center gap-2">
-                            <Broadcast className="text-green-500 w-5 h-5" weight="bold" />
+                            <Radio className="text-green-500 w-5 h-5" />
                             Service Distribution
                         </CardTitle>
                     </CardHeader>

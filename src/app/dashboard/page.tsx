@@ -324,23 +324,17 @@ export default function DashboardPage() {
                   className={`border-border hover:border-green-500/50 active:scale-95 transition-smooth cursor-pointer group bg-card animate-scale-in stagger-${index + 1} relative overflow-hidden`}
                 >
                   {"badge" in service && service.badge && (
-                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 sm:px-1.5 py-0.5 bg-linear-to-r from-amber-500 to-orange-500 text-white text-[8px] sm:text-[9px] font-bold rounded-full">
+                    <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 px-1 sm:px-1.5 py-0.5 bg-green-500 text-white text-[8px] sm:text-[9px] font-bold rounded-full">
                       {service.badge}
                     </span>
                   )}
                   <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center">
-                    <div
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth ${
-                        "badge" in service && service.badge
-                          ? "bg-linear-to-br from-amber-500/20 to-orange-500/20 group-hover:from-amber-500 group-hover:to-orange-500"
-                          : "bg-green-500/10 group-hover:bg-green-500"
-                      }`}
-                    >
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3 transition-smooth bg-green-500/10 group-hover:bg-green-500">
                       <IonIcon
                         name={service.icon}
                         size="22px"
-                        color={("badge" in service && service.badge) ? "#f59e0b" : "#22c55e"}
-                        className="group-hover:text-white! transition-smooth"
+                        className="transition-smooth text-green-500 group-hover:text-white!"
+                        color="currentColor"
                       />
                     </div>
                     <span className="text-[11px] sm:text-xs font-medium text-foreground">

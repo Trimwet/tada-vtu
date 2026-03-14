@@ -9,7 +9,7 @@ import { LogoInline } from '@/components/logo';
 import { toast } from 'sonner';
 import { StatCard } from '@/components/admin/StatCard';
 import { AnalyticsCharts } from '@/components/admin/AnalyticsCharts';
-import { Wallet, Users, TrendUp, CreditCard, CurrencyNgn, ChartLineUp, Storefront } from '@phosphor-icons/react';
+import { Wallet, Users, TrendingUp, CreditCard, Store, Currency } from 'lucide-react';
 
 interface Stats {
   totalUsers: number;
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
               <StatCard
                 title="Gross Volume"
                 value={`₦${stats.grossVolume.toLocaleString()}`}
-                icon={<CurrencyNgn weight="bold" className="w-5 h-5" />}
+                icon={<Currency className="w-5 h-5" />}
                 trend={{
                   value: analytics?.summary?.trends?.grossVolume || 0,
                   direction: (analytics?.summary?.trends?.grossVolume || 0) >= 0 ? 'up' : 'down',
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
               <StatCard
                 title="Estimated Earnings"
                 value={`₦${stats.estimatedEarnings.toLocaleString()}`}
-                icon={<TrendUp weight="bold" className="w-5 h-5" />}
+                icon={<TrendingUp className="w-5 h-5" />}
                 trend={{
                   value: analytics?.summary?.trends?.estimatedEarnings || 0,
                   direction: (analytics?.summary?.trends?.estimatedEarnings || 0) >= 0 ? 'up' : 'down',
@@ -333,14 +333,14 @@ export default function AdminDashboard() {
               <StatCard
                 title="Net Profit"
                 value={`₦${stats.netProfit.toLocaleString()}`}
-                icon={<ChartLineUp weight="bold" className="w-5 h-5" />}
+                icon={<TrendingUp className="w-5 h-5" />}
                 tooltip="Your actual profit after deducting Flutterwave gateway fees (~1%) from estimated earnings."
                 description="Earnings minus Gateway fees"
               />
               <StatCard
                 title="Active Users"
                 value={stats.activeUsers.toString()}
-                icon={<Users weight="bold" className="w-5 h-5" />}
+                icon={<Users className="w-5 h-5" />}
                 trend={{
                   value: analytics?.summary?.trends?.users || 0,
                   direction: (analytics?.summary?.trends?.users || 0) >= 0 ? 'up' : 'down',
@@ -351,7 +351,7 @@ export default function AdminDashboard() {
               <StatCard
                 title="Total Transactions"
                 value={stats.totalTransactions.toLocaleString()}
-                icon={<CreditCard weight="bold" className="w-5 h-5" />}
+                icon={<CreditCard className="w-5 h-5" />}
                 trend={{
                   value: analytics?.summary?.trends?.transactions || 0,
                   direction: (analytics?.summary?.trends?.transactions || 0) >= 0 ? 'up' : 'down',
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
               <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-white text-base flex items-center gap-2">
-                    <Storefront className="w-4 h-4 text-green-400" /> Revenue Breakdown
+                    <Store className="w-4 h-4 text-green-400" /> Revenue Breakdown
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">

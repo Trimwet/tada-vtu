@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Eye, EyeSlash, SpinnerGap } from "@phosphor-icons/react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export function LoginForm({
@@ -162,7 +162,7 @@ export function LoginForm({
                   disabled={isLoading}
                 >
                   {showPassword ? (
-                    <EyeSlash size={16} />
+                    <EyeOff size={16} />
                   ) : (
                     <Eye size={16} />
                   )}
@@ -200,7 +200,7 @@ export function LoginForm({
               >
                 {isLoading ? (
                   <>
-                    <SpinnerGap size={16} className="mr-2 animate-spin" />
+                    <Loader2 size={16} className="mr-2 animate-spin" />
                     Signing In...
                   </>
                 ) : (

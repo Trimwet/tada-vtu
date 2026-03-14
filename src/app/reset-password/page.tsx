@@ -1,6 +1,6 @@
 "use client"
 
-import { Lightning, Lock } from "@phosphor-icons/react"
+import { Zap, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -89,7 +89,7 @@ export default function ResetPasswordPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-green-600 text-white flex size-6 items-center justify-center rounded-md">
-              <Lightning size={16} />
+              <Zap size={16} />
             </div>
             TADA VTU
           </Link>
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center p-8">
             <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lightning size={40} className="text-white" />
+              <Zap size={40} className="text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Almost There!

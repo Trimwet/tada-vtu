@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogoInline } from "@/components/logo";
 import { LiveTransactionTicker } from "@/components/stats-counter";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "lucide-react";
 import { AnimatedBackgroundWrapper } from "@/components/animated-background-wrapper";
 
 function PricingTeaser() {
@@ -51,7 +51,7 @@ function PricingTeaser() {
             <Button size="lg" className="bg-green-500 hover:bg-green-400 text-black font-bold px-10 h-14 rounded-xl group" asChild>
               <Link href="/pricing">
                 View Live Price List
-                <ArrowRight weight="bold" className="ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
           </div>

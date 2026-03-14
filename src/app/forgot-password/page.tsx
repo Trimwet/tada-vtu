@@ -1,6 +1,6 @@
 "use client"
 
-import { Lightning, Envelope, ArrowLeft } from "@phosphor-icons/react"
+import { Zap, Mail, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
         <div className="flex justify-center gap-2 md:justify-start">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="bg-green-600 text-white flex size-6 items-center justify-center rounded-md">
-              <Lightning size={16} />
+              <Zap size={16} />
             </div>
             TADA VTU
           </Link>
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             <Card className="border-0 shadow-none">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                  <Envelope size={24} className="text-green-600 dark:text-green-400" />
+                  <Mail size={24} className="text-green-600 dark:text-green-400" />
                 </div>
                 <CardTitle className="text-2xl">Reset Password</CardTitle>
                 <CardDescription>
@@ -131,7 +131,7 @@ export default function ForgotPasswordPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center p-8">
             <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lightning size={40} className="text-white" />
+              <Zap size={40} className="text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Reset Your Password
