@@ -1,8 +1,8 @@
 // TADA VTU Service Worker - Advanced Caching & Offline Support
-const CACHE_NAME = 'tada-vtu-v1.3.1';
-const STATIC_CACHE = 'tada-static-v1.3.1';
-const DYNAMIC_CACHE = 'tada-dynamic-v1.3.1';
-const API_CACHE = 'tada-api-v1.3.1';
+const CACHE_NAME = 'tada-vtu-v1.4.0';
+const STATIC_CACHE = 'tada-static-v1.4.0';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.4.0';
+const API_CACHE = 'tada-api-v1.4.0';
 
 // Critical resources to cache immediately (only guaranteed to exist)
 const STATIC_ASSETS = [
@@ -225,15 +225,10 @@ async function handleApiRequest(request) {
   }
 }
 
-// Static Assets Handler - Cache First with error handling
+// Static Assets Handler - Network First for _next/static (ensures fresh deploys)
 async function handleStaticAssets(request) {
   try {
     const cache = await caches.open(STATIC_CACHE);
-    const cachedResponse = await cache.match(request);
-
-    if (cachedResponse) {
-      return cachedResponse;
-    }
 
     try {
       const networkResponse = await fetch(request);
@@ -244,12 +239,14 @@ async function handleStaticAssets(request) {
 
       return networkResponse;
     } catch (error) {
-      console.log('[SW] Failed to fetch static asset:', error);
+      // Only fall back to cache when offline
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) return cachedResponse;
       return new Response('Asset not available offline', { status: 503 });
     }
   } catch (error) {
     console.error('[SW] Static asset cache error:', error);
-    return fetch(request); // Fallback to network
+    return fetch(request);
   }
 }
 

@@ -96,10 +96,18 @@ export default function Home() {
         <div className="absolute top-40 right-1/4 w-64 h-64 bg-green-400/10 rounded-full blur-[100px] animate-float-delayed" />
         <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-[120px] animate-float-slow" />
 
+        {/* Illustration — absolutely positioned upper right, desktop only */}
+        <div className="hidden lg:block absolute top-16 right-0 w-80 xl:w-96 pointer-events-none select-none z-0">
+          <div className="absolute inset-0 bg-green-500/10 rounded-full blur-[60px]" />
+          <img
+            src="/illustration-video-park.svg"
+            alt=""
+            className="relative w-full h-full object-contain opacity-70 animate-float"
+          />
+        </div>
+
         <div className="container mx-auto relative">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-            {/* Text content */}
-            <div className="flex-1 text-center lg:text-left max-w-2xl mx-auto lg:mx-0">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-sm text-gray-300">Trusted by 1,800+ Nigerians</span>
@@ -112,12 +120,12 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-xl leading-relaxed">
               Experience lightning-fast VTU services with unbeatable rates.
               Recharge any network, pay bills, and earn rewards.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <Button size="lg" className="bg-green-500 hover:bg-green-400 text-black font-semibold px-8 h-14 text-lg" asChild>
                 <Link href="/register">
                   Start for Free
@@ -131,41 +139,37 @@ export default function Home() {
               </Button>
             </div>
 
+            {/* Illustration */}
+            <div className="relative mb-10">
+              <div className="absolute inset-0 bg-green-500/15 rounded-full blur-[80px] pointer-events-none" />
+              <img
+                src="/illustration-video-park.svg"
+                alt="Person using TADA VTU"
+                className="relative w-64 h-64 md:w-80 md:h-80 object-contain opacity-90 animate-float mx-auto"
+              />
+            </div>
+
             {/* Stats */}
-            <div className="flex items-center justify-center lg:justify-start gap-6 md:gap-12 mb-12">
-              <div className="text-center px-4">
+            <div className="flex items-center justify-center gap-6 md:gap-12 mb-10">
+              <div className="text-center">
                 <p className="text-2xl md:text-3xl font-bold text-white">1.8K+</p>
                 <p className="text-xs md:text-sm text-gray-500">Active Users</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
-              <div className="text-center px-4">
+              <div className="text-center">
                 <p className="text-2xl md:text-3xl font-bold text-green-500">99.8%</p>
                 <p className="text-xs md:text-sm text-gray-500">Uptime</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
-              <div className="text-center px-4">
+              <div className="text-center">
                 <p className="text-2xl md:text-3xl font-bold text-white">500K+</p>
                 <p className="text-xs md:text-sm text-gray-500">Transactions</p>
               </div>
             </div>
 
             {/* Live Transaction Ticker */}
-            <div className="flex justify-center lg:justify-start">
-              <LiveTransactionTicker />
-            </div>
-            </div>
+            <LiveTransactionTicker />
 
-            {/* Hero illustration — desktop only */}
-            <div className="hidden lg:flex flex-shrink-0 items-center justify-center w-[420px]">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-[80px]" />
-                <img
-                  src="/illustration-call-waiting.svg"
-                  alt="Person using TADA VTU on phone"
-                  className="relative w-[380px] h-[380px] object-contain opacity-90 animate-float"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </section>

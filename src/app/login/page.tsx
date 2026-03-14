@@ -109,7 +109,7 @@ export default function LoginPage() {
         </div>
 
         {/* Glassmorphism card */}
-        <div className="relative overflow-hidden bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl shadow-green-500/5">
+        <div className="relative overflow-hidden bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-xl p-6 space-y-6 shadow-2xl shadow-green-500/5">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome Back</h1>
             <p className="text-gray-400 text-sm">Sign in to your account to continue</p>
