@@ -14,7 +14,7 @@ export default function TermsPage() {
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
         <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
-        <p className="text-muted-foreground mb-8">Last updated: December 2024</p>
+        <p className="text-muted-foreground mb-8">Last updated: March 2025</p>
 
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
           <section>
@@ -28,9 +28,8 @@ export default function TermsPage() {
             <ul className="list-disc pl-6 text-muted-foreground space-y-1 mt-2">
               <li>Airtime recharge for all Nigerian networks</li>
               <li>Data bundle purchases</li>
-              <li>Cable TV subscription payments</li>
-              <li>Electricity bill payments</li>
-              <li>Betting account funding</li>
+              <li>Data Vault — park data and redeem via QR code</li>
+              <li>Wallet funding and bank transfers</li>
             </ul>
           </section>
 
