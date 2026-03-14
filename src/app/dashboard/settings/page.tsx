@@ -483,8 +483,10 @@ export default function SettingsPage() {
                   className="text-muted-foreground"
                 />
               </Link>
-              <Link
-                href="/dashboard/support"
+              <a
+                href="https://wa.me/2347058748217?text=Hello%20TADA%20VTU%2C%20I%20need%20assistance%20with..."
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth"
               >
                 <div className="flex items-center gap-3">
@@ -500,7 +502,7 @@ export default function SettingsPage() {
                   size="18px"
                   className="text-muted-foreground"
                 />
-              </Link>
+              </a>
               <Link
                 href="/terms"
                 className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-smooth"

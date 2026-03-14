@@ -132,7 +132,7 @@ export default function ProfilePage() {
     {
       name: "Help & Support",
       icon: "help-circle-outline",
-      href: "/dashboard/support",
+      href: "https://wa.me/2347058748217?text=Hello%20TADA%20VTU%2C%20I%20need%20assistance%20with...",
     },
   ];
 
@@ -369,6 +369,8 @@ export default function ProfilePage() {
                 <Link
                   key={item.name}
                   href={item.href}
+                  target={item.href.startsWith("http") ? "_blank" : undefined}
+                  rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
