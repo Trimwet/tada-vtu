@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
         // Get user's current balance and referral info
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('balance, referred_by')
+          .select('balance, referred_by, referral_points')
           .eq('id', userId)
           .single();
 
@@ -132,15 +132,16 @@ export async function GET(request: NextRequest) {
 
                 if (!bonusError) {
                   // Only update profile if transaction was actually inserted
-                  await supabase.rpc('increment_referral_stats', {
+                  const { error: rpcError } = await supabase.rpc('increment_referral_stats', {
                     p_user_id: profile.referred_by,
                     p_points: REFERRAL_POINTS,
-                  }).catch(() => {
-                    // Fallback if RPC doesn't exist
-                    supabase.from('profiles').update({
-                      referral_points: supabase.rpc('coalesce_add', { col: 'referral_points', val: REFERRAL_POINTS }),
-                    }).eq('id', profile.referred_by);
                   });
+                  if (rpcError) {
+                    // Fallback if RPC doesn't exist
+                    await supabase.from('profiles').update({
+                      referral_points: (profile.referral_points ?? 0) + REFERRAL_POINTS,
+                    }).eq('id', profile.referred_by);
+                  }
 
                   await supabase.from('notifications').insert({
                     user_id: profile.referred_by,
