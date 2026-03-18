@@ -24,9 +24,11 @@ async function getFlutterwaveBalance(): Promise<{ available: number; ledger: num
       headers: { Authorization: `Bearer ${secretKey}` },
     });
     const result = await response.json();
+    // Flutterwave returns a single object, not an array
+    const data = Array.isArray(result.data) ? result.data[0] : result.data;
     return {
-      available: result.data?.[0]?.available_balance || 0,
-      ledger: result.data?.[0]?.ledger_balance || 0
+      available: data?.available_balance || 0,
+      ledger: data?.ledger_balance || 0,
     };
   } catch {
     return { available: 0, ledger: 0 };
