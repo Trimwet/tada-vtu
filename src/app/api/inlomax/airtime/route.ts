@@ -142,6 +142,7 @@ export async function POST(request: NextRequest) {
           .update({
             status: 'success',
             external_reference: result.data?.reference,
+            response_data: result,
           })
           .eq('id', transaction.id);
 

@@ -138,25 +138,35 @@ export async function GET(request: NextRequest) {
       return sum + (match ? parseInt(match[1], 10) : 0);
     }, 0) || 0;
 
-    // Total airtime/data purchases (what customers spent)
-    const { data: purchaseData } = await supabase
+    // Estimate margins — use actual Inlomax cost from response_data where stored,
+    // fall back to percentage estimates for older transactions
+    const { data: purchaseDataRaw } = await supabase
       .from('transactions')
-      .select('amount, type')
+      .select('amount, type, response_data')
       .in('type', ['airtime', 'data', 'cable', 'electricity'])
       .eq('status', 'success');
 
-    const totalPurchases = purchaseData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const purchaseData = purchaseDataRaw || [];
+    const totalPurchases = purchaseData.reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    // Estimate margins (roughly 2.5% on airtime, 5% on data)
-    const airtimePurchases = purchaseData?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const dataPurchases = purchaseData?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const otherPurchases = purchaseData?.filter(t => !['airtime', 'data'].includes(t.type)).reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const airtimePurchases = purchaseData.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const dataPurchases = purchaseData.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const otherPurchases = purchaseData.filter(t => !['airtime', 'data'].includes(t.type)).reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    const airtimeMargin = Math.round(airtimePurchases * 0.025); // ~2.5% margin
-    const dataMargin = Math.round(dataPurchases * 0.05); // ~5% margin
-    const otherMargin = Math.round(otherPurchases * 0.005); // ~0.5% margin
+    // Calculate actual cost paid to Inlomax using response_data.data.amount where available
+    const actualVTUCost = purchaseData.reduce((sum, t) => {
+      const inlomaxCost = t.response_data?.data?.amount ? Number(t.response_data.data.amount) : null;
+      if (inlomaxCost !== null) return sum + inlomaxCost;
+      // Fallback estimates for old transactions without response_data
+      if (t.type === 'airtime') return sum + Math.abs(t.amount) * 0.975;
+      if (t.type === 'data') return sum + Math.abs(t.amount) * 0.95;
+      return sum + Math.abs(t.amount) * 0.995;
+    }, 0);
 
-    const totalMargins = airtimeMargin + dataMargin + otherMargin;
+    const airtimeMargin = Math.round(airtimePurchases * 0.025);
+    const dataMargin = Math.round(dataPurchases * 0.05);
+    const otherMargin = Math.round(otherPurchases * 0.005);
+    const totalMargins = Math.round(totalPurchases - actualVTUCost);
     const estimatedEarnings = serviceFees + totalMargins;
 
     // Today's earnings
@@ -174,14 +184,22 @@ export async function GET(request: NextRequest) {
 
     const { data: todayPurchases } = await supabase
       .from('transactions')
-      .select('amount, type')
+      .select('amount, type, response_data')
       .in('type', ['airtime', 'data', 'cable', 'electricity'])
       .eq('status', 'success')
       .gte('created_at', today.toISOString());
 
     const todayAirtime = todayPurchases?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const todayData = todayPurchases?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const todayMargins = Math.round(todayAirtime * 0.025) + Math.round(todayData * 0.05);
+    const todayPurchaseTotal = todayPurchases?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const todayActualCost = todayPurchases?.reduce((sum, t) => {
+      const inlomaxCost = t.response_data?.data?.amount ? Number(t.response_data.data.amount) : null;
+      if (inlomaxCost !== null) return sum + inlomaxCost;
+      if (t.type === 'airtime') return sum + Math.abs(t.amount) * 0.975;
+      if (t.type === 'data') return sum + Math.abs(t.amount) * 0.95;
+      return sum + Math.abs(t.amount) * 0.995;
+    }, 0) || 0;
+    const todayMargins = Math.round(todayPurchaseTotal - todayActualCost);
     const todayEstimatedEarnings = todayServiceFees + todayMargins;
 
     // Total user balances (your liability)
@@ -206,14 +224,10 @@ export async function GET(request: NextRequest) {
       return sum + Math.min(2000, Math.round(amount * 0.014));
     }, 0) || 0;
 
-    // Calculate actual costs
-    const airtimeCost = Math.round(airtimePurchases * 0.975);
-    const dataCost = Math.round(dataPurchases * 0.95);
-    const otherCost = Math.round(otherPurchases * 0.995);
-    const totalVTUCosts = airtimeCost + dataCost + otherCost;
+    // Calculate actual costs using real Inlomax data
+    const totalVTUCosts = Math.round(actualVTUCost);
 
     // Gross volume = total deposits (money that entered the platform from users)
-    // Purchases come FROM deposits so we don't double-count
     const grossVolume = totalDeposits;
     const grossRevenue = totalDeposits + serviceFees;
     const totalCosts = totalVTUCosts + flutterwaveFeesPaid;
