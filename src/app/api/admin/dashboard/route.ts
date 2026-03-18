@@ -125,18 +125,17 @@ export async function GET(request: NextRequest) {
     // Total deposits (wallet funding from customers)
     const { data: depositData } = await supabase
       .from('transactions')
-      .select('amount')
+      .select('amount, description')
       .eq('type', 'deposit')
       .eq('status', 'success');
 
     const totalDeposits = depositData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
-    // Calculate service fees earned (1% or min ₦20 per deposit)
-    // Each deposit has a service fee attached
+    // Extract ACTUAL service fees from deposit descriptions
+    // e.g. "Wallet funding via Flutterwave (₦50 service fee paid)"
     const serviceFees = depositData?.reduce((sum, t) => {
-      const amount = Math.abs(t.amount);
-      const fee = Math.max(20, Math.ceil(amount * 0.01));
-      return sum + fee;
+      const match = t.description?.match(/₦(\d+)\s+service fee paid/);
+      return sum + (match ? parseInt(match[1], 10) : 0);
     }, 0) || 0;
 
     // Total airtime/data purchases (what customers spent)
@@ -158,19 +157,19 @@ export async function GET(request: NextRequest) {
     const otherMargin = Math.round(otherPurchases * 0.005); // ~0.5% margin
 
     const totalMargins = airtimeMargin + dataMargin + otherMargin;
-    const estimatedEarnings = serviceFees + totalMargins; // Renamed for clarity
+    const estimatedEarnings = serviceFees + totalMargins;
 
     // Today's earnings
     const { data: todayDeposits } = await supabase
       .from('transactions')
-      .select('amount')
+      .select('amount, description')
       .eq('type', 'deposit')
       .eq('status', 'success')
       .gte('created_at', today.toISOString());
 
     const todayServiceFees = todayDeposits?.reduce((sum, t) => {
-      const amount = Math.abs(t.amount);
-      return sum + Math.max(20, Math.ceil(amount * 0.01));
+      const match = t.description?.match(/₦(\d+)\s+service fee paid/);
+      return sum + (match ? parseInt(match[1], 10) : 0);
     }, 0) || 0;
 
     const { data: todayPurchases } = await supabase
@@ -201,8 +200,11 @@ export async function GET(request: NextRequest) {
     const flutterwaveBalance = fwBalances.available;
     const flutterwaveLedgerBalance = fwBalances.ledger;
 
-    // Calculate Flutterwave fees paid (estimate ~1% of deposits)
-    const flutterwaveFeesPaid = Math.round(totalDeposits * 0.01);
+    // Flutterwave charges 1.4% capped at ₦2000 per transaction (merchant bears cost)
+    const flutterwaveFeesPaid = depositData?.reduce((sum, t) => {
+      const amount = Math.abs(t.amount);
+      return sum + Math.min(2000, Math.round(amount * 0.014));
+    }, 0) || 0;
 
     // Calculate actual costs
     const airtimeCost = Math.round(airtimePurchases * 0.975);
@@ -210,15 +212,20 @@ export async function GET(request: NextRequest) {
     const otherCost = Math.round(otherPurchases * 0.995);
     const totalVTUCosts = airtimeCost + dataCost + otherCost;
 
-    // Actual volume and profit calculation
-    const grossVolume = totalDeposits + totalPurchases; // Total money flowing through platform
-    const grossRevenue = totalDeposits + serviceFees; // Platform inflow
+    // Gross volume = total deposits (money that entered the platform from users)
+    // Purchases come FROM deposits so we don't double-count
+    const grossVolume = totalDeposits;
+    const grossRevenue = totalDeposits + serviceFees;
     const totalCosts = totalVTUCosts + flutterwaveFeesPaid;
     const netProfit = estimatedEarnings - flutterwaveFeesPaid;
 
     // Today's metrics
-    const todayGrossVolume = (todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0) + (todayPurchases?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0);
-    const todayFlutterwaveFees = Math.round((todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0) * 0.01);
+    const todayDepositTotal = todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+    const todayGrossVolume = todayDepositTotal;
+    const todayFlutterwaveFees = todayDeposits?.reduce((sum, t) => {
+      const amount = Math.abs(t.amount);
+      return sum + Math.min(2000, Math.round(amount * 0.014));
+    }, 0) || 0;
     const todayNetProfit = todayEstimatedEarnings - todayFlutterwaveFees;
 
     // Fetch users (last 100)

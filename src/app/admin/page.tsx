@@ -317,8 +317,8 @@ export default function AdminDashboard() {
                   direction: (analytics?.summary?.trends?.grossVolume || 0) >= 0 ? 'up' : 'down',
                   label: 'vs last period'
                 }}
-                tooltip="Total money flowing through the platform including all deposits from users and VTU purchases made."
-                description="Total flow (Deposits + VTU)"
+                tooltip="Total deposits received from users into the platform wallet."
+                description="Total user deposits"
               />
               <StatCard
                 title="Estimated Earnings"
