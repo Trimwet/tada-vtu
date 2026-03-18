@@ -9,6 +9,7 @@ import { LogoInline } from '@/components/logo';
 import { toast } from 'sonner';
 import { StatCard } from '@/components/admin/StatCard';
 import { AnalyticsCharts } from '@/components/admin/AnalyticsCharts';
+import { FlutterwaveHistory } from '@/components/admin/FlutterwaveHistory';
 import { Wallet, Users, TrendingUp, CreditCard, Store, Currency } from 'lucide-react';
 
 interface Stats {
@@ -83,7 +84,7 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'transactions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'transactions' | 'flutterwave'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [inlomaxBalance, setInlomaxBalance] = useState<number | null>(null);
   const [userModal, setUserModal] = useState<UserModalState>({
@@ -279,7 +280,7 @@ export default function AdminDashboard() {
       <main className="container mx-auto px-4 py-6">
         {/* Navigation Tabs */}
         <div className="flex gap-2 mb-6 border-b border-green-500/20 pb-4 flex-wrap">
-          {(['overview', 'users', 'transactions'] as const).map((tab) => (
+          {(['overview', 'users', 'transactions', 'flutterwave'] as const).map((tab) => (
             <Button
               key={tab}
               variant={activeTab === tab ? 'default' : 'ghost'}
@@ -289,7 +290,8 @@ export default function AdminDashboard() {
               {tab === 'overview' && '📊 '}
               {tab === 'users' && '👥 '}
               {tab === 'transactions' && '💳 '}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'flutterwave' && '🏦 '}
+              {tab === 'flutterwave' ? 'FW History' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </Button>
           ))}
           <Button
@@ -615,6 +617,12 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+        {/* FLUTTERWAVE HISTORY TAB */}
+        {activeTab === 'flutterwave' && admin && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <FlutterwaveHistory token={typeof window !== 'undefined' ? (localStorage.getItem('adminToken') || '') : ''} />
           </div>
         )}
       </main>
