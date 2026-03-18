@@ -59,6 +59,10 @@ interface HistoryData {
   settlements: Settlement[];
   transactions: FWTransaction[];
   charges: Charge[];
+  meta: {
+    settlements: { total?: number; page_size?: number };
+    transactions: { total?: number; page_size?: number };
+  };
 }
 
 function fmt(n: number) {
@@ -126,13 +130,13 @@ export function FlutterwaveHistory({ token }: { token: string }) {
           <Tabs defaultValue="settlements">
             <TabsList className="bg-gray-900/60 mb-4">
               <TabsTrigger value="settlements" className="text-xs data-[state=active]:bg-green-600 data-[state=active]:text-white">
-                Settlements ({data.settlements.length})
+                Settlements ({data.meta?.settlements?.total ?? data.settlements.length})
               </TabsTrigger>
               <TabsTrigger value="funding" className="text-xs data-[state=active]:bg-green-600 data-[state=active]:text-white">
-                Funding History ({data.transactions.length})
+                Funding History ({data.meta?.transactions?.total ?? data.transactions.length})
               </TabsTrigger>
               <TabsTrigger value="charges" className="text-xs data-[state=active]:bg-green-600 data-[state=active]:text-white">
-                Charges ({data.charges.length})
+                Charges ({data.charges.length}{data.meta?.transactions?.total && data.meta.transactions.total > data.transactions.length ? '+' : ''})
               </TabsTrigger>
             </TabsList>
 

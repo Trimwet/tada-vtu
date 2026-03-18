@@ -30,11 +30,12 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const page = searchParams.get('page') || '1';
+  const per_page = '100'; // Flutterwave max
 
   try {
     const [settlements, transactions] = await Promise.all([
-      fwGet(`/settlements?page=${page}&per_page=20`, secretKey),
-      fwGet(`/transactions?page=${page}&per_page=20`, secretKey),
+      fwGet(`/settlements?page=${page}&per_page=${per_page}`, secretKey),
+      fwGet(`/transactions?page=${page}&per_page=${per_page}`, secretKey),
     ]);
 
     // Extract charges from transactions (app_fee field)
