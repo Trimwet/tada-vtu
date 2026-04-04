@@ -1,6 +1,6 @@
 # tada-vtu
 
-ADA VTU - A comprehensive VTU platform for airtime, data, cable TV, electricity, and betting services.
+TADA VTU - A comprehensive VTU platform for airtime, data, cable TV, electricity, and betting services.
 
 VTU Dashboard — recharge airtime/data, schedule recurring top-ups, and view usage analytics.
 
