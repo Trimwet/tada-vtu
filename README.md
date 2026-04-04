@@ -1,91 +1,50 @@
-# 🇳🇬 TADA VTU - Nigerian Virtual Top-Up Platform
+# tada-vtu
 
-> Fast, reliable mobile recharge and bill payment services for Nigeria
+ADA VTU - A comprehensive VTU platform for airtime, data, cable TV, electricity, and betting services.
 
-## 🚀 Quick Start
+VTU Dashboard — recharge airtime/data, schedule recurring top-ups, and view usage analytics.
 
-```bash
-# Clone and setup
-git clone <your-repo>
-cd tada-vtu
-npm install
+Status: Actively maintained
 
-# Environment setup
-cp .env.example .env.local
-# Add your API keys (Supabase, Flutterwave, etc.)
+Highlights
+- Purchase airtime & data for multiple networks
+- Dashboard with transaction history and charts
+- Recurring top-ups (cron-based scheduler)
+- Admin panel for monitoring & refunds
+- Webhooks for provider callbacks
+- Payment integrations: Stripe / Paystack
 
-# Development
-npm run dev
-```
+Tech stack
+- Backend: Node.js + Express + TypeScript (Bun-friendly where possible)
+- Frontend: Next.js or React
+- Mobile: Companion mobile app (React Native / Native iOS & Android)
+- DB: PostgreSQL or MongoDB
+- External: Payment gateways, VTU API integrations
 
-## 📚 Documentation
+Local setup
+1. Clone:
+   git clone https://github.com/Trimwet/tada-vtu.git
+2. Setup env:
+   cp .env.example .env
+3. Install & run:
+   npm install
+   npm run dev
 
-- [🏗️ Architecture Overview](./docs/architecture-diagram.md)
-- [🎯 System Design](./docs/system-design.md) 
-- [🔧 Technical Specifications](./docs/technical-specifications.md)
+Environment variables
+- VTU_API_KEY
+- DATABASE_URL
+- STRIPE_SECRET
+- CRON_SCHEDULE (for recurring jobs)
 
-## 🛠️ Tech Stack
+Deployment
+- Dockerfile included
+- GitHub Actions to build & push images
+- Recommended hosts: Vercel (frontend), Fly/Render (backend), or Heroku
 
-- **Framework**: Next.js 15 with App Router
-- **Database**: Supabase (PostgreSQL)
-- **Payments**: Flutterwave
-- **VTU Provider**: Inlomax
-- **Styling**: Tailwind CSS
-- **Deployment**: Vercel
+Testing & monitoring
+- Unit tests with Jest
+- Health endpoint: /health
+- Optional: Sentry for error tracking
 
-## 🔑 Core Features
-
-- ✅ Airtime & Data Top-up (MTN, Airtel, Glo, 9mobile)
-- ✅ Data Vault with QR Codes (Park & Deliver)
-- ✅ Bill Payments (Electricity, Cable TV)
-- ✅ Wallet System with Bank Transfer
-- ✅ Referral Program (₦100 per referral)
-- ✅ Loyalty System with Tiers & Rewards
-- ✅ Real-time Notifications
-- ✅ Admin Analytics Dashboard
-
-## 🏃‍♂️ Development Commands
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run type-check   # Check TypeScript errors
-npm run lint         # Run ESLint
-npm run errors       # Show all errors at once
-```
-
-## 🔐 Environment Variables
-
-```bash
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Flutterwave
-FLUTTERWAVE_SECRET_KEY=
-FLUTTERWAVE_PUBLIC_KEY=
-
-# VTU Provider
-INLOMAX_API_KEY=
-
-# AI Features
-GROQ_API_KEY=
-```
-
-## 📊 System Status
-
-- **Uptime**: 99.9%+ (Vercel)
-- **Database**: Supabase (99.95% SLA)
-- **Payments**: Flutterwave (Enterprise)
-- **VTU**: Inlomax (Primary)
-
-## 🚨 Support
-
-- **Issues**: Create GitHub issue
-- **Email**: support@tadavtu.com
-- **WhatsApp**: +234-XXX-XXXX-XXX
-
----
-
-Built with ❤️ for Nigeria 🇳🇬
+License
+MIT — see LICENSE
