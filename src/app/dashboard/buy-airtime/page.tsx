@@ -18,6 +18,8 @@ import { NETWORKS } from "@/lib/constants";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
+import { TransactionConfirmationCard, type TransactionStatus } from "@/components/transaction-confirmation-card";
+import { useRouter } from "next/navigation";
 
 const CreatePinModal = dynamic(
   () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -43,11 +45,18 @@ export default function BuyAirtimePage() {
     onPinVerified,
   } = useTransactionPin();
 
+  const router = useRouter();
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [useReferralPoints, setUseReferralPoints] = useState(false);
+  const [txResult, setTxResult] = useState<{
+    status: TransactionStatus;
+    orderId: string;
+    description: string;
+    amount: string;
+  } | null>(null);
 
   // Get user's referral points
   const referralPoints = ((user as any)?.referral_points) || 0;
@@ -110,22 +119,31 @@ export default function BuyAirtimePage() {
 
       if (result.status) {
         await refreshUser();
-        
-        if (pointsUsed > 0) {
-          toast.payment("Airtime purchase successful!", `${pointsUsed} points used + ₦${amountToPay.toLocaleString()} paid for ${selectedNetwork} airtime sent to ${phoneNumber}`);
-        } else {
-          toast.payment("Airtime purchase successful!", `₦${numAmount.toLocaleString()} ${selectedNetwork} airtime sent to ${phoneNumber}`);
-        }
-
+        setTxResult({
+          status: result.processing ? "pending" : "success",
+          orderId: result.transactionId || "—",
+          description: `₦${numAmount.toLocaleString()} ${selectedNetwork} airtime → ${phoneNumber}`,
+          amount: `₦${finalAmount.toLocaleString()}`,
+        });
         setPhoneNumber("");
         setAmount("");
         setSelectedNetwork("");
         setUseReferralPoints(false);
       } else {
-        toast.error(result.message || "Purchase failed");
+        setTxResult({
+          status: "failed",
+          orderId: result.transactionId || "—",
+          description: result.message || "Purchase failed",
+          amount: `₦${finalAmount.toLocaleString()}`,
+        });
       }
     } catch (error) {
-      toast.error("Network error", "Please try again");
+      setTxResult({
+        status: "failed",
+        orderId: "—",
+        description: "Network error. Please try again.",
+        amount: `₦${finalAmount.toLocaleString()}`,
+      });
       console.error("Purchase error:", error);
     } finally {
       setIsProcessing(false);
@@ -157,6 +175,33 @@ export default function BuyAirtimePage() {
   const handleQuickAmount = (value: number) => {
     setAmount(value.toString());
   };
+
+  if (txResult) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+          <div className="flex items-center h-14 px-4">
+            <Link href="/dashboard" className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target">
+              <IonIcon name="arrow-back-outline" size="20px" />
+            </Link>
+            <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">Buy Airtime</h1>
+          </div>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-4 py-8">
+          <TransactionConfirmationCard
+            status={txResult.status}
+            orderId={txResult.orderId}
+            paymentMethod="Wallet Balance"
+            dateTime={new Date().toLocaleString("en-NG", { dateStyle: "short", timeStyle: "short" })}
+            totalAmount={txResult.amount}
+            description={txResult.description}
+            onGoToAccount={() => router.push("/dashboard")}
+            onTryAgain={() => setTxResult(null)}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

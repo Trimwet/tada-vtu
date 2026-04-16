@@ -161,6 +161,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           status: true,
+          transactionId: transaction.reference,
           message: `${planName || 'Data'} sent to ${phone} successfully!`,
           data: {
             reference: transaction.reference,
@@ -184,6 +185,8 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           status: true,
+          processing: true,
+          transactionId: transaction.reference,
           message: 'Transaction is processing. You will be notified when complete.',
           data: {
             reference: transaction.reference,

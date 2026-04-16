@@ -27,6 +27,8 @@ import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
 import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
 import { useDataVault } from "@/hooks/useDataVault";
+import { TransactionConfirmationCard, type TransactionStatus } from "@/components/transaction-confirmation-card";
+import { useRouter } from "next/navigation";
 
 const CreatePinModal = dynamic(
     () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -51,6 +53,7 @@ const DATA_TYPE_LABELS: Record<string, { label: string; description: string }> =
 
 export default function BuyDataPage() {
     const { user, refreshUser, isProfileLoaded } = useSupabaseUser();
+    const router = useRouter();
     const {
         userPin,
         showCreatePin,
@@ -68,6 +71,12 @@ export default function BuyDataPage() {
     const [selectedPlan, setSelectedPlan] = useState("");
     const [isProcessing, setIsProcessing] = useState(false);
     const [purchaseMode, setPurchaseMode] = useState<'buy' | 'park'>('buy');
+    const [txResult, setTxResult] = useState<{
+        status: TransactionStatus;
+        orderId: string;
+        description: string;
+        amount: string;
+    } | null>(null);
 
     const {
         plans: dataPlans,
@@ -141,13 +150,22 @@ export default function BuyDataPage() {
 
                 if (result.status) {
                     await refreshUser();
-                    toast.payment("Data parked successfully!", `${selectedPlanDetails.size} ${selectedNetwork} data parked for ${phoneNumber}. Deliver when ready!`);
-
+                    setTxResult({
+                        status: "success",
+                        orderId: result.transactionId || "—",
+                        description: `${selectedPlanDetails.size} ${selectedNetwork} data parked for ${phoneNumber}`,
+                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                    });
                     setPhoneNumber("");
                     setSelectedPlan("");
                     setSelectedNetwork("");
                 } else {
-                    toast.error(result.message || "Failed to park data");
+                    setTxResult({
+                        status: "failed",
+                        orderId: result.transactionId || "—",
+                        description: result.message || "Failed to park data",
+                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                    });
                 }
             } else {
                 // Regular purchase flow
@@ -173,17 +191,31 @@ export default function BuyDataPage() {
 
                 if (result.status) {
                     await refreshUser();
-                    toast.payment("Data purchase successful!", `${selectedPlanDetails.size} ${selectedNetwork} data sent to ${phoneNumber}`);
-
+                    setTxResult({
+                        status: result.processing ? "pending" : "success",
+                        orderId: result.transactionId || "—",
+                        description: `${selectedPlanDetails.size} ${selectedNetwork} data → ${phoneNumber}`,
+                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                    });
                     setPhoneNumber("");
                     setSelectedPlan("");
                     setSelectedNetwork("");
                 } else {
-                    toast.error(result.message || "Purchase failed");
+                    setTxResult({
+                        status: "failed",
+                        orderId: result.transactionId || "—",
+                        description: result.message || "Purchase failed",
+                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                    });
                 }
             }
         } catch (error) {
-            toast.error("Network error", "Please try again");
+            setTxResult({
+                status: "failed",
+                orderId: "—",
+                description: "Network error. Please try again.",
+                amount: selectedPlanDetails ? `₦${selectedPlanDetails.price.toLocaleString()}` : "—",
+            });
             console.error("Purchase error:", error);
         } finally {
             setIsProcessing(false);
@@ -206,6 +238,33 @@ export default function BuyDataPage() {
         requirePin(executePurchase);
     };
 
+
+    if (txResult) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col">
+                <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-xl border-b border-border safe-top">
+                    <div className="flex items-center h-14 px-4">
+                        <Link href="/dashboard" className="p-2 -ml-2 hover:bg-muted active:bg-muted/80 rounded-lg transition-smooth lg:hidden touch-target">
+                            <IonIcon name="arrow-back-outline" size="20px" />
+                        </Link>
+                        <h1 className="text-lg font-semibold text-foreground ml-2 lg:ml-0">Buy Data</h1>
+                    </div>
+                </header>
+                <main className="flex-1 flex items-center justify-center px-4 py-8">
+                    <TransactionConfirmationCard
+                        status={txResult.status}
+                        orderId={txResult.orderId}
+                        paymentMethod="Wallet Balance"
+                        dateTime={new Date().toLocaleString("en-NG", { dateStyle: "short", timeStyle: "short" })}
+                        totalAmount={txResult.amount}
+                        description={txResult.description}
+                        onGoToAccount={() => router.push("/dashboard")}
+                        onTryAgain={() => setTxResult(null)}
+                    />
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-background">
