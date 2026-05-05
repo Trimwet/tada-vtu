@@ -260,7 +260,7 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
                 Create a secure QR code that you can scan later to deliver this data instantly
               </p>
               <Button
-                onClick={generateQR}
+                onClick={() => generateQR()}
                 disabled={isGenerating}
                 className="bg-green-500 hover:bg-green-600 text-white"
               >
