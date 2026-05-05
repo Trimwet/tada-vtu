@@ -1,8 +1,8 @@
 // TADA VTU Service Worker - Advanced Caching & Offline Support
-const CACHE_NAME = 'tada-vtu-v1.4.0';
-const STATIC_CACHE = 'tada-static-v1.4.0';
-const DYNAMIC_CACHE = 'tada-dynamic-v1.4.0';
-const API_CACHE = 'tada-api-v1.4.0';
+const CACHE_NAME = 'tada-vtu-v1.4.1';
+const STATIC_CACHE = 'tada-static-v1.4.1';
+const DYNAMIC_CACHE = 'tada-dynamic-v1.4.1';
+const API_CACHE = 'tada-api-v1.4.1';
 
 // Critical resources to cache immediately (only guaranteed to exist)
 const STATIC_ASSETS = [
@@ -110,7 +110,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleApiRequest(request));
   } else if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(handleStaticAssets(request));
-  } else if (url.pathname.startsWith('/dashboard')) {
+  } else if (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/vault/')) {
     event.respondWith(handleDashboardPages(request));
   } else {
     event.respondWith(handleGeneralRequests(request));
