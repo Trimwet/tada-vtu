@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Build: 2026-05-05
 const nextConfig: NextConfig = {
   // Production optimizations
   poweredByHeader: false,
