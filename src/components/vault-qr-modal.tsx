@@ -101,7 +101,7 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
     fetchExistingQR();
   }, [vault.id]);
 
-  const generateQR = async () => {
+  const generateQR = async (forceRegenerate = false) => {
     if (!user?.id) {
       toast.error('Please log in to generate QR code');
       return;
@@ -111,7 +111,11 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
       const response = await fetch("/api/data-vault/generate-qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vaultId: vault.id, userId: user.id }),
+        body: JSON.stringify({ 
+          vaultId: vault.id, 
+          userId: user.id,
+          forceRegenerate 
+        }),
       });
 
       const result = await response.json();
@@ -124,10 +128,13 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         // Extract base64 data from QR data for shareable link
         if (result.data.qrData) {
           try {
-            // Use btoa for browser-compatible base64 encoding
+            // Use base64url encoding (URL-safe) to avoid '/' breaking routing
             const jsonString = JSON.stringify(result.data.qrData);
-            const base64Data = btoa(jsonString);
-            console.log('[QR-MODAL] Generated - Encoded base64 data:', base64Data.substring(0, 50) + '...');
+            const base64Data = btoa(jsonString)
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=+$/, '');
+            console.log('[QR-MODAL] Generated - Encoded base64url data:', base64Data.substring(0, 50) + '...');
             setQrDataBase64(base64Data);
           } catch (error) {
             console.error('[QR-MODAL] Failed to encode QR data:', error);
@@ -137,7 +144,9 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         }
         
         setIsGenerated(true);
-        if (result.data.isExisting) {
+        if (forceRegenerate) {
+          toast.success("New QR code generated!");
+        } else if (result.data.isExisting) {
           toast.info("Found existing QR code!");
         } else {
           toast.success("QR code generated successfully!");
@@ -314,6 +323,26 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
                   Share
                 </Button>
               </div>
+
+              {/* Regenerate Button */}
+              <Button
+                variant="outline"
+                onClick={() => generateQR(true)}
+                disabled={isGenerating}
+                className="w-full flex items-center justify-center gap-2 border-orange-200 text-orange-600 hover:bg-orange-50"
+              >
+                {isGenerating ? (
+                  <>
+                    <ButtonLoading />
+                    Regenerating...
+                  </>
+                ) : (
+                  <>
+                    <IonIcon name="refresh-outline" size="16px" />
+                    Regenerate QR Code
+                  </>
+                )}
+              </Button>
 
               {/* Shareable Link */}
               <div className="bg-muted/50 rounded-xl p-3">

@@ -15,7 +15,7 @@ function getSupabaseAdmin() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { vaultId, userId } = await request.json();
+    const { vaultId, userId, forceRegenerate } = await request.json();
 
     if (!vaultId || !userId) {
       return NextResponse.json(
@@ -42,27 +42,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if QR code already exists for this vault and hasn't expired
-    const { data: existingQR } = await supabase
-      .from('vault_qr_codes')
-      .select('*')
-      .eq('vault_id', vaultId)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (existingQR) {
-      // Return existing QR code - check if qrCode is stored or needs regeneration
-      const storedQrCode = existingQR.qr_data?.qrCode;
+    // If forceRegenerate is true, delete old QR codes
+    if (forceRegenerate) {
+      await supabase
+        .from('vault_qr_codes')
+        .delete()
+        .eq('vault_id', vaultId);
       
-      if (storedQrCode) {
-        // Return stored QR code
-        console.log('Returning stored QR code');
+      console.log('Force regenerating QR code for vault:', vaultId);
+    } else {
+      // Check if QR code already exists for this vault and hasn't expired
+      const { data: existingQR } = await supabase
+        .from('vault_qr_codes')
+        .select('*')
+        .eq('vault_id', vaultId)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (existingQR) {
+        // Return existing QR code - check if qrCode is stored or needs regeneration
+        const storedQrCode = existingQR.qr_data?.qrCode;
+        
+        if (storedQrCode) {
+          // Return stored QR code
+          console.log('Returning stored QR code');
+          return NextResponse.json({
+            status: true,
+            data: {
+              qrCode: storedQrCode,
+              qrId: existingQR.qr_data.id,
+              qrData: existingQR.qr_data, // Include the full QR data
+              expiresAt: existingQR.expires_at,
+              vaultInfo: {
+                network: vault.network,
+                plan_name: vault.plan_name,
+                amount: vault.amount,
+                phone_number: vault.recipient_phone,
+              },
+              isExisting: true,
+            },
+          });
+        }
+        
+        // Old QR code without stored image - regenerate from qr_data
+        console.log('Regenerating QR code from stored data');
+        const { qrCode } = await generatePersonalDataQR({
+          vaultId: vault.id,
+          userId: userId,
+          network: vault.network,
+          planSize: vault.plan_name,
+          planName: vault.plan_name,
+          amount: vault.amount,
+          validDays: 7,
+        });
+        
         return NextResponse.json({
           status: true,
           data: {
-            qrCode: storedQrCode,
+            qrCode,
             qrId: existingQR.qr_data.id,
             qrData: existingQR.qr_data, // Include the full QR data
             expiresAt: existingQR.expires_at,
@@ -76,35 +115,6 @@ export async function POST(request: NextRequest) {
           },
         });
       }
-      
-      // Old QR code without stored image - regenerate from qr_data
-      console.log('Regenerating QR code from stored data');
-      const { qrCode } = await generatePersonalDataQR({
-        vaultId: vault.id,
-        userId: userId,
-        network: vault.network,
-        planSize: vault.plan_name,
-        planName: vault.plan_name,
-        amount: vault.amount,
-        validDays: 7,
-      });
-      
-      return NextResponse.json({
-        status: true,
-        data: {
-          qrCode,
-          qrId: existingQR.qr_data.id,
-          qrData: existingQR.qr_data, // Include the full QR data
-          expiresAt: existingQR.expires_at,
-          vaultInfo: {
-            network: vault.network,
-            plan_name: vault.plan_name,
-            amount: vault.amount,
-            phone_number: vault.recipient_phone,
-          },
-          isExisting: true,
-        },
-      });
     }
 
     // Generate QR code
