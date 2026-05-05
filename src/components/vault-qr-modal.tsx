@@ -59,10 +59,13 @@ export function VaultQRModal({ isOpen, onClose, vault }: VaultQRModalProps) {
         // Extract base64 data from QR data for shareable link
         if (result.data.qrData) {
           try {
-            // Use btoa for browser-compatible base64 encoding
+            // Use base64url encoding (URL-safe) to avoid '/' breaking routing
             const jsonString = JSON.stringify(result.data.qrData);
-            const base64Data = btoa(jsonString);
-            console.log('[QR-MODAL] Encoded base64 data:', base64Data.substring(0, 50) + '...');
+            const base64Data = btoa(jsonString)
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=+$/, '');
+            console.log('[QR-MODAL] Encoded base64url data:', base64Data.substring(0, 50) + '...');
             setQrDataBase64(base64Data);
           } catch (error) {
             console.error('[QR-MODAL] Failed to encode QR data:', error);

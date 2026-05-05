@@ -74,8 +74,8 @@ export async function generatePersonalDataQR(params: {
     ownerId: qrData.ownerId,
   });
 
-  // Create QR code URL for personal use
-  const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/vault/qr/${Buffer.from(JSON.stringify(qrData)).toString('base64')}`;
+  // Create QR code URL for personal use (base64url encoding to avoid / in URL)
+  const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/vault/qr/${Buffer.from(JSON.stringify(qrData)).toString('base64url')}`;
   
   // Generate QR code image with TADA VTU branding
   const qrCode = await QRCode.toDataURL(qrUrl, {
@@ -96,10 +96,14 @@ export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
   try {
     console.log('[QR-PARSE] Attempting to parse QR data, length:', base64Data?.length);
     
+    // Normalize base64url to standard base64 for atob compatibility
+    const normalized = base64Data.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '=='.slice(0, (4 - normalized.length % 4) % 4);
+
     // Use atob for browser compatibility, fallback to Buffer for server
     const jsonString = typeof window !== 'undefined'
-      ? decodeURIComponent(escape(atob(base64Data)))
-      : Buffer.from(base64Data, 'base64').toString('utf-8');
+      ? decodeURIComponent(escape(atob(padded)))
+      : Buffer.from(base64Data, 'base64url').toString('utf-8');
     const qrData = JSON.parse(jsonString) as PersonalDataQR;
     
     console.log('[QR-PARSE] Decoded QR data:', {
