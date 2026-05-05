@@ -32,14 +32,35 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
   const per_page = '100'; // Flutterwave max
 
+  // Default to last 365 days if no date params provided
+  const today = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+  
+  const from = searchParams.get('from') || oneYearAgo.toISOString().split('T')[0];
+  const to = searchParams.get('to') || today.toISOString().split('T')[0];
+
   try {
     const [settlements, transactions] = await Promise.all([
-      fwGet(`/settlements?page=${page}&per_page=${per_page}`, secretKey),
-      fwGet(`/transactions?page=${page}&per_page=${per_page}`, secretKey),
+      fwGet(`/settlements?page=${page}&per_page=${per_page}&from=${from}&to=${to}`, secretKey),
+      fwGet(`/transactions?page=${page}&per_page=${per_page}&from=${from}&to=${to}`, secretKey),
     ]);
 
+    // Check if API returned an error
+    if (transactions.status === 'error' || settlements.status === 'error') {
+      console.error('Flutterwave API error:', { transactions, settlements });
+      return NextResponse.json({
+        error: 'Flutterwave API returned an error',
+        details: transactions.message || settlements.message || 'Unknown error',
+        settlements: [],
+        transactions: [],
+        charges: [],
+        meta: {}
+      }, { status: 500 });
+    }
+
     // Extract charges from transactions (app_fee field)
-    const charges = (transactions.data || [])
+    const charges = ((transactions.data || []) as Record<string, unknown>[])
       .filter((t: Record<string, unknown>) => Number(t.app_fee) > 0)
       .map((t: Record<string, unknown>) => ({
         id: t.id,
@@ -63,6 +84,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('FW history error:', err);
-    return NextResponse.json({ error: 'Failed to fetch Flutterwave history' }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ 
+      error: 'Failed to fetch Flutterwave history',
+      details: errorMessage,
+      settlements: [],
+      transactions: [],
+      charges: [],
+      meta: {}
+    }, { status: 500 });
   }
 }
