@@ -50,8 +50,8 @@ type PaymentMethod = "card" | "bank";
 
 export default function FundWalletPage() {
   const searchParams = useSearchParams();
-  const { user, isProfileLoaded } = useSupabaseUser();
-  const { transactions } = useSupabaseTransactions(10);
+  const { user, isProfileLoaded, refreshUser } = useSupabaseUser();
+  const { transactions, refreshTransactions } = useSupabaseTransactions(10);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [feeInfo, setFeeInfo] = useState<FeeInfo | null>(null);
@@ -129,30 +129,31 @@ export default function FundWalletPage() {
 
     const handlePaymentCallback = async () => {
       if (status === "successful" && tx_ref) {
+        // Clean URL immediately
+        window.history.replaceState({}, "", "/dashboard/fund-wallet");
+        localStorage.removeItem("pending_payment");
+
         try {
           const response = await fetch(`/api/flutterwave/verify?tx_ref=${tx_ref}`);
           const result = await response.json();
 
           if (result.status === "success") {
-            toast.success("Payment successful!", {
+            // Refresh balance and transactions in-place — no hard reload
+            await refreshUser();
+            refreshTransactions();
+            toast.success("Payment successful! 🎉", {
               description: `₦${result.data?.amount?.toLocaleString() || ''} added to your wallet`
             });
-            setTimeout(() => {
-              window.location.href = "/dashboard/fund-wallet";
-            }, 2000);
           } else {
             toast.error("Payment verification failed", {
               description: "Contact support if you were debited"
             });
-            window.history.replaceState({}, "", "/dashboard/fund-wallet");
           }
         } catch {
-          toast.success("Payment processing", {
-            description: "Your wallet will be credited shortly"
+          toast.info("Payment is being processed", {
+            description: "Your wallet will be credited within a few minutes"
           });
-          window.history.replaceState({}, "", "/dashboard/fund-wallet");
         }
-        localStorage.removeItem("pending_payment");
       } else if (status === "cancelled") {
         toast.error("Payment cancelled", {
           description: "You can try again anytime"
@@ -163,6 +164,7 @@ export default function FundWalletPage() {
     };
 
     if (status) handlePaymentCallback();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleQuickAmount = (value: number) => {

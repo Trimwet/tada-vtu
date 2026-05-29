@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction, verifyTransactionByRef } from '@/lib/api/flutterwave';
 import { createClient } from '@supabase/supabase-js';
+import { processDeposit } from '@/lib/api/deposit-processor';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -33,128 +34,31 @@ export async function GET(request: NextRequest) {
       const supabase = getSupabaseAdmin();
       const txRef = result.data.tx_ref;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const meta = (result.data as any).meta || {};
+      const meta = (result.data as any).meta_data || (result.data as any).meta || {};
       const userId = meta.user_id;
-
-      // Use the original amount (wallet_credit) from meta, not the total charged amount
-      // This ensures we only credit what the user intended to fund, not including service charge
       const walletCredit = meta.wallet_credit || meta.original_amount || result.data.amount;
       const serviceCharge = meta.service_charge || 0;
+      const flwRef = result.data.flw_ref;
 
-      console.log('Payment verification:', {
-        txRef,
-        totalPaid: result.data.amount,
-        walletCredit,
-        serviceCharge,
-        userId
-      });
+      console.log('Payment verification:', { txRef, flwRef, totalPaid: result.data.amount, walletCredit, serviceCharge, userId });
 
-      // Check if transaction already processed
-      const { data: existingTxn } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('reference', txRef)
-        .single();
+      if (userId) {
+        // processDeposit handles duplicate detection via external_reference (flw_ref)
+        // so it's safe to call even if the webhook already processed it
+        const depositResult = await processDeposit(supabase, {
+          userId,
+          amount: result.data.amount,
+          walletCredit: Math.max(walletCredit, 0),
+          fee: serviceCharge,
+          reference: txRef,
+          externalReference: flwRef,
+          paymentType: result.data.payment_type || 'card',
+          description: `Wallet funding via card (₦${serviceCharge} service fee paid)`,
+          metadata: { flutterwave_ref: flwRef, service_charge: serviceCharge, total_paid: result.data.amount }
+        });
 
-      if (!existingTxn && userId) {
-        // Transaction not yet processed - credit the wallet with original amount only
-        console.log('Crediting wallet via verify endpoint:', { userId, walletCredit, txRef });
-
-        // Get user's current balance and referral info
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('balance, referred_by, referral_points')
-          .eq('id', userId)
-          .single();
-
-        if (!profileError && profile) {
-          // Credit wallet with original amount (excluding service charge)
-          // ATOMIC UPDATE: Use RPC to safely add balance
-          const { data: creditResult, error: creditError } = await supabase
-            .rpc('atomic_wallet_update', {
-              p_user_id: userId,
-              p_amount: walletCredit, // Positive for credit
-              p_description: `Wallet funding via Flutterwave (₦${serviceCharge} service fee paid)`,
-              p_reference: txRef,
-              p_type: 'deposit',
-              p_metadata: {
-                flutterwave_ref: result.data.flw_ref,
-                service_charge: serviceCharge,
-                total_paid: result.data.amount
-              }
-            });
-
-          if (creditError) {
-            console.error('Failed to credit wallet atomically:', creditError);
-            throw new Error('Database error during wallet credit');
-          }
-
-          const { new_balance } = creditResult as any;
-
-          console.log('Wallet credited successfully:', { userId, walletCredit, new_balance, serviceCharge });
-
-          // Check if this is user's first deposit and they have a referrer
-          if (profile.referred_by) {
-            // Check if referral bonus already paid
-            const { data: existingBonus } = await supabase
-              .from('transactions')
-              .select('id')
-              .eq('user_id', profile.referred_by)
-              .eq('type', 'deposit')
-              .ilike('description', `%Referral bonus%${userId}%`)
-              .single();
-
-            if (!existingBonus) {
-              // Check if this is the referee's first deposit
-              const { count: depositCount } = await supabase
-                .from('transactions')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', userId)
-                .eq('type', 'deposit')
-                .eq('status', 'success');
-
-              // Only pay bonus on first deposit
-              if (depositCount === 1) {
-                const REFERRAL_POINTS = 100;
-                const bonusRef = `REF_POINTS_${profile.referred_by.slice(0, 8)}_${userId.slice(0, 8)}`;
-
-                // Atomic upsert — prevents duplicate bonus if two requests race
-                const { error: bonusError } = await supabase
-                  .from('transactions')
-                  .upsert({
-                    user_id: profile.referred_by,
-                    type: 'deposit',
-                    amount: REFERRAL_POINTS,
-                    status: 'success',
-                    description: `Referral points earned - ${userId.slice(0, 8)}`,
-                    reference: bonusRef,
-                  }, { onConflict: 'reference', ignoreDuplicates: true });
-
-                if (!bonusError) {
-                  // Only update profile if transaction was actually inserted
-                  const { error: rpcError } = await supabase.rpc('increment_referral_stats', {
-                    p_user_id: profile.referred_by,
-                    p_points: REFERRAL_POINTS,
-                  });
-                  if (rpcError) {
-                    // Fallback if RPC doesn't exist
-                    await supabase.from('profiles').update({
-                      referral_points: (profile.referral_points ?? 0) + REFERRAL_POINTS,
-                    }).eq('id', profile.referred_by);
-                  }
-
-                  await supabase.from('notifications').insert({
-                    user_id: profile.referred_by,
-                    type: 'success',
-                    title: 'Referral Points Earned! 🎉',
-                    message: `You earned ${REFERRAL_POINTS} points because someone you referred made their first deposit!`,
-                  }).then(() => {
-                    console.log('Referral points awarded:', { referrerId: profile.referred_by, points: REFERRAL_POINTS });
-                  });
-                }
-              }
-            }
-          }
+        if (depositResult.alreadyProcessed) {
+          console.log('Verify: deposit already processed by webhook, returning success');
         }
       }
 
@@ -162,12 +66,12 @@ export async function GET(request: NextRequest) {
         status: 'success',
         message: 'Transaction verified and wallet credited',
         data: {
-          amount: walletCredit, // Return the amount credited to wallet
+          amount: walletCredit,
           total_paid: result.data.amount,
           service_charge: serviceCharge,
           currency: result.data.currency,
-          tx_ref: result.data.tx_ref,
-          flw_ref: result.data.flw_ref,
+          tx_ref: txRef,
+          flw_ref: flwRef,
           status: result.data.status,
           customer: result.data.customer,
         },
