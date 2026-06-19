@@ -36,7 +36,7 @@ function transformPlan(plan: ServiceDataPlan, index: number) {
     name: plan.dataPlan,
     description: plan.dataPlan,
     size: plan.dataPlan,
-    price: parseAmount(plan.amount),
+    price: parseAmount(plan.amount) + 20,
     validity: plan.validity || '30 Days',
     type: mapDataType(plan.dataType || 'SME'),
     network: plan.network.toUpperCase(),

@@ -27,8 +27,12 @@ import { useTransactionPin } from "@/hooks/useTransactionPin";
 import dynamic from "next/dynamic";
 import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
 import { useDataVault } from "@/hooks/useDataVault";
+import { useContacts, Contact } from "@/hooks/useContacts";
+import { useFrequentPlans } from "@/hooks/useFrequentPlans";
 import { TransactionConfirmationCard, type TransactionStatus } from "@/components/transaction-confirmation-card";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { DateTimePicker } from "@/components/date-time-picker";
 
 const CreatePinModal = dynamic(
     () => import("@/components/create-pin-modal").then(mod => mod.CreatePinModal),
@@ -78,6 +82,19 @@ export default function BuyDataPage() {
         amount: string;
     } | null>(null);
 
+    // New features state
+    const [deliverAtDate, setDeliverAtDate] = useState<Date | undefined>(undefined);
+    const [isMultiRecipient, setIsMultiRecipient] = useState(false);
+    const [extraPhones, setExtraPhones] = useState<string[]>([]);
+    const [saveAsContact, setSaveAsContact] = useState(false);
+    const [contactName, setContactName] = useState("");
+    const [showContacts, setShowContacts] = useState(false);
+
+    const { contacts, saveContact } = useContacts(user?.id);
+    const { parkData, isParking } = useDataVault(user?.id);
+
+
+
     const {
         plans: dataPlans,
         loading: loadingPlans,
@@ -87,7 +104,7 @@ export default function BuyDataPage() {
         autoRefresh: true
     });
 
-    const { parkData, isParking } = useDataVault(user?.id);
+    const { plans: frequentPlans, loading: loadingFrequent } = useFrequentPlans();
 
     // Reset selections when network changes
     useEffect(() => {
@@ -134,91 +151,110 @@ export default function BuyDataPage() {
         setIsProcessing(true);
 
         try {
-            if (purchaseMode === 'park') {
-                // Park the data instead of buying immediately
-                const result = await parkData({
-                    network: selectedNetwork,
-                    phone: phoneNumber,
-                    planId: selectedPlanDetails.id.includes('-')
-                        ? selectedPlanDetails.id.split('-')[0]
-                        : selectedPlanDetails.id,
-                    amount: selectedPlanDetails.price,
-                    planName: selectedPlanDetails.size,
-                    userId: user!.id,
-                    pin: verifiedPin,
-                });
+            const planIdForPurchase = selectedPlanDetails.id.includes('-')
+                ? selectedPlanDetails.id.split('-')[0]
+                : selectedPlanDetails.id;
 
-                if (result.status) {
-                    await refreshUser();
-                    setTxResult({
-                        status: "success",
-                        orderId: result.transactionId || "—",
-                        description: `${selectedPlanDetails.size} ${selectedNetwork} data parked for ${phoneNumber}`,
-                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
-                    });
-                    setPhoneNumber("");
-                    setSelectedPlan("");
-                    setSelectedNetwork("");
-                } else {
-                    setTxResult({
-                        status: "failed",
-                        orderId: result.transactionId || "—",
-                        description: result.message || "Failed to park data",
-                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
-                    });
-                }
-            } else {
-                // Regular purchase flow
-                const planIdForPurchase = selectedPlanDetails.id.includes('-')
-                    ? selectedPlanDetails.id.split('-')[0]
-                    : selectedPlanDetails.id;
+            const allPhones = [phoneNumber, ...extraPhones.filter(p => p.trim())];
+            const results = [];
 
-                const response = await fetch("/api/inlomax/data", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
+            for (const phone of allPhones) {
+                if (purchaseMode === 'park') {
+                    const deliverAt = deliverAtDate ? deliverAtDate.toISOString() : undefined;
+
+                    const res = await parkData({
                         network: selectedNetwork,
-                        phone: phoneNumber,
+                        phone,
                         planId: planIdForPurchase,
                         amount: selectedPlanDetails.price,
                         planName: selectedPlanDetails.size,
-                        userId: user?.id,
+                        userId: user!.id,
                         pin: verifiedPin,
-                    }),
-                });
-
-                const result = await response.json();
-
-                if (result.status) {
-                    await refreshUser();
-                    setTxResult({
-                        status: result.processing ? "pending" : "success",
-                        orderId: result.transactionId || "—",
-                        description: `${selectedPlanDetails.size} ${selectedNetwork} data → ${phoneNumber}`,
-                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                        deliverAt: deliverAt,
                     });
-                    setPhoneNumber("");
-                    setSelectedPlan("");
-                    setSelectedNetwork("");
+                    results.push(res);
                 } else {
-                    setTxResult({
-                        status: "failed",
-                        orderId: result.transactionId || "—",
-                        description: result.message || "Purchase failed",
-                        amount: `₦${selectedPlanDetails.price.toLocaleString()}`,
+                    const response = await fetch("/api/inlomax/data", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            network: selectedNetwork,
+                            phone,
+                            planId: planIdForPurchase,
+                            amount: selectedPlanDetails.price,
+                            planName: selectedPlanDetails.size,
+                            userId: user!.id,
+                            pin: verifiedPin,
+                        }),
                     });
+                    const res = await response.json();
+                    results.push(res);
                 }
             }
+
+            const allSuccess = results.every(r => r.status);
+            const successCount = results.filter(r => r.status).length;
+
+            if (allSuccess) {
+                await refreshUser();
+
+                // Track plan preference (fire-and-forget)
+                fetch("/api/analytics/track-plan", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    service_type: "data",
+                    network: selectedNetwork,
+                    plan_id: planIdForPurchase,
+                    plan_name: selectedPlanDetails.size,
+                    amount: selectedPlanDetails.price,
+                  }),
+                }).catch(() => {});
+
+                // Save contact if requested
+                if (saveAsContact && contactName) {
+                    await saveContact({
+                        name: contactName,
+                        phone: phoneNumber,
+                        network: selectedNetwork
+                    });
+                }
+
+                setTxResult({
+                    status: "success",
+                    orderId: results[0].transactionId || "—",
+                    description: purchaseMode === 'park' 
+                        ? `${selectedPlanDetails.size} data parked for ${successCount} recipient(s)`
+                        : `Purchase successful for ${successCount} recipient(s)`,
+                    amount: `₦${(selectedPlanDetails.price * allPhones.length).toLocaleString()}`,
+                });
+
+                setPhoneNumber("");
+                setSelectedPlan("");
+                setSelectedNetwork("");
+                setExtraPhones([]);
+                setDeliverAtDate(undefined);
+            } else {
+                setTxResult({
+                    status: successCount > 0 ? "success" : "failed",
+                    orderId: results[0].transactionId || "—",
+                    description: successCount > 0 
+                        ? `Partial success: ${successCount}/${allPhones.length} processed.`
+                        : results[0].message || "Transaction failed",
+                    amount: `₦${(selectedPlanDetails.price * allPhones.length).toLocaleString()}`,
+                });
+            }
         } catch (error) {
+            console.error("Purchase error:", error);
             setTxResult({
                 status: "failed",
                 orderId: "—",
-                description: "Network error. Please try again.",
-                amount: selectedPlanDetails ? `₦${selectedPlanDetails.price.toLocaleString()}` : "—",
+                description: "An unexpected error occurred",
+                amount: "—",
             });
-            console.error("Purchase error:", error);
         } finally {
             setIsProcessing(false);
+            setShowVerifyPin(false);
         }
     };
 
@@ -351,7 +387,7 @@ export default function BuyDataPage() {
                             </button>
                         </div>
 
-                        {/* Purchase Mode Toggle - More robust layout */}
+
                         <div className="bg-white/3 border border-white/10 rounded-2xl p-4 mb-6">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="space-y-1 flex-1">
@@ -429,6 +465,33 @@ export default function BuyDataPage() {
                                 </div>
                             </div>
 
+
+                            {/* Frequent Plans Quick Recharge */}
+                            {!selectedNetwork && frequentPlans.length > 0 && !loadingFrequent && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <IonIcon name="refresh-outline" size="16px" className="text-green-500" />
+                                        <Label className="text-sm font-medium">Frequent Plans</Label>
+                                    </div>
+                                    <div className="flex gap-2 overflow-x-auto pb-1 thin-scrollbar -mx-1 px-1">
+                                        {frequentPlans.slice(0, 5).map((plan) => (
+                                            <button
+                                                key={plan.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (plan.network) setSelectedNetwork(plan.network);
+                                                }}
+                                                className="shrink-0 bg-muted/30 border border-border hover:border-green-500/50 rounded-xl p-3 text-left min-w-[130px] transition-smooth"
+                                            >
+                                                <div className="text-xs text-muted-foreground font-medium">{plan.network}</div>
+                                                <div className="font-bold text-foreground text-sm truncate">{plan.plan_name}</div>
+                                                <div className="text-xs text-green-500 font-semibold">₦{plan.amount?.toLocaleString()}</div>
+                                                <div className="text-[10px] text-muted-foreground">Bought {plan.purchase_count}x</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Data Type Selection - Dynamic based on available plans */}
                             {selectedNetwork && (
@@ -556,11 +619,39 @@ export default function BuyDataPage() {
                                 </div>
                             )}
 
-                            {/* Phone Number */}
-                            <div className="space-y-2">
-                                <Label htmlFor="phone" className="text-sm font-medium">
-                                    Phone Number
-                                </Label>
+                            {/* Phone Number & Contacts */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="phone" className="text-sm font-medium">Recipient Number</Label>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowContacts(!showContacts)}
+                                        className="text-[10px] font-bold text-green-500 uppercase tracking-widest hover:underline"
+                                    >
+                                        {showContacts ? "Hide Contacts" : "View Contacts"}
+                                    </button>
+                                </div>
+
+                                {showContacts && contacts.length > 0 && (
+                                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 thin-scrollbar">
+                                        {contacts.map((contact) => (
+                                            <button
+                                                key={contact.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setPhoneNumber(contact.phone);
+                                                    if (contact.network) setSelectedNetwork(contact.network);
+                                                    setShowContacts(false);
+                                                }}
+                                                className="shrink-0 bg-muted/50 border border-border rounded-lg p-2 text-left hover:border-green-500 transition-all min-w-[120px]"
+                                            >
+                                                <p className="text-xs font-bold truncate">{contact.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{contact.phone}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div className="relative">
                                     <IonIcon
                                         name="call-outline"
@@ -577,7 +668,99 @@ export default function BuyDataPage() {
                                         required
                                     />
                                 </div>
+
+                                <div className="flex items-center gap-4 py-1">
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer group">
+                                        <input 
+                                            type="checkbox"
+                                            className="rounded border-border bg-background h-4 w-4 accent-green-500"
+                                            checked={saveAsContact} 
+                                            onChange={(e) => setSaveAsContact(e.target.checked)} 
+                                        />
+                                        <span className="group-hover:text-foreground transition-colors">Save to Contacts</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer group">
+                                        <input 
+                                            type="checkbox"
+                                            className="rounded border-border bg-background h-4 w-4 accent-green-500"
+                                            checked={isMultiRecipient} 
+                                            onChange={(e) => setIsMultiRecipient(e.target.checked)} 
+                                        />
+                                        <span className="group-hover:text-foreground transition-colors">Multi-recipient</span>
+                                    </label>
+                                </div>
+
+                                {saveAsContact && (
+                                    <Input
+                                        placeholder="Contact Name (e.g. Mom)"
+                                        value={contactName}
+                                        onChange={(e) => setContactName(e.target.value)}
+                                        className="h-9 text-sm"
+                                    />
+                                )}
+
+                                {isMultiRecipient && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Extra Recipients</p>
+                                        {extraPhones.map((p, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <Input 
+                                                    placeholder={`Phone ${i+2}`}
+                                                    value={p}
+                                                    onChange={(e) => {
+                                                        const newPhones = [...extraPhones];
+                                                        newPhones[i] = e.target.value;
+                                                        setExtraPhones(newPhones);
+                                                    }}
+                                                    className="h-9 text-sm"
+                                                />
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-9 w-9 text-red-500"
+                                                    onClick={() => setExtraPhones(extraPhones.filter((_, idx) => idx !== i))}
+                                                >
+                                                    <IonIcon name="trash-outline" size="16px" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            className="w-full h-9 text-xs border-dashed"
+                                            onClick={() => setExtraPhones([...extraPhones, ""])}
+                                        >
+                                            <IonIcon name="add-outline" className="mr-1" />
+                                            Add Phone Number
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Scheduling & Personalization (Vault Mode Only) */}
+                            {purchaseMode === 'park' && (
+                                <div className="space-y-4 pt-2 border-t border-border/50">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <IonIcon name="calendar-outline" size="18px" className="text-green-500" />
+                                        <p className="text-sm font-bold">Smart Delivery Options</p>
+                                    </div>
+                                    
+                                        <div className="space-y-2">
+                                            <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-widest">Delivery Schedule (12H)</Label>
+                                            <DateTimePicker 
+                                                value={deliverAtDate}
+                                                onChange={setDeliverAtDate}
+                                                placeholder="Pick delivery date & time"
+                                            />
+                                        </div>
+                                        <p className="text-[9px] text-muted-foreground italic ml-1">
+                                            {deliverAtDate 
+                                                ? `Auto-delivery: ${deliverAtDate.toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })} at ${deliverAtDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                                                : "Select a future date and time for automatic vault delivery."}
+                                        </p>
+                                </div>
+                            )}
 
 
                             {/* Summary */}
@@ -626,7 +809,7 @@ export default function BuyDataPage() {
                                             <div className="flex justify-between">
                                                 <span className="font-semibold text-foreground">Total</span>
                                                 <span className="font-bold text-green-500 text-lg">
-                                                    ₦{selectedPlanDetails.price.toLocaleString()}
+                                                    ₦{(selectedPlanDetails.price * (1 + extraPhones.filter(p => p.trim()).length)).toLocaleString()}
                                                 </span>
                                             </div>
                                         </div>

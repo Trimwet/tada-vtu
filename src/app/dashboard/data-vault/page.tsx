@@ -2,95 +2,270 @@
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { IonIcon } from "@/components/ion-icon";
 import { useDataVault } from "@/hooks/useDataVault";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
-import { VaultQRModal } from "@/components/vault-qr-modal";
-import { toast } from "sonner";
+import { VaultCarousel } from "@/components/vault-ready-card";
+import { toast } from "@/lib/toast";
 import Link from "next/link";
+import confetti from "canvas-confetti";
+
+type TabKey = "ready" | "delivered" | "expired" | "insights";
+
+// ── Insights Tab ──────────────────────────────────────────────────────────
+
+function InsightsTab({ vaultData }: { vaultData: any }) {
+  const all = useMemo(() => [
+    ...(vaultData?.ready || []),
+    ...(vaultData?.delivered || []),
+    ...(vaultData?.expired || []),
+  ], [vaultData]);
+
+  const delivered = vaultData?.delivered || [];
+  const totalSpent = all.reduce((s: number, v: any) => s + Number(v.amount), 0);
+  const totalDelivered = delivered.reduce((s: number, v: any) => s + Number(v.amount), 0);
+  const uniqueRecipients = new Set(delivered.map((v: any) => v.recipient_phone)).size;
+
+  const networkCounts = delivered.reduce((acc: Record<string, number>, v: any) => {
+    acc[v.network] = (acc[v.network] || 0) + 1;
+    return acc;
+  }, {});
+  const topNetwork = Object.entries(networkCounts).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] || "—";
+
+  const monthlyData = useMemo(() => {
+    const map: Record<string, number> = {};
+    delivered.forEach((v: any) => {
+      const month = new Date(v.purchased_at).toLocaleDateString("en-NG", { month: "short", year: "2-digit" });
+      map[month] = (map[month] || 0) + Number(v.amount);
+    });
+    return Object.entries(map).slice(-6);
+  }, [delivered]);
+
+  const maxMonthly = Math.max(...monthlyData.map(([, v]) => v), 1);
+
+  if (all.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <IonIcon name="bar-chart-outline" size="32px" className="text-muted-foreground" />
+        </div>
+        <p className="font-medium text-foreground mb-1">No data yet</p>
+        <p className="text-sm text-muted-foreground">Park and deliver data to see your gifting insights</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { label: "Total Spent", value: `₦${totalSpent.toLocaleString()}`, icon: "wallet", color: "#16a34a" },
+          { label: "Total Delivered", value: `₦${totalDelivered.toLocaleString()}`, icon: "send", color: "#2563eb" },
+          { label: "Unique Recipients", value: uniqueRecipients.toString(), icon: "people", color: "#8b5cf6" },
+          { label: "Top Network", value: topNetwork, icon: "wifi", color: "#d97706" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-muted/50 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <IonIcon name={stat.icon} size="14px" color={stat.color} />
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </div>
+            <p className="text-lg font-bold text-foreground tracking-tight">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {monthlyData.length > 0 && (
+        <div className="bg-muted/50 rounded-xl p-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">Monthly gifting (₦)</p>
+          <div className="flex items-end gap-2 h-20">
+            {monthlyData.map(([month, value]) => (
+              <div key={month} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  className="w-full bg-green-500/80 rounded-t-sm transition-all"
+                  style={{ height: `${(value / maxMonthly) * 64}px`, minHeight: "4px" }}
+                />
+                <p className="text-[9px] text-muted-foreground truncate w-full text-center">{month}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {Object.keys(networkCounts).length > 0 && (
+        <div className="bg-muted/50 rounded-xl p-4">
+          <p className="text-xs font-medium text-muted-foreground mb-3">By network</p>
+          <div className="space-y-2">
+            {Object.entries(networkCounts)
+              .sort((a, b) => (b[1] as number) - (a[1] as number))
+              .map(([network, count]) => (
+                <div key={network} className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold w-12">{network}</span>
+                  <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${((count as number) / delivered.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">{count as any} items</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Network Reliability (Public Stats) */}
+      <NetworkReliabilitySection />
+    </div>
+  );
+}
+
+function NetworkReliabilitySection() {
+  const [stats, setStats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useState(() => {
+    fetch('/api/data-vault/network-stats')
+      .then(r => r.json())
+      .then(res => {
+        if (res.status) setStats(res.data);
+        setLoading(false);
+      });
+  });
+
+  if (loading || stats.length === 0) return null;
+
+  return (
+    <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-bold text-green-600 flex items-center gap-1.5 uppercase tracking-wider">
+          <IonIcon name="pulse-outline" size="14px" />
+          Live Network Reliability
+        </p>
+        <Badge variant="outline" className="text-[9px] h-4 bg-green-500/10 text-green-600 border-green-500/20">
+          Last 24h
+        </Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map((s) => (
+          <div key={s.network} className="space-y-1">
+            <div className="flex justify-between text-[10px]">
+              <span className="font-bold">{s.network}</span>
+              <span className={Number(s.success_rate) > 95 ? "text-green-600" : "text-amber-600"}>
+                {s.success_rate}%
+              </span>
+            </div>
+            <div className="h-1 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full ${Number(s.success_rate) > 95 ? "bg-green-500" : "bg-amber-500"}`}
+                style={{ width: `${s.success_rate}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[9px] text-muted-foreground mt-3 leading-relaxed">
+        Reliability score is based on the last 100 delivery attempts across the TADA network.
+      </p>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function DataVaultPage() {
   const { user } = useSupabaseUser();
-  const { vaultData, loading, isDelivering, deliverData, refresh } = useDataVault(user?.id);
-  const [activeTab, setActiveTab] = useState<'ready' | 'delivered' | 'expired'>('ready');
-  const [selectedVault, setSelectedVault] = useState<any>(null);
-  const [showQRModal, setShowQRModal] = useState(false);
+  const { vaultData, loading, isDelivering, isRefunding, deliverData, refundData, refresh } = useDataVault(user?.id);
+  const [activeTab, setActiveTab] = useState<TabKey>("ready");
 
-  // Memoize derived data to prevent unnecessary recalculations
   const readyItems = useMemo(() => vaultData?.ready || [], [vaultData?.ready]);
   const deliveredItems = useMemo(() => vaultData?.delivered || [], [vaultData?.delivered]);
   const expiredItems = useMemo(() => vaultData?.expired || [], [vaultData?.expired]);
   const stats = useMemo(() => vaultData?.stats, [vaultData?.stats]);
 
   const tabs = useMemo(() => [
-    { key: 'ready' as const, label: 'Ready', count: readyItems.length, items: readyItems },
-    { key: 'delivered' as const, label: 'Delivered', count: deliveredItems.length, items: deliveredItems },
-    { key: 'expired' as const, label: 'Expired', count: expiredItems.length, items: expiredItems },
+    { key: "ready" as TabKey, label: "Ready", count: readyItems.length, items: readyItems },
+    { key: "delivered" as TabKey, label: "Delivered", count: deliveredItems.length, items: deliveredItems },
+    { key: "expired" as TabKey, label: "Expired", count: expiredItems.length, items: expiredItems },
+    { key: "insights" as TabKey, label: "Insights", count: 0, items: [] },
   ], [readyItems, deliveredItems, expiredItems]);
 
-  const activeItems = useMemo(() => 
-    tabs.find(tab => tab.key === activeTab)?.items || [], 
+  const activeItems = useMemo(
+    () => tabs.find((t) => t.key === activeTab)?.items || [],
     [tabs, activeTab]
   );
 
   const handleDeliver = async (vaultId: string) => {
-    if (!user?.id) {
-      toast.error('Please log in to deliver data');
-      return;
-    }
+    if (!user?.id) return toast.error("Please log in");
     try {
       const result = await deliverData(vaultId, user.id);
-      
+      if (result.status) {
+        toast.success(result.message);
+        confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ["#22c55e", "#16a34a", "#ffffff"] });
+      } else {
+        toast.error(result.message);
+      }
+    } catch {
+      toast.error("Failed to deliver data. Please try again.");
+    }
+  };
+
+  const handleRefund = async (vaultId: string) => {
+    if (!user?.id) return toast.error("Please log in");
+    if (!confirm("Are you sure you want to refund this data? The balance will be returned to your wallet.")) return;
+    try {
+      const result = await refundData(vaultId, user.id);
       if (result.status) {
         toast.success(result.message);
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error('Failed to deliver data. Please try again.');
+    } catch {
+      toast.error("Failed to process refund. Please try again.");
     }
   };
 
-  const handleGenerateQR = (vault: any) => {
-    setSelectedVault(vault);
-    setShowQRModal(true);
-  };
+  const downloadReceipt = async (vaultId: string) => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`/api/data-vault/receipt/${vaultId}?userId=${user.id}`);
+      const result = await res.json();
+      if (!result.status) return toast.error("Could not fetch receipt");
+      const r = result.data;
+      const text = [
+        "═══════════════════════════════",
+        "        TADA VTU RECEIPT       ",
+        "═══════════════════════════════",
+        `Receipt ID:  ${r.receiptId}`,
+        `Network:     ${r.network}`,
+        `Plan:        ${r.planName}`,
+        `Amount:      ₦${Number(r.amount).toLocaleString()}`,
+        `Phone:       ${r.recipientPhone}`,
+        `Status:      ${r.status.toUpperCase()}`,
+        `Parked:      ${new Date(r.parkedAt).toLocaleString("en-NG")}`,
+        r.deliveredAt ? `Delivered:   ${new Date(r.deliveredAt).toLocaleString("en-NG")}` : "",
+        r.deliveryReference ? `Ref:         ${r.deliveryReference}` : "",
+        "───────────────────────────────",
+        "tadavtu.com",
+      ].filter(Boolean).join("\n");
 
-  const formatTimeRemaining = (expiresAt: string) => {
-    const now = new Date();
-    const expires = new Date(expiresAt);
-    const diff = expires.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Expired';
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (days > 0) return `${days}d ${hours}h left`;
-    if (hours > 0) return `${hours}h left`;
-    return 'Expires soon';
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `TADA-Receipt-${r.receiptId}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Receipt downloaded!");
+    } catch {
+      toast.error("Failed to download receipt");
+    }
   };
 
   if (loading) {
     return (
       <div className="px-4 lg:px-8 py-6 space-y-6 lg:max-w-7xl lg:mx-auto animate-pulse">
-        {/* Header skeleton */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted rounded-xl" />
@@ -101,8 +276,7 @@ export default function DataVaultPage() {
           </div>
           <div className="h-9 w-24 bg-muted rounded-lg" />
         </div>
-        {/* Stats skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="border border-border rounded-xl p-4">
               <div className="flex items-center gap-3">
@@ -115,21 +289,10 @@ export default function DataVaultPage() {
             </div>
           ))}
         </div>
-        {/* Tabs skeleton */}
-        <div className="h-12 w-full sm:w-80 bg-muted rounded-xl" />
-        {/* Items skeleton */}
+        <div className="h-12 w-full bg-muted rounded-xl" />
         <div className="border border-border rounded-xl p-4 space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="border border-border rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-muted rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-40 bg-muted rounded" />
-                  <div className="h-3 w-28 bg-muted rounded" />
-                  <div className="h-3 w-16 bg-muted rounded" />
-                </div>
-              </div>
-            </div>
+            <div key={i} className="border border-border rounded-xl p-4 h-20 bg-muted/30" />
           ))}
         </div>
       </div>
@@ -147,122 +310,74 @@ export default function DataVaultPage() {
             </div>
             Data Vault
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your parked data plans
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Manage your parked data plans</p>
         </div>
-        <Link href="/dashboard/buy-data" className="shrink-0">
-          <Button className="gap-1.5 h-9 text-sm">
-            <IonIcon name="add-outline" size="16px" />
-            <span className="hidden sm:inline">Park Data</span>
-            <span className="sm:hidden">Park</span>
-          </Button>
-        </Link>
+        <div className="flex gap-2 shrink-0">
+          <Link href="/dashboard/scan-qr">
+            <Button variant="outline" className="gap-1.5 h-9 text-sm border-green-500/20 text-green-600 hover:bg-green-50">
+              <IonIcon name="qr-code" size="16px" />
+              <span className="hidden sm:inline">Scan QR</span>
+              <span className="sm:hidden">Scan</span>
+            </Button>
+          </Link>
+          <Link href="/dashboard/buy-data">
+            <Button className="gap-1.5 h-9 text-sm bg-green-500 hover:bg-green-600">
+              <IonIcon name="add-outline" size="16px" />
+              <span className="hidden sm:inline">Park Data</span>
+              <span className="sm:hidden">Park</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <Card className="border-border">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center shrink-0">
-                <IonIcon name="archive-outline" size="18px" color="#22c55e" />
+        {[
+          { label: "Ready to Send", value: `₦${stats?.totalParked.toLocaleString() || "0"}`, sub: `${stats?.readyCount || 0} items`, icon: "archive-outline", color: "#22c55e", bg: "bg-green-500/10" },
+          { label: "Delivered", value: `₦${stats?.totalDelivered.toLocaleString() || "0"}`, sub: `${stats?.deliveredCount || 0} items`, icon: "checkmark-circle-outline", color: "#3b82f6", bg: "bg-blue-500/10" },
+          { label: "Expired", value: stats?.expiredCount?.toString() || "0", sub: "Auto-refunded", icon: "time-outline", color: "#f59e0b", bg: "bg-amber-500/10" },
+        ].map((s) => (
+          <Card key={s.label} className="border-border">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 ${s.bg} rounded-lg flex items-center justify-center shrink-0`}>
+                  <IonIcon name={s.icon} size="18px" color={s.color} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-lg sm:text-xl font-bold text-foreground">{s.value}</p>
+                  <p className="text-xs text-muted-foreground">{s.sub}</p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Ready to Send</p>
-                <p className="text-lg sm:text-xl font-bold text-foreground">
-                  ₦{stats?.totalParked.toLocaleString() || '0'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.readyCount || 0} items
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center shrink-0">
-                <IonIcon name="checkmark-circle-outline" size="18px" color="#3b82f6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Delivered</p>
-                <p className="text-lg sm:text-xl font-bold text-foreground">
-                  ₦{stats?.totalDelivered.toLocaleString() || '0'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.deliveredCount || 0} items
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center shrink-0">
-                <IonIcon name="time-outline" size="18px" color="#f59e0b" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm text-muted-foreground">Expired</p>
-                <p className="text-lg sm:text-xl font-bold text-foreground">
-                  {stats?.expiredCount || 0}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Auto-refunded
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Switch-Style Tabs */}
-      <div className="relative bg-muted p-1 rounded-xl w-full sm:w-fit overflow-hidden">
-        {/* Animated background indicator */}
-        <div 
+      {/* Tabs */}
+      <div className="relative bg-muted p-1 rounded-xl w-full overflow-x-auto">
+        <div
           className="absolute top-1 bottom-1 bg-background rounded-lg shadow-sm transition-all duration-300 ease-out"
           style={{
-            left: `${4 + (tabs.findIndex(tab => tab.key === activeTab) * (100 / tabs.length))}%`,
+            left: `calc(${tabs.findIndex((t) => t.key === activeTab) * (100 / tabs.length)}% + 4px)`,
             width: `calc(${100 / tabs.length}% - 8px)`,
           }}
         />
-        
-        <div className="relative flex">
-          {tabs.map((tab, index) => (
+        <div className="relative flex min-w-max sm:min-w-0">
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`relative px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-none sm:min-w-[120px] justify-center ${
-                activeTab === tab.key
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+              className={`relative px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 flex-1 justify-center whitespace-nowrap ${
+                activeTab === tab.key ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {/* Tab icon */}
-              <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
-                activeTab === tab.key
-                  ? 'bg-green-500/20'
-                  : 'bg-transparent'
-              }`}>
-                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
-                  activeTab === tab.key
-                    ? 'bg-green-500'
-                    : 'bg-muted-foreground/50'
-                }`} />
-              </div>
-              
-              <span className="relative z-10 truncate">{tab.label}</span>
-              
-              {/* Count badge */}
+              <span>{tab.label}</span>
               {tab.count > 0 && (
-                <span className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full transition-all duration-300 shrink-0 ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
                   activeTab === tab.key
-                    ? 'bg-green-500/15 text-green-600 border border-green-500/20'
-                    : 'bg-muted-foreground/10 text-muted-foreground'
+                    ? "bg-green-500/15 text-green-600 border border-green-500/20"
+                    : "bg-muted-foreground/10 text-muted-foreground"
                 }`}>
                   {tab.count}
                 </span>
@@ -276,41 +391,41 @@ export default function DataVaultPage() {
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-lg">
-            {activeTab === 'ready' && 'Ready to Send'}
-            {activeTab === 'delivered' && 'Delivered Items'}
-            {activeTab === 'expired' && 'Expired Items'}
+            {activeTab === "ready" && "Ready to Send"}
+            {activeTab === "delivered" && "Delivered Items"}
+            {activeTab === "expired" && "Expired Items"}
+            {activeTab === "insights" && "Gifting Insights"}
           </CardTitle>
           <CardDescription>
-            {activeTab === 'ready' && 'Tap "Send Now" to deliver instantly'}
-            {activeTab === 'delivered' && 'Successfully delivered data plans'}
-            {activeTab === 'expired' && 'Expired items are automatically refunded'}
+            {activeTab === "ready" && `Tap "Send Now" to deliver instantly`}
+            {activeTab === "delivered" && "Successfully delivered data plans"}
+            {activeTab === "expired" && "Expired items are automatically refunded"}
+            {activeTab === "insights" && "Your data gifting activity at a glance"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {activeItems.length === 0 ? (
+          {activeTab === "insights" ? (
+            <InsightsTab vaultData={vaultData} />
+          ) : activeItems.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <IonIcon
-                  name={
-                    activeTab === 'ready' ? 'archive-outline' :
-                    activeTab === 'delivered' ? 'checkmark-circle-outline' :
-                    'time-outline'
-                  }
+                  name={activeTab === "ready" ? "archive-outline" : activeTab === "delivered" ? "checkmark-circle-outline" : "time-outline"}
                   size="32px"
                   className="text-muted-foreground"
                 />
               </div>
               <p className="text-foreground font-medium mb-1">
-                {activeTab === 'ready' && 'No Data Parked'}
-                {activeTab === 'delivered' && 'No Delivered Items'}
-                {activeTab === 'expired' && 'No Expired Items'}
+                {activeTab === "ready" && "No Data Parked"}
+                {activeTab === "delivered" && "No Delivered Items"}
+                {activeTab === "expired" && "No Expired Items"}
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                {activeTab === 'ready' && 'Park data plans for instant delivery when needed'}
-                {activeTab === 'delivered' && 'Delivered items will appear here'}
-                {activeTab === 'expired' && 'Expired items are automatically refunded'}
+                {activeTab === "ready" && "Park data plans for instant delivery when needed"}
+                {activeTab === "delivered" && "Delivered items will appear here"}
+                {activeTab === "expired" && "Expired items are automatically refunded"}
               </p>
-              {activeTab === 'ready' && (
+              {activeTab === "ready" && (
                 <Link href="/dashboard/buy-data">
                   <Button className="gap-2">
                     <IonIcon name="add-outline" size="16px" />
@@ -320,113 +435,18 @@ export default function DataVaultPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {activeItems.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="border border-border rounded-xl p-3 sm:p-4 hover:border-green-500/50 transition-smooth"
-                >
-                  {/* Mobile-first layout */}
-                  <div className="space-y-3">
-                    {/* Header row with icon and title */}
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ${
-                        activeTab === 'ready' ? 'bg-green-500/10' :
-                        activeTab === 'delivered' ? 'bg-blue-500/10' :
-                        'bg-amber-500/10'
-                      }`}>
-                        <IonIcon 
-                          name="wifi-outline" 
-                          size="18px" 
-                          color={
-                            activeTab === 'ready' ? '#22c55e' :
-                            activeTab === 'delivered' ? '#3b82f6' :
-                            '#f59e0b'
-                          }
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground text-sm sm:text-base leading-tight">
-                            {item.network} {item.plan_name}
-                          </h3>
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded shrink-0">
-                            {item.network}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2 break-all">
-                          {item.recipient_phone}
-                        </p>
-                        <div className="text-sm font-medium text-green-500">
-                          ₦{item.amount.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Metadata row - mobile optimized */}
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>Parked {formatDate(item.purchased_at)}</span>
-                      {activeTab === 'ready' && (
-                        <span className={new Date(item.expires_at) <= new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-amber-500 font-medium' : ''}>
-                          {formatTimeRemaining(item.expires_at)}
-                        </span>
-                      )}
-                      {activeTab === 'delivered' && item.delivered_at && (
-                        <span className="text-green-600">Delivered {formatDate(item.delivered_at)}</span>
-                      )}
-                    </div>
-
-                    {/* Action buttons - mobile optimized */}
-                    {activeTab === 'ready' && (
-                      <div className="flex gap-2 pt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleGenerateQR(item)}
-                          className="gap-1.5 flex-1 h-8 text-xs"
-                        >
-                          <IonIcon name="qr-code-outline" size="14px" />
-                          QR Code
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleDeliver(item.id)}
-                          disabled={isDelivering === item.id}
-                          className="gap-1.5 flex-1 h-8 text-xs bg-green-500 hover:bg-green-600 text-white"
-                        >
-                          {isDelivering === item.id ? (
-                            <>
-                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <IonIcon name="send-outline" size="14px" />
-                              Send Now
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VaultCarousel
+              items={activeItems}
+              tab={activeTab as "ready" | "delivered" | "expired"}
+              isDelivering={isDelivering}
+              isRefunding={isRefunding}
+              onDeliver={handleDeliver}
+              onRefund={handleRefund}
+              onDownloadReceipt={downloadReceipt}
+            />
           )}
         </CardContent>
       </Card>
-
-      {/* QR Modal */}
-      {selectedVault && (
-        <VaultQRModal
-          isOpen={showQRModal}
-          onClose={() => {
-            setShowQRModal(false);
-            setSelectedVault(null);
-          }}
-          vault={selectedVault}
-        />
-      )}
     </div>
   );
 }

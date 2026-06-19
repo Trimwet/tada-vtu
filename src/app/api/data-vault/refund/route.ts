@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
@@ -10,13 +11,25 @@ function getSupabaseAdmin() {
         throw new Error('Missing Supabase configuration');
     }
 
-    return createClient(url, serviceKey);
+    return createSupabaseClient(url, serviceKey);
 }
 
 export async function POST(request: NextRequest) {
     try {
+        const supabaseClient = await createClient();
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ status: false, message: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json();
         const { vaultId, userId } = body;
+
+        // Security check: Verify userId matches authenticated user
+        if (userId !== user.id) {
+            return NextResponse.json({ status: false, message: 'Unauthorized: User ID mismatch' }, { status: 401 });
+        }
 
         if (!vaultId || !userId) {
             return NextResponse.json(
@@ -58,6 +71,14 @@ export async function POST(request: NextRequest) {
         if (vaultItem.status !== 'ready') {
             return NextResponse.json(
                 { status: false, message: `This item cannot be refunded as it is already ${vaultItem.status}` },
+                { status: 400 }
+            );
+        }
+
+        // Enforce freeze_until
+        if (vaultItem.freeze_until && new Date(vaultItem.freeze_until) > new Date()) {
+            return NextResponse.json(
+                { status: false, message: `This item is frozen until ${new Date(vaultItem.freeze_until).toLocaleString()} and cannot be refunded yet.` },
                 { status: 400 }
             );
         }

@@ -86,13 +86,16 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'transactions' | 'flutterwave'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [transactionsTotal, setTransactionsTotal] = useState(0);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [inlomaxBalance, setInlomaxBalance] = useState<number | null>(null);
   const [userModal, setUserModal] = useState<UserModalState>({
     isOpen: false, user: null, action: null, amount: '', reason: '', loading: false,
   });
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
-
   const openUserModal = (user: User, action: 'view' | 'fund' | 'debit') => {
     setUserModal({ isOpen: true, user, action, amount: '', reason: '', loading: false });
   };
@@ -119,7 +122,10 @@ export default function AdminDashboard() {
       const result = await response.json();
       if (response.ok && result.success) {
         toast.success(result.message);
-        fetchData(token);
+        const opts: any = {};
+        if (activeTab === 'users') opts.usersPage = usersPage;
+        if (activeTab === 'transactions') opts.transactionsPage = transactionsPage;
+        fetchData(token, opts);
         closeUserModal();
       } else {
         toast.error(result.error || 'Action failed');
@@ -131,34 +137,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleMaintenanceMode = async () => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-    
-    setMaintenanceLoading(true);
-    try {
-      const response = await fetch('/api/admin/maintenance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ maintenanceMode: !maintenanceMode }),
-      });
-      
-      const result = await response.json();
-      if (response.ok && result.success) {
-        setMaintenanceMode(result.maintenanceMode);
-        toast.success(result.message);
-      } else {
-        toast.error(result.error || 'Failed to toggle maintenance mode');
-      }
-    } catch (error) {
-      console.error('Error toggling maintenance mode:', error);
-      toast.error('Network error');
-    } finally {
-      setMaintenanceLoading(false);
-    }
-  };
-
-
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     const adminData = localStorage.getItem('adminUser');
@@ -167,10 +145,14 @@ export default function AdminDashboard() {
     fetchData(token);
   }, [router]);
 
-  const fetchData = async (token: string) => {
-    setLoading(true);
+  const fetchData = async (token: string, opts?: { usersPage?: number; transactionsPage?: number }) => {
+    if (!opts) setLoading(true);
     try {
-      const response = await fetch('/api/admin/dashboard', { headers: { Authorization: `Bearer ${token}` } });
+      const params = new URLSearchParams();
+      if (opts?.usersPage) params.set('usersPage', String(opts.usersPage));
+      if (opts?.transactionsPage) params.set('transactionsPage', String(opts.transactionsPage));
+      const qs = params.toString();
+      const response = await fetch(`/api/admin/dashboard${qs ? `?${qs}` : ''}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 401) {
@@ -182,20 +164,12 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Failed to fetch data');
       }
       setStats(data.stats || getDefaultStats());
-      setUsers(data.users || []);
-      setTransactions(data.transactions || []);
-
-      // Fetch maintenance status
-      try {
-        const maintenanceRes = await fetch('/api/admin/maintenance', { headers: { Authorization: `Bearer ${token}` } });
-        const maintenanceData = await maintenanceRes.json();
-        if (maintenanceData.success) {
-          setMaintenanceMode(maintenanceData.maintenanceMode);
-        }
-      } catch (e) {
-        console.error('Failed to fetch maintenance status:', e);
-      }
-
+      if (data.users) setUsers(data.users);
+      if (data.transactions) setTransactions(data.transactions);
+      if (data.usersTotal !== undefined && opts?.usersPage) setUsersTotal(data.usersTotal);
+      else if (data.usersTotal !== undefined) setUsersTotal(data.usersTotal);
+      if (data.transactionsTotal !== undefined && opts?.transactionsPage) setTransactionsTotal(data.transactionsTotal);
+      else if (data.transactionsTotal !== undefined) setTransactionsTotal(data.transactionsTotal);
       try {
         const balanceRes = await fetch('/api/inlomax/balance');
         const balanceData = await balanceRes.json();
@@ -203,9 +177,27 @@ export default function AdminDashboard() {
       } catch { }
 
       try {
-        const analyticsRes = await fetch('/api/admin/analytics?range=30d', { headers: { Authorization: `Bearer ${token}` } });
-        const analyticsData = await analyticsRes.json();
-        setAnalytics(analyticsData);
+        const analyticsRes = await fetch('/api/admin/analytics?period=month', { headers: { Authorization: `Bearer ${token}` } });
+        const raw = await analyticsRes.json();
+        if (raw.success) {
+          const a = raw.analytics;
+          const chartData = (a.daily || []).map((d: any) => ({
+            date: d.date,
+            estimatedEarnings: d.revenue,
+            deposits: d.deposits,
+            grossVolume: d.deposits + d.purchases,
+            transactions: d.transactions,
+            users: 0,
+          }));
+          const serviceBreakdown = [
+            { name: 'Airtime', value: a.revenue.airtimeMargin || 0 },
+            { name: 'Data', value: a.revenue.dataMargin || 0 },
+            { name: 'Cable', value: a.revenue.cableMargin || 0 },
+            { name: 'Electricity', value: a.revenue.electricityMargin || 0 },
+            { name: 'Deposit Fees', value: a.revenue.depositFees || 0 },
+          ].filter(s => s.value > 0);
+          setAnalytics({ chartData, serviceBreakdown });
+        }
       } catch (e) { console.error("Analytics fetch error", e); }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -247,6 +239,22 @@ export default function AdminDashboard() {
     txn.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+
+  const handleTabChange = (tab: 'overview' | 'users' | 'transactions' | 'flutterwave') => {
+    setActiveTab(tab);
+    setSearchQuery('');
+    if (tab === 'users' && token) {
+      setUsersPage(1);
+      setUsersLoading(true);
+      fetchData(token, { usersPage: 1 }).then(() => setUsersLoading(false));
+    } else if (tab === 'transactions' && token) {
+      setTransactionsPage(1);
+      setTransactionsLoading(true);
+      fetchData(token, { transactionsPage: 1 }).then(() => setTransactionsLoading(false));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-950/20 via-black to-black flex items-center justify-center">
@@ -284,7 +292,7 @@ export default function AdminDashboard() {
             <Button
               key={tab}
               variant={activeTab === tab ? 'default' : 'ghost'}
-              onClick={() => { setActiveTab(tab); setSearchQuery(''); }}
+              onClick={() => handleTabChange(tab)}
               className={activeTab === tab ? 'bg-green-600 hover:bg-green-700' : 'text-green-400/60 hover:text-green-400 hover:bg-green-500/10'}
             >
               {tab === 'overview' && '📊 '}
@@ -492,7 +500,7 @@ export default function AdminDashboard() {
         {activeTab === 'users' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">👥 All Users ({users.length})</h2>
+              <h2 className="text-lg font-semibold text-white">Users</h2>
               <Input
                 placeholder="Search by name, email, or phone..."
                 value={searchQuery}
@@ -514,7 +522,9 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.length === 0 ? (
+                      {usersLoading ? (
+                        <tr><td colSpan={5} className="p-8 text-center text-gray-400">Loading...</td></tr>
+                      ) : filteredUsers.length === 0 ? (
                         <tr><td colSpan={5} className="p-8 text-center text-gray-400">No users found</td></tr>
                       ) : filteredUsers.map((user) => (
                         <tr key={user.id} className="border-t border-gray-700 hover:bg-gray-700/50">
@@ -548,6 +558,19 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+            <div className="flex items-center justify-between text-sm text-gray-400">
+              <span>Page {usersPage} of {Math.ceil(usersTotal / 20) || 1} ({usersTotal} total)</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={usersPage <= 1 || usersLoading} onClick={async () => {
+                  setUsersPage(p => p - 1); setUsersLoading(true);
+                  await fetchData(token!, { usersPage: usersPage - 1 }); setUsersLoading(false);
+                }} className="border-gray-600">Prev</Button>
+                <Button size="sm" variant="outline" disabled={usersPage >= Math.ceil(usersTotal / 20) || usersLoading} onClick={async () => {
+                  setUsersPage(p => p + 1); setUsersLoading(true);
+                  await fetchData(token!, { usersPage: usersPage + 1 }); setUsersLoading(false);
+                }} className="border-gray-600">Next</Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -555,7 +578,7 @@ export default function AdminDashboard() {
         {activeTab === 'transactions' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">💳 All Transactions ({transactions.length})</h2>
+              <h2 className="text-lg font-semibold text-white">Transactions</h2>
               <Input
                 placeholder="Search transactions..."
                 value={searchQuery}
@@ -578,7 +601,9 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTransactions.length === 0 ? (
+                      {transactionsLoading ? (
+                        <tr><td colSpan={6} className="p-8 text-center text-gray-400">Loading...</td></tr>
+                      ) : filteredTransactions.length === 0 ? (
                         <tr><td colSpan={6} className="p-8 text-center text-gray-400">No transactions found</td></tr>
                       ) : filteredTransactions.map((txn) => (
                         <tr key={txn.id} className="border-t border-gray-700 hover:bg-gray-700/50">
@@ -617,6 +642,19 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+            <div className="flex items-center justify-between text-sm text-gray-400">
+              <span>Page {transactionsPage} of {Math.ceil(transactionsTotal / 20) || 1} ({transactionsTotal} total)</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={transactionsPage <= 1 || transactionsLoading} onClick={async () => {
+                  setTransactionsPage(p => p - 1); setTransactionsLoading(true);
+                  await fetchData(token!, { transactionsPage: transactionsPage - 1 }); setTransactionsLoading(false);
+                }} className="border-gray-600">Prev</Button>
+                <Button size="sm" variant="outline" disabled={transactionsPage >= Math.ceil(transactionsTotal / 20) || transactionsLoading} onClick={async () => {
+                  setTransactionsPage(p => p + 1); setTransactionsLoading(true);
+                  await fetchData(token!, { transactionsPage: transactionsPage + 1 }); setTransactionsLoading(false);
+                }} className="border-gray-600">Next</Button>
+              </div>
+            </div>
           </div>
         )}
         {/* FLUTTERWAVE HISTORY TAB */}

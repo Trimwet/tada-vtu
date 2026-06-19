@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
@@ -10,7 +11,7 @@ function getSupabaseAdmin() {
     throw new Error('Missing Supabase configuration');
   }
 
-  return createClient(url, serviceKey);
+  return createSupabaseClient(url, serviceKey);
 }
 
 // PIN verification utility
@@ -24,6 +25,13 @@ function verifyPin(pin: string, hash: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseClient = await createClient();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ status: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
 
     // Input validation
@@ -38,6 +46,43 @@ export async function POST(request: NextRequest) {
     }
 
     const { network, phone, planId, amount, planName, userId, pin } = validation.data!;
+
+    // Security check: Verify userId matches authenticated user
+    if (userId !== user.id) {
+      return NextResponse.json({ status: false, message: 'Unauthorized: User ID mismatch' }, { status: 401 });
+    }
+
+    // Optional scheduling / escrow fields
+    const deliverAt: string | null = body.deliverAt || null;
+    const freezeUntil: string | null = body.freezeUntil || null;
+    const lockedToPhone: string | null = body.lockedToPhone || null;
+
+    // Validate dates if provided
+    const now = new Date();
+    if (deliverAt) {
+      const deliverDate = new Date(deliverAt);
+      if (isNaN(deliverDate.getTime())) {
+        return NextResponse.json({ status: false, message: 'Invalid delivery date' }, { status: 400 });
+      }
+      if (deliverDate < now) {
+        return NextResponse.json({ status: false, message: 'Delivery date must be in the future' }, { status: 400 });
+      }
+      // Max 30 days in future
+      const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      if (deliverDate > thirtyDays) {
+        return NextResponse.json({ status: false, message: 'Delivery date cannot be more than 30 days in the future' }, { status: 400 });
+      }
+    }
+
+    if (freezeUntil) {
+      const freezeDate = new Date(freezeUntil);
+      if (isNaN(freezeDate.getTime())) {
+        return NextResponse.json({ status: false, message: 'Invalid freeze date' }, { status: 400 });
+      }
+      if (freezeDate < now) {
+        return NextResponse.json({ status: false, message: 'Freeze date must be in the future' }, { status: 400 });
+      }
+    }
 
     // Rate limiting
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
@@ -137,6 +182,9 @@ export async function POST(request: NextRequest) {
           p_amount: numAmount,
           p_recipient_phone: phone,
           p_transaction_id: transaction.id,
+          p_deliver_at: deliverAt,
+          p_freeze_until: freezeUntil,
+          p_occasion_tag: body.occasionTag || null,
         });
 
       if (rpcError) {

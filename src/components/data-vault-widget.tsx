@@ -220,14 +220,12 @@ export function DataVaultWidget({ userId }: DataVaultWidgetProps) {
               Park More
             </Button>
           </Link>
-          {readyItems.length > 0 && (
-            <Link href="/dashboard/data-vault" className="flex-1">
-              <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
-                <IonIcon name="list-outline" size="12px" />
-                Manage
-              </Button>
-            </Link>
-          )}
+          <Link href="/dashboard/scan-qr" className="flex-1">
+            <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs border-green-500/20 text-green-600">
+              <IonIcon name="qr-code" size="12px" />
+              Scan QR
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>

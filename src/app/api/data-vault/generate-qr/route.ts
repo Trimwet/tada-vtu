@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { generatePersonalDataQR } from '@/lib/qr-generator';
 
 function getSupabaseAdmin() {
@@ -10,12 +11,24 @@ function getSupabaseAdmin() {
     throw new Error('Missing Supabase configuration');
   }
 
-  return createClient(url, serviceKey);
+  return createSupabaseClient(url, serviceKey);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { vaultId, userId, forceRegenerate } = await request.json();
+    const supabaseClient = await createClient();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ status: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { vaultId, userId, forceRegenerate, lockedToPhone, giftMessage, voiceNoteUrl } = await request.json();
+
+    // Security check: Verify userId matches authenticated user
+    if (userId !== user.id) {
+      return NextResponse.json({ status: false, message: 'Unauthorized: User ID mismatch' }, { status: 401 });
+    }
 
     if (!vaultId || !userId) {
       return NextResponse.json(
@@ -82,6 +95,9 @@ export async function POST(request: NextRequest) {
                 phone_number: vault.recipient_phone,
               },
               isExisting: true,
+              giftMessage: existingQR.gift_message,
+              voiceNoteUrl: existingQR.voice_note_url,
+              lockedToPhone: existingQR.locked_to_phone,
             },
           });
         }
@@ -142,6 +158,9 @@ export async function POST(request: NextRequest) {
         vault_id: vault.id,
         user_id: userId,
         qr_data: qrDataWithCode,
+        locked_to_phone: lockedToPhone || null,
+        gift_message: giftMessage || null,
+        voice_note_url: voiceNoteUrl || null,
         expires_at: qrData.validUntil,
         created_at: new Date().toISOString(),
       });

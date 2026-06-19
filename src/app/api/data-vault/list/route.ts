@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,13 +10,25 @@ function getSupabaseAdmin() {
     throw new Error('Missing Supabase configuration');
   }
 
-  return createClient(url, serviceKey);
+  return createSupabaseClient(url, serviceKey);
 }
 
 export async function GET(request: NextRequest) {
   try {
+    const supabaseClient = await createClient();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ status: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+
+    // Security check: Verify userId matches authenticated user
+    if (userId !== user.id) {
+      return NextResponse.json({ status: false, message: 'Unauthorized: User ID mismatch' }, { status: 401 });
+    }
 
     if (!userId) {
       return NextResponse.json(

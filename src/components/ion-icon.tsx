@@ -473,6 +473,16 @@ const iconMap: Record<IconName, React.ComponentType<LucideProps>> = {
   // Camera
   camera: Camera,
   "camera-outline": Camera,
+  "camera-reverse": RefreshCw,
+  "camera-reverse-outline": RefreshCw,
+
+  // Flashlight
+  flashlight: Zap,
+  "flashlight-outline": Zap,
+
+  // Dots
+  "ellipsis-horizontal": MoreHorizontal,
+  "ellipsis-vertical": MoreHorizontal,
 
   // File Text
   document: FileText,

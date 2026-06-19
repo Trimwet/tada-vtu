@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyToken } from '@/lib/admin-auth';
 
-// Verify admin token
-function verifyToken(token: string): { valid: boolean; adminId?: string } {
-  try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (payload.exp < Date.now()) {
-      return { valid: false };
-    }
-    return { valid: true, adminId: payload.id };
-  } catch {
-    return { valid: false };
-  }
-}
-
-// Get Flutterwave balance
 async function getFlutterwaveBalance(): Promise<{ available: number; ledger: number }> {
   try {
     const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
@@ -24,7 +11,6 @@ async function getFlutterwaveBalance(): Promise<{ available: number; ledger: num
       headers: { Authorization: `Bearer ${secretKey}` },
     });
     const result = await response.json();
-    // Flutterwave returns a single object, not an array
     const data = Array.isArray(result.data) ? result.data[0] : result.data;
     return {
       available: data?.available_balance || 0,
@@ -35,7 +21,6 @@ async function getFlutterwaveBalance(): Promise<{ available: number; ledger: num
   }
 }
 
-// Get Inlomax balance
 async function getInlomaxBalance(): Promise<number> {
   try {
     const apiKey = process.env.INLOMAX_API_KEY;
@@ -53,9 +38,7 @@ async function getInlomaxBalance(): Promise<number> {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check env vars
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase env vars');
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
@@ -64,20 +47,16 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Verify authorization
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const token = authHeader.split(' ')[1];
-    const { valid, adminId } = verifyToken(token);
-
+    const { valid, adminId } = verifyToken(authHeader.split(' ')[1]);
     if (!valid || !adminId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Verify admin exists
     const { data: admin, error: adminError } = await supabase
       .from('admins')
       .select('id')
@@ -86,43 +65,43 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (adminError || !admin) {
-      console.error('Admin not found:', adminError);
       return NextResponse.json({ error: 'Admin not found' }, { status: 401 });
     }
 
-    // Fetch stats
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Total users
+    const { searchParams } = new URL(request.url);
+    const usersPage = Math.max(1, parseInt(searchParams.get('usersPage') || '1', 10));
+    const usersPageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('usersPageSize') || '20', 10)));
+    const transactionsPage = Math.max(1, parseInt(searchParams.get('transactionsPage') || '1', 10));
+    const transactionsPageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('transactionsPageSize') || '20', 10)));
+    const usersOffset = (usersPage - 1) * usersPageSize;
+    const transactionsOffset = (transactionsPage - 1) * transactionsPageSize;
+
     const { count: totalUsers } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true });
 
-    // Active users (with balance > 0)
     const { count: activeUsers } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .gt('balance', 0);
 
-    // Total transactions
     const { count: totalTransactions } = await supabase
       .from('transactions')
       .select('*', { count: 'exact', head: true });
 
-    // Today's transactions
     const { count: todayTransactions } = await supabase
       .from('transactions')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', today.toISOString());
 
-    // Pending transactions
     const { count: pendingTransactions } = await supabase
       .from('transactions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
 
-    // Total deposits (wallet funding from customers)
     const { data: depositData } = await supabase
       .from('transactions')
       .select('amount, description')
@@ -131,15 +110,11 @@ export async function GET(request: NextRequest) {
 
     const totalDeposits = depositData?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
-    // Extract ACTUAL service fees from deposit descriptions
-    // e.g. "Wallet funding via Flutterwave (₦50 service fee paid)"
     const serviceFees = depositData?.reduce((sum, t) => {
       const match = t.description?.match(/₦(\d+)\s+service fee paid/);
       return sum + (match ? parseInt(match[1], 10) : 0);
     }, 0) || 0;
 
-    // Estimate margins — use actual Inlomax cost from response_data where stored,
-    // fall back to percentage estimates for older transactions
     const { data: purchaseDataRaw } = await supabase
       .from('transactions')
       .select('amount, type, response_data')
@@ -153,23 +128,35 @@ export async function GET(request: NextRequest) {
     const dataPurchases = purchaseData.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const otherPurchases = purchaseData.filter(t => !['airtime', 'data'].includes(t.type)).reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    // Calculate actual cost paid to Inlomax using response_data.data.amount where available
-    const actualVTUCost = purchaseData.reduce((sum, t) => {
-      const inlomaxCost = t.response_data?.data?.amount ? Number(t.response_data.data.amount) : null;
-      if (inlomaxCost !== null) return sum + inlomaxCost;
-      // Fallback estimates for old transactions without response_data
-      if (t.type === 'airtime') return sum + Math.abs(t.amount) * 0.975;
-      if (t.type === 'data') return sum + Math.abs(t.amount) * 0.95;
-      return sum + Math.abs(t.amount) * 0.995;
-    }, 0);
+    // Calculate actual margins using response_data.data.amount (actual Inlomax cost)
+    let actualDataCost = 0;
+    let actualAirtimeCost = 0;
+    let actualOtherCost = 0;
 
-    const airtimeMargin = Math.round(airtimePurchases * 0.025);
-    const dataMargin = Math.round(dataPurchases * 0.05);
-    const otherMargin = Math.round(otherPurchases * 0.005);
+    purchaseData.forEach(t => {
+      const inlomaxCost = t.response_data?.data?.amount ? Number(t.response_data.data.amount) : null;
+      if (inlomaxCost !== null) {
+        if (t.type === 'airtime') actualAirtimeCost += inlomaxCost;
+        else if (t.type === 'data') actualDataCost += inlomaxCost;
+        else actualOtherCost += inlomaxCost;
+      } else {
+        // Fallback estimates for old transactions without response_data
+        if (t.type === 'airtime') actualAirtimeCost += Math.abs(t.amount) * 0.975;
+        else if (t.type === 'data') actualDataCost += Math.abs(t.amount) - 20; // Flat ₦20 markup
+        else actualOtherCost += Math.abs(t.amount) * 0.995;
+      }
+    });
+
+    const actualVTUCost = actualAirtimeCost + actualDataCost + actualOtherCost;
+
+    // Calculate actual margins (selling price - actual Inlomax cost)
+    const airtimeMargin = Math.round(airtimePurchases - actualAirtimeCost);
+    const dataMargin = Math.round(dataPurchases - actualDataCost);
+    const otherMargin = Math.round(otherPurchases - actualOtherCost);
     const totalMargins = Math.round(totalPurchases - actualVTUCost);
     const estimatedEarnings = serviceFees + totalMargins;
 
-    // Today's earnings
+    // Today's metrics (same approach)
     const { data: todayDeposits } = await supabase
       .from('transactions')
       .select('amount, description')
@@ -189,27 +176,25 @@ export async function GET(request: NextRequest) {
       .eq('status', 'success')
       .gte('created_at', today.toISOString());
 
-    const todayAirtime = todayPurchases?.filter(t => t.type === 'airtime').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const todayData = todayPurchases?.filter(t => t.type === 'data').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const todayPurchaseTotal = todayPurchases?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-    const todayActualCost = todayPurchases?.reduce((sum, t) => {
+    let todayActualCost = 0;
+    todayPurchases?.forEach(t => {
       const inlomaxCost = t.response_data?.data?.amount ? Number(t.response_data.data.amount) : null;
-      if (inlomaxCost !== null) return sum + inlomaxCost;
-      if (t.type === 'airtime') return sum + Math.abs(t.amount) * 0.975;
-      if (t.type === 'data') return sum + Math.abs(t.amount) * 0.95;
-      return sum + Math.abs(t.amount) * 0.995;
-    }, 0) || 0;
+      if (inlomaxCost !== null) todayActualCost += inlomaxCost;
+      else if (t.type === 'airtime') todayActualCost += Math.abs(t.amount) * 0.975;
+      else if (t.type === 'data') todayActualCost += Math.abs(t.amount) - 20;
+      else todayActualCost += Math.abs(t.amount) * 0.995;
+    });
+
+    const todayPurchaseTotal = todayPurchases?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const todayMargins = Math.round(todayPurchaseTotal - todayActualCost);
     const todayEstimatedEarnings = todayServiceFees + todayMargins;
 
-    // Total user balances (your liability)
     const { data: balanceData } = await supabase
       .from('profiles')
       .select('balance');
 
     const totalUserBalances = balanceData?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
-    // Get API balances
     const [fwBalances, inlomaxBalance] = await Promise.all([
       getFlutterwaveBalance(),
       getInlomaxBalance(),
@@ -218,22 +203,17 @@ export async function GET(request: NextRequest) {
     const flutterwaveBalance = fwBalances.available;
     const flutterwaveLedgerBalance = fwBalances.ledger;
 
-    // Flutterwave charges 1.4% capped at ₦2000 per transaction (merchant bears cost)
     const flutterwaveFeesPaid = depositData?.reduce((sum, t) => {
       const amount = Math.abs(t.amount);
       return sum + Math.min(2000, Math.round(amount * 0.014));
     }, 0) || 0;
 
-    // Calculate actual costs using real Inlomax data
     const totalVTUCosts = Math.round(actualVTUCost);
-
-    // Gross volume = total deposits (money that entered the platform from users)
     const grossVolume = totalDeposits;
     const grossRevenue = totalDeposits + serviceFees;
     const totalCosts = totalVTUCosts + flutterwaveFeesPaid;
     const netProfit = estimatedEarnings - flutterwaveFeesPaid;
 
-    // Today's metrics
     const todayDepositTotal = todayDeposits?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
     const todayGrossVolume = todayDepositTotal;
     const todayFlutterwaveFees = todayDeposits?.reduce((sum, t) => {
@@ -242,19 +222,17 @@ export async function GET(request: NextRequest) {
     }, 0) || 0;
     const todayNetProfit = todayEstimatedEarnings - todayFlutterwaveFees;
 
-    // Fetch users (last 100)
     const { data: users } = await supabase
       .from('profiles')
       .select('id, full_name, email, phone_number, balance, created_at, is_active')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .range(usersOffset, usersOffset + usersPageSize - 1);
 
-    // Fetch transactions (last 100) - with user full name
     const { data: transactions } = await supabase
       .from('transactions')
       .select('id, user_id, type, amount, status, description, created_at, reference, external_reference, profiles(full_name)')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .range(transactionsOffset, transactionsOffset + transactionsPageSize - 1);
 
     return NextResponse.json({
       stats: {
@@ -266,30 +244,29 @@ export async function GET(request: NextRequest) {
         totalDeposits,
         totalPurchases,
         totalUserBalances,
-        // Earnings breakdown
         serviceFees,
         airtimeMargin,
         dataMargin,
         otherMargin,
         totalMargins,
-        estimatedEarnings, // Renamed
-        todayEstimatedEarnings, // Renamed
-        grossVolume, // NEW
-        todayGrossVolume, // NEW
-        // NEW: Costs & Net Profit
+        estimatedEarnings,
+        todayEstimatedEarnings,
+        grossVolume,
+        todayGrossVolume,
         flutterwaveFeesPaid,
         totalVTUCosts,
         grossRevenue,
         totalCosts,
         netProfit,
         todayNetProfit,
-        // API Balances
         flutterwaveBalance,
         flutterwaveLedgerBalance,
         inlomaxBalance,
       },
       users: users || [],
+      usersTotal: totalUsers || 0,
       transactions: transactions || [],
+      transactionsTotal: totalTransactions || 0,
     });
   } catch (error) {
     console.error('Admin dashboard error:', error);

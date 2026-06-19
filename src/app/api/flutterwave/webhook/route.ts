@@ -76,7 +76,8 @@ export async function POST(request: NextRequest) {
       const amount = data.amount;
       const flwRef = data.flw_ref;
 
-      let userId = data.meta?.user_id;
+      const meta = payload.meta_data || data.meta || {};
+      let userId = meta.user_id;
 
       // Identify user for Bank Transfers
       if (!userId && data.payment_type === 'bank_transfer') {
@@ -143,8 +144,8 @@ export async function POST(request: NextRequest) {
         walletCredit = feeCalc.walletCredit;
       } else {
         // Card payments - use meta or full amount
-        fee = data.meta?.service_charge || 0;
-        walletCredit = data.meta?.wallet_credit || amount;
+        fee = meta.service_charge || 0;
+        walletCredit = meta.wallet_credit || amount;
       }
 
       await processDeposit(supabase, {
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
         externalReference: flwRef,
         paymentType: data.payment_type,
         description: isBankTransfer ? `Bank transfer (₦${fee} fee deducted)` : `Wallet funding via ${data.payment_type}`,
-        metadata: { ...data.meta, flw_id: data.id }
+        metadata: { ...meta, flw_id: data.id }
       });
       
       await logWebhook(supabase, 'flutterwave', event, payload, 'processed');

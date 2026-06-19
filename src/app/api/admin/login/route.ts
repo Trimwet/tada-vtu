@@ -1,35 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyPassword, generateToken } from '@/lib/admin-auth';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
-// Create client inside function to avoid build-time errors
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
-  if (!url || !key) {
-    throw new Error('Missing Supabase configuration');
-  }
-  
+  if (!url || !key) throw new Error('Missing Supabase configuration');
   return createClient(url, key);
-}
-
-// Simple token generation (use JWT in production)
-function generateToken(adminId: string): string {
-  const payload = {
-    id: adminId,
-    exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-  };
-  return Buffer.from(JSON.stringify(payload)).toString('base64');
-}
-
-// Simple password verification (use bcrypt in production)
-function verifyPassword(input: string, stored: string): boolean {
-  const hashedInput = Buffer.from(input).toString('base64');
-  return hashedInput === stored;
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateCheck = checkRateLimit(`admin-login:${ip}`, RATE_LIMITS.auth);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Too many login attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(rateCheck.resetIn / 1000)) } }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -41,7 +32,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Find admin by email
     const { data: admin, error } = await supabase
       .from('admins')
       .select('*')
@@ -56,7 +46,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password
     if (!verifyPassword(password, admin.password_hash)) {
       return NextResponse.json(
         { success: false, message: 'Invalid credentials' },
@@ -64,13 +53,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update last login
     await supabase
       .from('admins')
       .update({ last_login: new Date().toISOString() })
       .eq('id', admin.id);
 
-    // Generate token
     const token = generateToken(admin.id);
 
     return NextResponse.json({

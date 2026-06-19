@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { parsePersonalQRData } from '@/lib/qr-generator';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,6 +26,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limiting
+    const identifier = request.headers.get('x-forwarded-for') || 'anonymous-qr';
+    const rateLimit = checkRateLimit(`qr-redeem:${identifier}`, RATE_LIMITS.transaction);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { status: false, message: `Too many attempts. Please try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.` },
+        { status: 429 }
+      );
+    }
+
     // Parse and validate QR code
     const parsedQR = parsePersonalQRData(qrData);
     if (!parsedQR) {
@@ -42,11 +54,11 @@ export async function POST(request: NextRequest) {
     });
 
     const supabase = getSupabaseAdmin();
-    
+
     // Check if QR has already been used
     const { data: existingQR } = await supabase
       .from('vault_qr_codes')
-      .select('used_at')
+      .select('used_at, locked_to_phone, gift_message, voice_note_url')
       .eq('id', parsedQR.id)
       .single();
 
@@ -54,6 +66,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { status: false, message: 'This QR code has already been used' },
         { status: 400 }
+      );
+    }
+
+    // Phone-lock check
+    if (existingQR?.locked_to_phone && existingQR.locked_to_phone !== phoneNumber) {
+      return NextResponse.json(
+        { status: false, message: 'This gift is reserved for a different phone number' },
+        { status: 403 }
       );
     }
 
@@ -76,9 +96,9 @@ export async function POST(request: NextRequest) {
     console.log(`[QR-REDEEM] Delivering: ${vault.network} ${vault.plan_name} to ${phoneNumber}`);
 
     try {
-      const inlomaxResult = await purchaseDataInlomax({ 
-        serviceID: vault.plan_id, 
-        phone: phoneNumber 
+      const inlomaxResult = await purchaseDataInlomax({
+        serviceID: vault.plan_id,
+        phone: phoneNumber
       });
 
       console.log(`[QR-REDEEM] Inlomax response:`, inlomaxResult.status, inlomaxResult.message);
@@ -98,27 +118,25 @@ export async function POST(request: NextRequest) {
         // Mark QR as used
         await supabase
           .from('vault_qr_codes')
-          .update({ 
+          .update({
             used_at: new Date().toISOString(),
-            redeemed_phone: phoneNumber 
+            redeemed_phone: phoneNumber
           })
           .eq('id', parsedQR.id);
 
         // Create transaction record
-        await supabase
-          .from('transactions')
-          .insert({
-            user_id: vault.user_id,
-            type: 'data',
-            amount: vault.amount,
-            phone_number: phoneNumber,
-            network: vault.network,
-            status: 'success',
-            reference: `qr_${parsedQR.id}_${Date.now()}`,
-            external_reference: inlomaxResult.data?.reference,
-            description: `${vault.plan_name} ${vault.network} data delivered via QR code`,
-            response_data: inlomaxResult,
-          });
+        await supabase.from('transactions').insert({
+          user_id: vault.user_id,
+          type: 'data',
+          amount: -vault.amount, // Negative for delivery/spend
+          phone_number: phoneNumber,
+          network: vault.network,
+          status: 'success',
+          reference: `REDEEM_${Date.now()}_${parsedQR.id.slice(-6)}`,
+          external_reference: inlomaxResult.data?.reference,
+          description: `QR Data Redemption: ${vault.plan_name} to ${phoneNumber}`,
+          response_data: inlomaxResult,
+        });
 
         return NextResponse.json({
           status: true,
@@ -129,6 +147,8 @@ export async function POST(request: NextRequest) {
             phoneNumber: phoneNumber,
             deliveredAt: new Date().toISOString(),
             reference: inlomaxResult.data?.reference,
+            giftMessage: existingQR?.gift_message,
+            voiceNoteUrl: existingQR?.voice_note_url,
           }
         });
 
@@ -146,9 +166,9 @@ export async function POST(request: NextRequest) {
 
         await supabase
           .from('vault_qr_codes')
-          .update({ 
+          .update({
             used_at: new Date().toISOString(),
-            redeemed_phone: phoneNumber 
+            redeemed_phone: phoneNumber
           })
           .eq('id', parsedQR.id);
 

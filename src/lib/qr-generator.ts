@@ -76,7 +76,7 @@ export async function generatePersonalDataQR(params: {
 
   // Create QR code URL for personal use (base64url encoding to avoid / in URL)
   const qrUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tadavtu.com'}/vault/qr/${Buffer.from(JSON.stringify(qrData)).toString('base64url')}`;
-  
+
   // Generate QR code image with TADA VTU branding
   const qrCode = await QRCode.toDataURL(qrUrl, {
     width: 400,
@@ -95,7 +95,7 @@ export async function generatePersonalDataQR(params: {
 export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
   try {
     console.log('[QR-PARSE] Attempting to parse QR data, length:', base64Data?.length);
-    
+
     // Normalize base64url to standard base64 for atob compatibility
     const normalized = base64Data.replace(/-/g, '+').replace(/_/g, '/');
     const padded = normalized + '=='.slice(0, (4 - normalized.length % 4) % 4);
@@ -105,7 +105,7 @@ export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
       ? decodeURIComponent(escape(atob(padded)))
       : Buffer.from(base64Data, 'base64url').toString('utf-8');
     const qrData = JSON.parse(jsonString) as PersonalDataQR;
-    
+
     console.log('[QR-PARSE] Decoded QR data:', {
       id: qrData.id,
       type: qrData.type,
@@ -114,7 +114,7 @@ export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
       validUntil: qrData.validUntil,
       hasSignature: !!qrData.signature
     });
-    
+
     // Verify it's a personal data QR
     if (qrData.type !== 'personal_data') {
       console.error('[QR-PARSE] Invalid QR type:', qrData.type);
@@ -125,13 +125,13 @@ export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
     const now = new Date();
     const expiryDate = new Date(qrData.validUntil);
     const isExpired = now > expiryDate;
-    
+
     console.log('[QR-PARSE] Expiry check:', {
       now: now.toISOString(),
       validUntil: expiryDate.toISOString(),
       isExpired
     });
-    
+
     if (isExpired) {
       console.error('[QR-PARSE] QR code has expired');
       throw new Error('QR code has expired');
@@ -140,7 +140,7 @@ export function parsePersonalQRData(base64Data: string): PersonalDataQR | null {
     // Verify signature (but don't fail if it doesn't match - vault check in DB is more reliable)
     const signatureValid = verifyQRSignature(qrData);
     console.log('[QR-PARSE] Signature verification:', signatureValid);
-    
+
     if (!signatureValid) {
       console.warn('[QR-PARSE] Signature verification failed - will verify vault in database instead');
       // Don't throw error - let the API route verify the vault exists in DB

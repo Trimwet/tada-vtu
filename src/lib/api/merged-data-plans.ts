@@ -213,8 +213,8 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
       const costPrice = parseFloat(plan.amount.replace(/,/g, ''));
       if (isNaN(costPrice) || costPrice <= 0) continue;
 
-      // Use Inlomax cost price directly (no markup) to compete with OPay
-      const price = costPrice;
+      // Add ₦20 markup on all data plans
+      const price = costPrice + 20;
 
       // Create unique ID using serviceID only (Inlomax guarantees unique serviceIDs)
       // Previously we used serviceID + dataType which caused false duplicates

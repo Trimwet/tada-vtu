@@ -216,6 +216,15 @@ export default function DashboardPage() {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <Link href="/dashboard/scan-qr">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted transition-smooth h-10 w-10 text-foreground"
+              >
+                <IonIcon name="qr-code" size="22px" />
+              </Button>
+            </Link>
             <Link href="/dashboard/notifications">
               <Button
                 variant="ghost"

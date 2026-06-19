@@ -386,6 +386,82 @@ export interface Database {
           credited_at?: string;
         };
       };
+      user_plan_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          service_type: 'data' | 'airtime';
+          network: string | null;
+          plan_id: string | null;
+          plan_name: string | null;
+          amount: number | null;
+          purchase_count: number;
+          last_purchased_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          service_type: 'data' | 'airtime';
+          network?: string | null;
+          plan_id?: string | null;
+          plan_name?: string | null;
+          amount?: number | null;
+          purchase_count?: number;
+          last_purchased_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          service_type?: 'data' | 'airtime';
+          network?: string | null;
+          plan_id?: string | null;
+          plan_name?: string | null;
+          amount?: number | null;
+          purchase_count?: number;
+          last_purchased_at?: string;
+          created_at?: string;
+        };
+      };
+      user_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          ip_address: string;
+          user_agent: string | null;
+          device_type: string | null;
+          browser: string | null;
+          os: string | null;
+          first_seen_at: string;
+          last_seen_at: string;
+          session_count: number;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          ip_address: string;
+          user_agent?: string | null;
+          device_type?: string | null;
+          browser?: string | null;
+          os?: string | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          session_count?: number;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          ip_address?: string;
+          user_agent?: string | null;
+          device_type?: string | null;
+          browser?: string | null;
+          os?: string | null;
+          first_seen_at?: string;
+          last_seen_at?: string;
+          session_count?: number;
+        };
+      };
     };
     Functions: {
       update_user_balance: {
@@ -407,6 +483,17 @@ export interface Database {
           points_earned: number;
           is_new_day: boolean;
         };
+      };
+      upsert_plan_preference: {
+        Args: {
+          p_user_id: string;
+          p_service_type: string;
+          p_network?: string | null;
+          p_plan_id?: string | null;
+          p_plan_name?: string | null;
+          p_amount?: number | null;
+        };
+        Returns: void;
       };
     };
   };
@@ -533,3 +620,6 @@ export interface NetworkPrice {
 // Gift Cards - Type aliases for convenience (types defined at top of file)
 export type GiftCard = Database['public']['Tables']['gift_cards']['Row'];
 export type BirthdayBonus = Database['public']['Tables']['birthday_bonuses']['Row'];
+export type PlanPreference = Database['public']['Tables']['user_plan_preferences']['Row'];
+export type UserSession = Database['public']['Tables']['user_sessions']['Row'];
+

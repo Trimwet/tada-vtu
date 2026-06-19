@@ -129,6 +129,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [supabase, fetchProfile]);
 
+  // Fire-and-forget session tracking on mount
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/analytics/track-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userAgent: navigator.userAgent }),
+    }).catch(() => {});
+  }, [user?.id]);
+
 
   // Password-based signup - simple and reliable
   const signUp = async (

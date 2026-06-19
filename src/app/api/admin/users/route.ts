@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyToken } from '@/lib/admin-auth';
 import { sendPinResetNotificationEmail } from '@/lib/email';
-
-function verifyToken(token: string): { valid: boolean; adminId?: string } {
-  try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-    if (payload.exp < Date.now()) return { valid: false };
-    return { valid: true, adminId: payload.id };
-  } catch {
-    return { valid: false };
-  }
-}
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,7 +10,6 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey);
 }
 
-// GET - Get single user details
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -39,7 +29,6 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Get user profile
     const { data: user, error: userError } = await supabase
       .from('profiles')
       .select('*')
@@ -50,7 +39,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get user's recent transactions
     const { data: transactions } = await supabase
       .from('transactions')
       .select('*')
@@ -65,7 +53,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Admin actions on users
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -85,7 +72,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Verify admin exists and is active
     const { data: admin, error: adminError } = await supabase
       .from('admins')
       .select('id, full_name, role')
@@ -97,7 +83,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin not found' }, { status: 401 });
     }
 
-    // Get user
     const { data: user, error: userError } = await supabase
       .from('profiles')
       .select('*')
@@ -115,14 +100,12 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Valid amount required' }, { status: 400 });
         }
 
-        // Update balance
         const newBalance = (user.balance || 0) + fundAmount;
         await supabase
           .from('profiles')
           .update({ balance: newBalance })
           .eq('id', userId);
 
-        // Create transaction record
         await supabase.from('transactions').insert({
           user_id: userId,
           type: 'deposit',
@@ -188,27 +171,44 @@ export async function POST(request: NextRequest) {
       }
 
       case 'reset_pin': {
-        // Reset the user's PIN
+        if (!user.pin) {
+          return NextResponse.json({
+            success: true,
+            message: 'User already has no transaction PIN set',
+            alreadyReset: true
+          });
+        }
+
+        if (!user.email) {
+          return NextResponse.json({
+            error: 'User has no email address. Cannot send notification.'
+          }, { status: 400 });
+        }
+
         await supabase
           .from('profiles')
-          .update({ pin: null })
+          .update({ pin: null, updated_at: new Date().toISOString() })
           .eq('id', userId);
 
-        // Send email notification to user about PIN reset
+        let emailSent = false;
         try {
-          await sendPinResetNotificationEmail({
-            recipientEmail: user.email!,
+          const emailResult = await sendPinResetNotificationEmail({
+            recipientEmail: user.email,
             recipientName: user.full_name || 'User',
             adminName: admin.full_name
           });
+          emailSent = emailResult.success;
         } catch (emailError) {
           console.error('Failed to send PIN reset email:', emailError);
-          // Don't fail the entire operation if email fails
         }
 
         return NextResponse.json({
           success: true,
-          message: 'User PIN has been reset and notification email sent'
+          message: emailSent
+            ? 'User PIN has been reset and notification email sent successfully'
+            : 'User PIN has been reset (email notification failed)',
+          emailSent,
+          resetAt: new Date().toISOString()
         });
       }
 

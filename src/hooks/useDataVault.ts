@@ -35,7 +35,8 @@ const ITEMS_PER_PAGE = 20;
 export function useDataVault(userId?: string) {
   const [isParking, setIsParking] = useState(false);
   const [isDelivering, setIsDelivering] = useState<string | null>(null);
-  const [readyPage, setReadyPage] = useState(0);
+  const [isRefunding, setIsRefunding] = useState<string | null>(null);
+  const [readyPage, setReadyPage] = useState(1);
   const [deliveredPage, setDeliveredPage] = useState(0);
   const [expiredPage, setExpiredPage] = useState(0);
 
@@ -82,6 +83,9 @@ export function useDataVault(userId?: string) {
     planName: string;
     userId: string;
     pin: string;
+    deliverAt?: string;
+    freezeUntil?: string;
+    occasionTag?: string;
   }) => {
     setIsParking(true);
     try {
@@ -145,6 +149,7 @@ export function useDataVault(userId?: string) {
 
   // Refund data function
   const refundData = useCallback(async (vaultId: string, userId: string) => {
+    setIsRefunding(vaultId);
     try {
       const response = await fetch('/api/data-vault/refund', {
         method: 'POST',
@@ -168,6 +173,8 @@ export function useDataVault(userId?: string) {
         status: false,
         message: 'Network error. Please try again.',
       };
+    } finally {
+      setIsRefunding(null);
     }
   }, [mutate]);
 
@@ -177,6 +184,7 @@ export function useDataVault(userId?: string) {
     error,
     isParking,
     isDelivering,
+    isRefunding,
     parkData,
     deliverData,
     refundData,

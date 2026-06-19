@@ -9,7 +9,9 @@ CREATE OR REPLACE FUNCTION public.park_data_vault(
   p_plan_name TEXT,
   p_amount DECIMAL,
   p_recipient_phone TEXT,
-  p_transaction_id UUID
+  p_transaction_id UUID,
+  p_deliver_at TIMESTAMPTZ DEFAULT NULL,
+  p_freeze_until TIMESTAMPTZ DEFAULT NULL
 )
 RETURNS TABLE(
   success BOOLEAN,
@@ -57,10 +59,10 @@ BEGIN
   -- Create vault entry
   INSERT INTO public.data_vault (
     user_id, network, plan_id, plan_name, amount, recipient_phone,
-    status, transaction_id, expires_at
+    status, transaction_id, expires_at, deliver_at, freeze_until
   ) VALUES (
     p_user_id, p_network, p_plan_id, p_plan_name, p_amount, p_recipient_phone,
-    'ready', p_transaction_id, NOW() + INTERVAL '7 days'
+    'ready', p_transaction_id, NOW() + INTERVAL '7 days', p_deliver_at, p_freeze_until
   )
   RETURNING id INTO v_vault_id;
 

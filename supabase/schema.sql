@@ -249,9 +249,10 @@ CREATE TABLE IF NOT EXISTS public.admins (
 );
 
 -- Insert default admin (password: 2005159 - change in production!)
--- Password hash is bcrypt of '2005159'
+-- Password hash is base64-encoded '2005159' (legacy format)
+-- New admins will use PBKDF2-SHA512 hashing via src/lib/admin-auth.ts
 INSERT INTO public.admins (email, password_hash, full_name, role)
-VALUES ('admin@tadavtu.com', '$2a$10$rQnM1.kK8LFXxKjKvKjKvOeJKjKvKjKvKjKvKjKvKjKvKjKvKjKvK', 'Super Admin', 'super_admin')
+VALUES ('admin@tadavtu.com', 'MjAwNTE1OQ==', 'Super Admin', 'super_admin')
 ON CONFLICT (email) DO NOTHING;
 
 -- Create index for admin lookups

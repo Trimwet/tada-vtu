@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function verifyToken(token: string): boolean {
-  try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-    return payload.exp > Date.now();
-  } catch {
-    return false;
-  }
-}
+import { verifyToken } from '@/lib/admin-auth';
 
 const FW_BASE = 'https://api.flutterwave.com/v3';
 
@@ -21,7 +13,7 @@ async function fwGet(path: string, secretKey: string) {
 
 export async function GET(request: NextRequest) {
   const auth = request.headers.get('Authorization')?.replace('Bearer ', '');
-  if (!auth || !verifyToken(auth)) {
+  if (!auth || !verifyToken(auth).valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -30,23 +22,20 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const page = searchParams.get('page') || '1';
-  const per_page = '100'; // Flutterwave max
 
-  // Default to last 365 days if no date params provided
   const today = new Date();
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(today.getFullYear() - 1);
-  
+
   const from = searchParams.get('from') || oneYearAgo.toISOString().split('T')[0];
   const to = searchParams.get('to') || today.toISOString().split('T')[0];
 
   try {
     const [settlements, transactions] = await Promise.all([
-      fwGet(`/settlements?page=${page}&per_page=${per_page}&from=${from}&to=${to}`, secretKey),
-      fwGet(`/transactions?page=${page}&per_page=${per_page}&from=${from}&to=${to}`, secretKey),
+      fwGet(`/settlements?page=${page}&per_page=100&from=${from}&to=${to}`, secretKey),
+      fwGet(`/transactions?page=${page}&per_page=100&from=${from}&to=${to}`, secretKey),
     ]);
 
-    // Check if API returned an error
     if (transactions.status === 'error' || settlements.status === 'error') {
       console.error('Flutterwave API error:', { transactions, settlements });
       return NextResponse.json({
@@ -59,7 +48,6 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Extract charges from transactions (app_fee field)
     const charges = ((transactions.data || []) as Record<string, unknown>[])
       .filter((t: Record<string, unknown>) => Number(t.app_fee) > 0)
       .map((t: Record<string, unknown>) => ({
@@ -85,7 +73,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error('FW history error:', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Failed to fetch Flutterwave history',
       details: errorMessage,
       settlements: [],

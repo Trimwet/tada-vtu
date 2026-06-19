@@ -93,90 +93,172 @@ export function TransactionReceiptModal({
   const downloadPDF = async () => {
     setIsDownloading(true);
     try {
-      // Import jsPDF dynamically to avoid SSR issues
       const { jsPDF } = await import('jspdf');
-      
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
-      let yPosition = 30;
 
-      // Header
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('TADA VTU', pageWidth / 2, yPosition, { align: 'center' });
-      
-      yPosition += 10;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Transaction Receipt', pageWidth / 2, yPosition, { align: 'center' });
-      
-      yPosition += 20;
-      
-      // Transaction Details
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Transaction Details', margin, yPosition);
-      yPosition += 15;
-      
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      
-      const details = [
-        ['Transaction ID:', transaction.reference || ''],
-        ['Description:', transaction.description || ''],
-        ['Amount:', `₦${Math.abs(transaction.amount).toLocaleString()}`],
-        ['Type:', transaction.type ? transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1) : ''],
-        ['Status:', transaction.status ? transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1) : ''],
-        ['Date:', formatDate(transaction.created_at)],
-        ...(transaction.phone_number ? [['Phone Number:', transaction.phone_number]] : []),
-        ...(transaction.network ? [['Network:', transaction.network]] : []),
-        ...(transaction.external_reference ? [['External Ref:', transaction.external_reference]] : []),
-      ];
-
-      details.forEach(([label, value]) => {
-        doc.setFont('helvetica', 'bold');
-        doc.text(label || '', margin, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(value || '', margin + 40, yPosition);
-        yPosition += 8;
+      // Pre-load logo
+      const logoImg = new Image();
+      logoImg.src = "/apple-touch-icon.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve;
       });
 
-      // Balance Information
-      if (transaction.balance_before !== undefined && transaction.balance_after !== undefined) {
-        yPosition += 10;
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Balance Information', margin, yPosition);
-        yPosition += 15;
-        
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text('Balance Before:', margin, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`₦${transaction.balance_before.toLocaleString()}`, margin + 40, yPosition);
-        yPosition += 8;
-        
-        doc.setFont('helvetica', 'bold');
-        doc.text('Balance After:', margin, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`₦${transaction.balance_after.toLocaleString()}`, margin + 40, yPosition);
-        yPosition += 8;
+      // Phone-style long format
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [100, 240] });
+      const pageWidth = 100;
+      const pageHeight = 240;
+
+      // 1. SERRATED EDGES
+      doc.setFillColor(240, 240, 240);
+      for (let i = 0; i < pageWidth; i += 4) {
+        doc.triangle(i, 0, i + 2, 3, i + 4, 0, "F");
+        doc.triangle(i, pageHeight, i + 2, pageHeight - 3, i + 4, pageHeight, "F");
       }
 
-      // Footer
-      yPosition += 20;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'italic');
-      doc.text('Thank you for using TADA VTU!', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 8;
-      doc.text('For support, contact us at support@tadavtu.com', pageWidth / 2, yPosition, { align: 'center' });
+      // 2. WATERMARK BACKGROUND
+      doc.setTextColor(252, 252, 252);
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      for (let y = 20; y < pageHeight; y += 40) {
+        for (let x = -10; x < pageWidth; x += 45) {
+          doc.text("TADA", x, y, { angle: 30 });
+        }
+      }
+
+      // 3. TOP BAR BRANDING
+      doc.setFillColor(248, 249, 250);
+      doc.rect(0, 0, pageWidth, 15, "F");
+      doc.setTextColor(22, 163, 74);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("TADA VTU", 10, 10);
       
-      // Save the PDF
-      doc.save(`TADA-VTU-Receipt-${transaction.reference || 'unknown'}.pdf`);
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(9);
+      doc.text("TRANSACTION", pageWidth - 10, 10, { align: "right" });
+
+      // 4. HERO SECTION
+      const isSuccess = transaction.status === 'success';
+      const statusColor = isSuccess ? [22, 163, 74] : transaction.status === 'failed' ? [239, 68, 68] : [245, 158, 11];
       
+      if (logoImg.complete && logoImg.naturalWidth > 0) {
+        doc.addImage(logoImg, "PNG", pageWidth / 2 - 8, 20, 16, 16);
+      }
+      
+      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.setFontSize(28);
+      doc.setFont("helvetica", "bold");
+      
+      // Draw Naira Symbol Manually
+      const amountX = pageWidth / 2;
+      const amountY = 45;
+      const amountPrefix = transaction.amount > 0 ? "+" : "";
+      const amountStr = `${amountPrefix}${Math.abs(transaction.amount).toLocaleString()}.00`;
+      
+      const nWidth = doc.getTextWidth("N");
+      const totalWidth = nWidth + doc.getTextWidth(amountStr) + 2;
+      const startX = (pageWidth - totalWidth) / 2;
+
+      // Draw N
+      doc.text("N", startX, amountY);
+      
+      // Draw Slashes (Thicker and wider)
+      doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.setLineWidth(0.7);
+      const slashY1 = amountY - 4.8;
+      const slashY2 = amountY - 3.2;
+      doc.line(startX - 0.5, slashY1, startX + nWidth + 0.5, slashY1);
+      doc.line(startX - 0.5, slashY2, startX + nWidth + 0.5, slashY2);
+
+      // Draw Amount
+      doc.text(amountStr, startX + nWidth + 2, amountY);
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.text(`Transaction ${transaction.status === 'success' ? 'Successful' : transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}`, pageWidth / 2, 55, { align: "center" });
+      
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(formatDate(transaction.created_at), pageWidth / 2, 62, { align: "center" });
+
+      doc.setDrawColor(240, 240, 240);
+      doc.line(10, 70, pageWidth - 10, 70);
+
+      // 5. DETAIL GROUPS
+      const drawSectionLabel = (label: string, y: number) => {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(160, 160, 160);
+        doc.text(label.toUpperCase(), 10, y);
+      };
+
+      const drawRow = (label: string, value: string, y: number) => {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120);
+        doc.text(label, 10, y);
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        const splitValue = doc.splitTextToSize(value, 50);
+        doc.text(splitValue, pageWidth - 10, y, { align: "right" });
+        return y + (splitValue.length > 1 ? 8 : 6);
+      };
+
+      let yPos = 80;
+      drawSectionLabel("Transaction Details", yPos);
+      yPos += 8;
+      yPos = drawRow("Description", transaction.description || "N/A", yPos);
+      yPos = drawRow("Type", transaction.type.toUpperCase(), yPos);
+      yPos = drawRow("Reference", transaction.reference, yPos);
+      
+      if (transaction.phone_number) {
+        yPos = drawRow("Recipient Phone", transaction.phone_number, yPos);
+      }
+      
+      if (transaction.network) {
+        yPos = drawRow("Network", transaction.network.toUpperCase(), yPos);
+      }
+
+      yPos += 5;
+      doc.line(10, yPos, pageWidth - 10, yPos);
+      yPos += 8;
+
+      if (transaction.balance_before !== undefined && transaction.balance_after !== undefined) {
+        drawSectionLabel("Balance Info", yPos);
+        yPos += 8;
+        yPos = drawRow("Balance Before", `₦${transaction.balance_before.toLocaleString()}`, yPos);
+        yPos = drawRow("Balance After", `₦${transaction.balance_after.toLocaleString()}`, yPos);
+        
+        yPos += 5;
+        doc.line(10, yPos, pageWidth - 10, yPos);
+        yPos += 8;
+      }
+
+      // 6. SUPPORT FOOTER
+      yPos = Math.max(yPos + 10, pageHeight - 40);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("Enjoy a better digital life with TADA VTU.", pageWidth / 2, yPos, { align: "center" });
+      yPos += 5;
+      doc.setTextColor(22, 163, 74);
+      doc.setFont("helvetica", "bold");
+      doc.text("www.tadavtu.com", pageWidth / 2, yPos, { align: "center" });
+      
+      yPos += 5;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150, 150, 150);
+      doc.text("Need help? Contact support@tadavtu.com", pageWidth / 2, yPos, { align: "center" });
+
+      const securityHash = btoa(`${transaction.reference}-${transaction.amount}`).slice(0, 32);
+      doc.setFontSize(6);
+      doc.setFont("courier", "normal");
+      doc.setTextColor(200, 200, 200);
+      doc.text(`DIGITAL-SEAL: ${securityHash}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+
+      doc.save(`TADA-RECEIPT-${transaction.reference.slice(-8)}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
