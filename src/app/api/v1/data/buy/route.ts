@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
 import { validateResellerApiKey, updateApiKeyUsage } from '@/lib/api/reseller-auth';
 import { sendTransactionWebhook } from '@/lib/api/webhooks';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -62,55 +63,44 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Use the reseller's balance (the user who owns the API key)
-    const { data: profile, error: profileError } = await supabase
+    // Fetch balance for display in error messages only — Core enforces it atomically
+    const { data: profile } = await supabase
       .from('profiles')
       .select('balance')
       .eq('id', apiKeyRecord.user_id)
       .single();
 
-    if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
-      return NextResponse.json(
-        { status: false, message: 'Reseller account not found' },
-        { status: 404 }
-      );
-    }
-
-    const currentBalance = profile.balance || 0;
-    if (currentBalance < numAmount) {
-      return NextResponse.json(
-        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
-        { status: 400 }
-      );
-    }
+    const currentBalance = profile?.balance || 0;
 
     const reference = `TADA_V1_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-    // Create pending transaction FIRST
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: apiKeyRecord.user_id,
-        type: 'data',
-        amount: -numAmount,
-        status: 'pending',
-        reference: reference,
-        phone_number: targetPhone,
-        network: network.toUpperCase(),
+    // ── Step 1: Debit wallet via Core ───────────────────────────────────────
+    let debitResult;
+    try {
+      debitResult = await coreDebit({
+        userId: apiKeyRecord.user_id,
+        amount: numAmount,
+        reference,
+        serviceType: 'data',
         description: `${network} ${planName || 'Data'} - ${targetPhone} (API)`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      console.error('Transaction creation error:', txnError);
+        metadata: { network, phone: targetPhone, planId, planName, source: 'reseller-api' },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Debit failed';
+      if (msg.startsWith('insufficient funds:')) {
+        return NextResponse.json(
+          { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
+          { status: 400 }
+        );
+      }
+      console.error('[V1-DATA] Core debit error:', err);
       return NextResponse.json(
         { status: false, message: 'Failed to initiate transaction. Please try again.' },
         { status: 500 }
       );
     }
 
+    // ── Step 2: Call provider ───────────────────────────────────────────────
     try {
       console.log(`[V1-DATA] Processing: ${network} ${planName} (ID: ${planId}) to ${targetPhone}`);
 
@@ -119,33 +109,15 @@ export async function POST(request: NextRequest) {
       console.log(`[V1-DATA] Response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        const newBalance = currentBalance - numAmount;
-
-        // Deduct from reseller's wallet
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', apiKeyRecord.user_id);
-
-        if (updateError) {
-          console.error('Balance update error:', updateError);
-        }
-
-        // Update transaction as success
         await supabase
           .from('transactions')
-          .update({
-            status: 'success',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ status: 'success', external_reference: result.data?.reference })
+          .eq('reference', reference);
 
-        // Update API key monthly usage
         await updateApiKeyUsage(apiKeyRecord.id, numAmount);
 
-        // Send webhook notification (async, don't await)
         sendTransactionWebhook(apiKeyRecord.user_id, {
-          reference: transaction.reference,
+          reference,
           type: 'data',
           status: 'success',
           network,
@@ -158,41 +130,38 @@ export async function POST(request: NextRequest) {
           status: true,
           message: `${planName || 'Data'} sent to ${targetPhone} successfully!`,
           data: {
-            reference: transaction.reference,
+            reference,
             externalReference: result.data?.reference,
             network,
             phone: targetPhone,
             dataPlan: planName,
             amount: numAmount,
-            newBalance,
+            newBalance: debitResult.newBalance,
           },
         });
       } else if (result.status === 'processing') {
         await supabase
           .from('transactions')
-          .update({
-            status: 'pending',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ status: 'pending', external_reference: result.data?.reference })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           message: 'Transaction is processing. You will be notified when complete.',
-          data: {
-            reference: transaction.reference,
-            status: 'processing',
-          },
+          data: { reference, status: 'processing' },
         });
       } else {
-        await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
+        // Provider returned failure — refund the reseller
+        await coreRefund({
+          userId: apiKeyRecord.user_id,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Refund: ${network} ${planName || 'data'} failed - ${targetPhone} (API)`,
+        });
 
-        // Send webhook notification for failure (async, don't await)
         sendTransactionWebhook(apiKeyRecord.user_id, {
-          reference: transaction.reference,
+          reference,
           type: 'data',
           status: 'failed',
           network,
@@ -202,27 +171,30 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           status: false,
-          message: result.message || 'Data purchase failed. Please try again.',
+          message: result.message || 'Data purchase failed. Your wallet has been refunded.',
         });
       }
     } catch (apiError) {
       console.error('[V1-DATA] API Error:', apiError);
 
-      await supabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
+      await coreRefund({
+        userId: apiKeyRecord.user_id,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${network} ${planName || 'data'} error - ${targetPhone} (API)`,
+      });
 
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(
-          { status: false, message: 'Service is unavailable. Please try again later.' },
+          { status: false, message: 'Service is unavailable. Your wallet has been refunded.' },
           { status: 503 }
         );
       }
 
       const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: errorMessage },
+        { status: false, message: `${errorMessage}. Your wallet has been refunded.` },
         { status: 500 }
       );
     }
