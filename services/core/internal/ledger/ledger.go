@@ -67,8 +67,8 @@ func (c *supabaseClient) do(method, path string, body any) ([]byte, error) {
 	return data, nil
 }
 
-func (c *supabaseClient) transactionExists(externalRef string) (bool, error) {
-	data, err := c.do("GET", "/transactions?external_reference=eq."+externalRef+"&select=id", nil)
+func (c *supabaseClient) transactionExists(ref string) (bool, error) {
+	data, err := c.do("GET", "/transactions?reference=eq."+ref+"&select=id", nil)
 	if err != nil {
 		return false, err
 	}
@@ -103,6 +103,15 @@ func (c *supabaseClient) insert(table string, record map[string]any) error {
 	return err
 }
 
+func (c *supabaseClient) updateTransaction(ref, status, externalRef string) error {
+	patch := map[string]any{"status": status}
+	if externalRef != "" {
+		patch["external_reference"] = externalRef
+	}
+	_, err := c.do("PATCH", "/transactions?reference=eq."+ref, patch)
+	return err
+}
+
 // ─── Deposit ─────────────────────────────────────────────────────────────────
 
 type DepositRequest struct {
@@ -129,12 +138,12 @@ func ProcessDeposit(req DepositRequest) (*DepositResult, error) {
 	log.Printf("[LEDGER] Deposit start: user=%s ref=%s gross=%.2f credit=%.2f",
 		req.UserID, req.Reference, req.Amount, req.WalletCredit)
 
-	exists, err := db.transactionExists(req.ExternalReference)
+	exists, err := db.transactionExists(req.Reference)
 	if err != nil {
 		return nil, fmt.Errorf("idempotency check failed: %w", err)
 	}
 	if exists {
-		log.Printf("[LEDGER] Duplicate rejected: %s", req.ExternalReference)
+		log.Printf("[LEDGER] Duplicate deposit rejected: %s", req.Reference)
 		return &DepositResult{Success: true, AlreadyProcessed: true}, nil
 	}
 
@@ -184,51 +193,37 @@ func ProcessDeposit(req DepositRequest) (*DepositResult, error) {
 
 // ─── Debit ────────────────────────────────────────────────────────────────────
 
-// DebitRequest is what Next.js sends to POST /ledger/debit.
-// Used for every VTU purchase: airtime, data, cable, electricity, etc.
 type DebitRequest struct {
 	UserID      string         `json:"userId"`
-	Amount      float64        `json:"amount"`      // amount to deduct from wallet
-	Reference   string         `json:"reference"`   // internal reference (e.g. TADA_DATA_001)
-	ServiceType string         `json:"serviceType"` // "airtime" | "data" | "cable" | "electricity"
+	Amount      float64        `json:"amount"`
+	Reference   string         `json:"reference"`
+	ServiceType string         `json:"serviceType"`
 	Description string         `json:"description"`
 	Metadata    map[string]any `json:"metadata"`
 }
 
-// DebitResult is what Core returns to Next.js after a debit.
 type DebitResult struct {
-	Success     bool    `json:"success"`
-	NewBalance  float64 `json:"newBalance"`
+	Success       bool    `json:"success"`
+	NewBalance    float64 `json:"newBalance"`
 	AmountDebited float64 `json:"amountDebited"`
 }
 
-// ProcessDebit deducts from a user's wallet for a VTU purchase.
-// Execution order:
-//  1. Idempotency check  — never debit the same reference twice
-//  2. Balance check      — reject if insufficient funds (no overdraft)
-//  3. Atomic RPC debit   — update_user_balance with type=debit
-//  4. Transaction record — immutable log entry with status=pending
-//     (status updated to success/failed by the VTU provider layer after delivery)
-//  5. Return new balance
 func ProcessDebit(req DebitRequest) (*DebitResult, error) {
 	db := newClient()
 
 	log.Printf("[LEDGER] Debit start: user=%s ref=%s amount=%.2f service=%s",
 		req.UserID, req.Reference, req.Amount, req.ServiceType)
 
-	// 1. Idempotency — never debit the same reference twice
 	exists, err := db.transactionExists(req.Reference)
 	if err != nil {
 		return nil, fmt.Errorf("idempotency check failed: %w", err)
 	}
 	if exists {
 		log.Printf("[LEDGER] Debit duplicate rejected: %s", req.Reference)
-		// Return the current balance — the caller already processed this.
 		balance, _ := db.getBalance(req.UserID)
 		return &DebitResult{Success: true, NewBalance: balance, AmountDebited: req.Amount}, nil
 	}
 
-	// 2. Balance check — Core enforces no overdraft
 	currentBalance, err := db.getBalance(req.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("balance check failed: %w", err)
@@ -240,7 +235,6 @@ func ProcessDebit(req DebitRequest) (*DebitResult, error) {
 			currentBalance, req.Amount)
 	}
 
-	// 3. Atomic debit via the existing Supabase RPC
 	if err := db.callRPC("update_user_balance", map[string]any{
 		"p_user_id":     req.UserID,
 		"p_amount":      req.Amount,
@@ -251,35 +245,118 @@ func ProcessDebit(req DebitRequest) (*DebitResult, error) {
 		return nil, fmt.Errorf("balance RPC failed: %w", err)
 	}
 
-	// 4. Immutable transaction record — status=pending until provider confirms delivery
 	if err := db.insert("transactions", map[string]any{
 		"user_id":            req.UserID,
 		"type":               req.ServiceType,
-		"amount":             req.Amount,
+		"amount":             -req.Amount,
 		"status":             "pending",
 		"description":        req.Description,
 		"reference":          req.Reference,
-		"external_reference": req.Reference, // overwritten by provider layer on delivery
+		"external_reference": req.Reference,
 		"response_data": map[string]any{
 			"service_type": req.ServiceType,
 			"source":       "tada-core",
 			"metadata":     req.Metadata,
 		},
 	}); err != nil {
-		// CRITICAL: balance was already debited. Log this loudly but don't fail —
-		// the money has moved. The transaction record will be reconciled.
 		log.Printf("[LEDGER] CRITICAL: debit succeeded but transaction insert failed: %v — ref=%s user=%s",
 			err, req.Reference, req.UserID)
 	}
 
-	// 5. Read updated balance
 	newBalance, err := db.getBalance(req.UserID)
 	if err != nil {
 		log.Printf("[LEDGER] Warning: debit succeeded but balance read failed: %v", err)
-		newBalance = currentBalance - req.Amount // safe estimate
+		newBalance = currentBalance - req.Amount
 	}
 
 	log.Printf("[LEDGER] Debit complete: user=%s new_balance=%.2f amount_debited=%.2f",
 		req.UserID, newBalance, req.Amount)
 	return &DebitResult{Success: true, NewBalance: newBalance, AmountDebited: req.Amount}, nil
+}
+
+// ─── Refund ───────────────────────────────────────────────────────────────────
+
+// RefundRequest credits a user's wallet back after a failed VTU delivery.
+// It is always paired with a prior ProcessDebit call via OriginalReference.
+type RefundRequest struct {
+	UserID            string  `json:"userId"`
+	Amount            float64 `json:"amount"`
+	Reference         string  `json:"reference"`         // new refund reference e.g. REFUND_TADA_AIR_xxx
+	OriginalReference string  `json:"originalReference"` // the debit reference being reversed
+	Description       string  `json:"description"`
+}
+
+type RefundResult struct {
+	Success    bool    `json:"success"`
+	NewBalance float64 `json:"newBalance"`
+}
+
+// ProcessRefund credits the user back when a VTU provider fails to deliver.
+// Execution order:
+//  1. Idempotency — never refund the same reference twice
+//  2. Atomic RPC credit — update_user_balance with type=refund
+//  3. Update original transaction to status=failed
+//  4. Insert refund transaction record
+//  5. Notify user
+func ProcessRefund(req RefundRequest) (*RefundResult, error) {
+	db := newClient()
+
+	log.Printf("[LEDGER] Refund start: user=%s ref=%s original=%s amount=%.2f",
+		req.UserID, req.Reference, req.OriginalReference, req.Amount)
+
+	// 1. Idempotency
+	exists, err := db.transactionExists(req.Reference)
+	if err != nil {
+		return nil, fmt.Errorf("idempotency check failed: %w", err)
+	}
+	if exists {
+		log.Printf("[LEDGER] Refund duplicate rejected: %s", req.Reference)
+		balance, _ := db.getBalance(req.UserID)
+		return &RefundResult{Success: true, NewBalance: balance}, nil
+	}
+
+	// 2. Atomic credit back to user wallet
+	if err := db.callRPC("update_user_balance", map[string]any{
+		"p_user_id":     req.UserID,
+		"p_amount":      req.Amount,
+		"p_type":        "credit",
+		"p_description": req.Description,
+		"p_reference":   req.Reference,
+	}); err != nil {
+		return nil, fmt.Errorf("refund balance RPC failed: %w", err)
+	}
+
+	// 3. Mark original transaction as failed
+	if err := db.updateTransaction(req.OriginalReference, "failed", ""); err != nil {
+		log.Printf("[LEDGER] Warning: refund credited but original txn update failed: %v", err)
+	}
+
+	// 4. Refund transaction record
+	if err := db.insert("transactions", map[string]any{
+		"user_id":            req.UserID,
+		"type":               "refund",
+		"amount":             req.Amount,
+		"status":             "success",
+		"description":        req.Description,
+		"reference":          req.Reference,
+		"external_reference": req.OriginalReference,
+	}); err != nil {
+		log.Printf("[LEDGER] Warning: refund insert failed: %v", err)
+	}
+
+	// 5. Notify user
+	_ = db.insert("notifications", map[string]any{
+		"user_id": req.UserID,
+		"type":    "info",
+		"title":   "Transaction Refunded",
+		"message": fmt.Sprintf("₦%.0f has been refunded to your wallet.", req.Amount),
+	})
+
+	newBalance, err := db.getBalance(req.UserID)
+	if err != nil {
+		log.Printf("[LEDGER] Warning: refund succeeded but balance read failed: %v", err)
+	}
+
+	log.Printf("[LEDGER] Refund complete: user=%s new_balance=%.2f", req.UserID, newBalance)
+	return &RefundResult{Success: true, NewBalance: newBalance}, nil
 }

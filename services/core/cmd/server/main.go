@@ -27,19 +27,18 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// ── Public ────────────────────────────────────────────────────────────────
+	// ── Public ─────────────────────────────────────────────────────────────
 	mux.HandleFunc("/health", handleHealth)
 
-	// ── Ledger (requires CORE_SECRET) ─────────────────────────────────────────
+	// ── Ledger (requires CORE_SECRET) ──────────────────────────────────────
 	mux.HandleFunc("/ledger/deposit", middleware.RequireInternalAuth(handleDeposit))
 	mux.HandleFunc("/ledger/debit",   middleware.RequireInternalAuth(handleDebit))
+	mux.HandleFunc("/ledger/refund",  middleware.RequireInternalAuth(handleRefund))
 
-	// ── Wallet (requires CORE_SECRET) ─────────────────────────────────────────
-	// GET /wallet/{userId}/balance
+	// ── Wallet (requires CORE_SECRET) ──────────────────────────────────────
 	mux.HandleFunc("/wallet/", middleware.RequireInternalAuth(handleWallet))
 
 	// Coming next:
-	// POST /ledger/refund
 	// POST /vtu/airtime
 	// POST /vtu/data
 
@@ -67,6 +66,7 @@ func main() {
 	log.Printf("🚀 TADAPAY Core running on port %s", port)
 	log.Printf("   POST /ledger/deposit")
 	log.Printf("   POST /ledger/debit")
+	log.Printf("   POST /ledger/refund")
 	log.Printf("   GET  /wallet/{userId}/balance")
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
@@ -144,15 +144,41 @@ func handleDebit(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// handleWallet routes GET /wallet/{userId}/balance
+func handleRefund(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	var req ledger.RefundRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+	if req.UserID == "" || req.Reference == "" || req.OriginalReference == "" {
+		http.Error(w, `{"error":"userId, reference, and originalReference are required"}`, http.StatusBadRequest)
+		return
+	}
+	if req.Amount <= 0 {
+		http.Error(w, `{"error":"amount must be greater than 0"}`, http.StatusBadRequest)
+		return
+	}
+	result, err := ledger.ProcessRefund(req)
+	if err != nil {
+		log.Printf("[REFUND] Error: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
 func handleWallet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
-
-	// Parse: /wallet/{userId}/balance
-	// path: ["", "wallet", "{userId}", "balance"]
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) != 3 || parts[2] != "balance" {
 		http.Error(w, `{"error":"use GET /wallet/{userId}/balance"}`, http.StatusNotFound)
@@ -163,7 +189,6 @@ func handleWallet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"userId is required"}`, http.StatusBadRequest)
 		return
 	}
-
 	result, err := wallet.GetBalance(userID)
 	if err != nil {
 		log.Printf("[WALLET] Balance error: %v", err)
