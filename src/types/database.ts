@@ -20,6 +20,8 @@ export interface Database {
           kyc_level: number;
           is_active: boolean;
           avatar_url: string | null;
+          whatsapp_number: string | null;
+          whatsapp_linked_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -37,6 +39,8 @@ export interface Database {
           kyc_level?: number;
           is_active?: boolean;
           avatar_url?: string | null;
+          whatsapp_number?: string | null;
+          whatsapp_linked_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -54,9 +58,12 @@ export interface Database {
           kyc_level?: number;
           is_active?: boolean;
           avatar_url?: string | null;
+          whatsapp_number?: string | null;
+          whatsapp_linked_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       achievements: {
         Row: {
@@ -95,6 +102,7 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       user_achievements: {
         Row: {
@@ -115,6 +123,7 @@ export interface Database {
           achievement_id?: string;
           unlocked_at?: string;
         };
+        Relationships: [];
       };
       transactions: {
         Row: {
@@ -165,6 +174,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       wallet_transactions: {
         Row: {
@@ -200,6 +210,7 @@ export interface Database {
           balance_after?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
       beneficiaries: {
         Row: {
@@ -229,6 +240,7 @@ export interface Database {
           service_type?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -258,6 +270,7 @@ export interface Database {
           is_read?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       gift_cards: {
         Row: {
@@ -359,6 +372,7 @@ export interface Database {
           cancelled_by?: string | null;
           access_token?: string;
         };
+        Relationships: [];
       };
       birthday_bonuses: {
         Row: {
@@ -385,6 +399,7 @@ export interface Database {
           tier?: string;
           credited_at?: string;
         };
+        Relationships: [];
       };
       user_plan_preferences: {
         Row: {
@@ -423,6 +438,7 @@ export interface Database {
           last_purchased_at?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       user_sessions: {
         Row: {
@@ -461,8 +477,10 @@ export interface Database {
           last_seen_at?: string;
           session_count?: number;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
     Functions: {
       update_user_balance: {
         Args: {

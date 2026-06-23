@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { coreRefund } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // Find pending transactions older than 10 minutes
+    // Find pending VTU transactions older than 10 minutes
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
     const { data: pendingTransactions, error: fetchError } = await supabase
@@ -47,50 +48,47 @@ export async function GET(request: NextRequest) {
 
     console.log(`[CRON] Found ${pendingTransactions.length} stuck pending transactions`);
 
-    let failedCount = 0;
+    let refundedCount = 0;
+    let skippedCount = 0;
     let refundedAmount = 0;
 
-    // Process each stuck transaction
     for (const transaction of pendingTransactions) {
       try {
-        // Mark transaction as failed
-        const { error: updateError } = await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
-
-        if (updateError) {
-          console.error(`[CRON] Failed to update transaction ${transaction.id}:`, updateError);
-          continue;
-        }
-
-        // Refund the user using RPC function
         const refundAmount = Math.abs(transaction.amount);
-        const { error: refundError } = await supabase.rpc('update_user_balance', {
-          p_user_id: transaction.user_id,
-          p_amount: refundAmount,
-          p_type: 'credit',
-          p_description: `Refund: ${transaction.description || transaction.type} (Timeout)`
+        const refundRef = `REFUND_${transaction.reference}`;
+
+        // coreRefund is idempotent: it checks TransactionExists(refundRef) before
+        // doing anything. If this cron runs twice concurrently, the second call
+        // finds the refund record already inserted and returns success without
+        // double-crediting. No raw RPC call needed.
+        await coreRefund({
+          userId: transaction.user_id,
+          amount: refundAmount,
+          reference: refundRef,
+          originalReference: transaction.reference,
+          description: `Refund: ${transaction.description || transaction.type} (Timeout)`,
         });
 
-        if (refundError) {
-          console.error(`[CRON] Failed to refund user ${transaction.user_id}:`, refundError);
-          continue;
-        }
-
-        failedCount++;
+        refundedCount++;
         refundedAmount += refundAmount;
-
-        console.log(`[CRON] Refunded ₦${refundAmount} to user ${transaction.user_id} for transaction ${transaction.reference}`);
+        console.log(`[CRON] Refunded ₦${refundAmount} to user ${transaction.user_id} for ref ${transaction.reference}`);
       } catch (error) {
-        console.error(`[CRON] Error processing transaction ${transaction.id}:`, error);
+        // coreRefund already handles: idempotency, balance credit, tx record, notification.
+        // If it throws here it's a network/Core error; log and skip — don't retry in this run.
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.includes('alreadyProcessed') || msg.includes('idempotent')) {
+          skippedCount++;
+        } else {
+          console.error(`[CRON] Refund failed for transaction ${transaction.reference}:`, error);
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: `Processed ${failedCount} stuck transactions`,
-      processed: failedCount,
+      message: `Processed ${refundedCount} stuck transactions`,
+      processed: refundedCount,
+      skipped: skippedCount,
       totalRefunded: refundedAmount,
       found: pendingTransactions.length,
     });

@@ -44,19 +44,19 @@ async function creditUserWallet(userId: string, amount: number, txRef: string, f
 
   if (txError) return { success: false, reason: txError.message };
 
-  const { error: balError } = await supabase.rpc('increment_balance', {
-    user_id: userId,
-    amount: netAmount
+  const { error: balError } = await supabase.rpc('update_user_balance', {
+    p_user_id: userId,
+    p_amount: netAmount,
+    p_type: 'credit',
+    p_description: `Wallet funding via Flutterwave (\u20a6${SERVICE_FEE} service fee) - Auto-verified`,
+    p_reference: txRef,
   });
 
   if (balError) {
-    await supabase.from('profiles')
-      .update({ balance: supabase.rpc('', {}) })
-      .eq('id', userId);
-    
-    await supabase.from('profiles')
-      .update({ balance: netAmount })
-      .eq('id', userId);
+    // RPC failed after tx record was already inserted — log loudly, the tx record
+    // exists but balance was not updated. Needs manual reconciliation.
+    console.error('[VERIFY-PAYMENTS] CRITICAL: balance RPC failed after tx insert for', txRef, balError);
+    return { success: false, reason: balError.message };
   }
 
   return { success: true, amount: netAmount };

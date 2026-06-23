@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateResellerApiKey } from '@/lib/api/reseller-auth';
+import { coreBalance } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,15 +32,13 @@ export async function GET(request: NextRequest) {
     const apiKeyRecord = validation.apiKey!;
     const supabase = getSupabaseAdmin();
 
-    // Get the reseller's balance
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('balance')
-      .eq('id', apiKeyRecord.user_id)
-      .single();
-
-    if (error || !profile) {
-      console.error('Profile fetch error:', error);
+    // Get the reseller's balance — Core is the single source of truth for balance
+    let balance: number;
+    try {
+      const result = await coreBalance(apiKeyRecord.user_id);
+      balance = result.balance;
+    } catch (coreError) {
+      console.error('[V1-WALLET-BALANCE] Core balance fetch error:', coreError);
       return NextResponse.json(
         { status: false, message: 'Reseller account not found' },
         { status: 404 }
@@ -56,7 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: true,
       data: {
-        balance: profile.balance || 0,
+        balance,
         currency: 'NGN',
         apiKey: {
           monthlyLimit: apiKeyData?.monthly_limit || 100000,

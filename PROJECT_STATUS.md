@@ -1,204 +1,206 @@
-# TADA VTU - Project Status
+# TADAPAY — Project Status
 
-**Last Updated:** February 27, 2026
+**Last Updated:** June 22, 2026  
+**Architecture:** Multi-service monorepo (Next.js web, Go Financial Core, Eve agent, React Native mobile, shared packages)
 
-## ✅ Completed Features
+---
 
-### Core VTU Services
-- ✅ Airtime purchase (MTN, Airtel, Glo, 9mobile)
-- ✅ Data bundle purchase with real-time pricing
-- ✅ Cable TV subscriptions (DStv, GOtv, Startimes)
-- ✅ Electricity bill payments
-- ✅ Betting wallet top-ups
+## System Map
 
-### Data Vault System
-- ✅ Park data for later delivery
-- ✅ QR code generation for offline access
-- ✅ Atomic transactions with RPC functions
-- ✅ Auto-refund on expiry
-- ✅ Duplicate prevention at DB level
-- ✅ 60-second polling optimization
-
-### Wallet & Payments
-- ✅ Flutterwave integration (deposits & virtual accounts)
-- ✅ Bank withdrawal system
-- ✅ Transaction history with receipts
-- ✅ Real-time balance updates
-
-### Security & Auth
-- ✅ Rate limiting (5 attempts per 15 min)
-- ✅ Account lockout (30 min after max attempts)
-- ✅ Progressive delays (exponential backoff)
-- ✅ PIN verification for sensitive operations
-- ✅ Row Level Security (RLS) on all tables
-
-### WhatsApp Bot Integration
-- ✅ OpenClaw API endpoints (12 routes)
-- ✅ Stateful USSD-style command system
-- ✅ Session management
-- ✅ WhatsApp webhook handler
-- ✅ Phone number linking with PIN
-
-### UI/UX Improvements
-- ✅ Vercel-style dark theme
-- ✅ Collapsible sidebar navigation
-- ✅ Nigerian-style typewriter messages (100+ phrases)
-- ✅ Responsive transactions page
-- ✅ shadcn/ui dropdown menu component
-- ✅ Mobile-first responsive design
-
-### Admin Features
-- ✅ Analytics dashboard
-- ✅ User management
-- ✅ Transaction monitoring
-- ✅ Performance metrics
-
-### Additional Features
-- ✅ Loyalty system (points, tiers, spin wheel)
-- ✅ Referral program (₦100 per referral)
-- ✅ Push notifications
-- ✅ Scheduled/recurring purchases
-- ✅ Beneficiary management
-- ✅ KYC levels
-
-## 🏗️ Architecture
-
-### Tech Stack
-- **Framework:** Next.js 15 (App Router, React 19)
-- **Database:** Supabase (PostgreSQL with RLS)
-- **Payments:** Flutterwave
-- **VTU Provider:** Inlomax API
-- **Styling:** Tailwind CSS 4, Radix UI, shadcn/ui
-- **State:** SWR for data fetching
-- **Deployment:** Vercel
-
-### API Structure
 ```
-/api
-├── /admin          - Admin endpoints
-├── /auth           - Authentication
-├── /cron           - Scheduled jobs
-├── /flutterwave    - Payment integration
-├── /inlomax        - VTU provider
-├── /data-vault     - Data vault operations
-├── /openclaw       - WhatsApp bot integration
-├── /gifts          - Gift system
-├── /withdrawal     - Bank withdrawals
-└── /notifications  - User notifications
+tada-vtu/
+├── src/                  Next.js 15 — web app + API routes (deployed on Vercel)
+├── services/core/        Go Financial Core — the money truth layer
+├── eve-agent/            Eve AI agent — natural language interface (scaffolding)
+├── mobile/               React Native (Expo) — mobile app (scaffolding)
+├── packages/shared/      Shared constants and types
+└── supabase/migrations/  32 database migrations
 ```
 
-### Database Schema
-- 15+ tables with RLS policies
-- RPC functions for atomic operations
-- Triggers for auto-updates
-- Indexes for performance
+---
 
-## 📊 Performance Metrics
+## What Is Actually Production-Ready
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| First Contentful Paint | < 1.5s | ✅ |
-| Time to Interactive | < 3.5s | ✅ |
-| Lighthouse Score | > 90 | ✅ |
-| TypeScript Errors | 0 | ✅ |
-| API Polling | 60s | ✅ Optimized |
+### ✅ Next.js Web App (src/)
+Fully functional. All VTU purchases, wallet funding, withdrawals, and UI are
+wired to the Go Core for money operations.
 
-## 🔐 Security Status
+- Airtime purchase (MTN, Airtel, Glo, 9mobile)
+- Data bundle purchase
+- Cable TV subscriptions (DStv, GOtv, Startimes)
+- Electricity payments
+- Betting wallet top-ups
+- Wallet funding via Flutterwave
+- Bank withdrawals
+- Data Vault (park data, QR code, auto-refund)
+- Scheduled / recurring purchases (cron-driven)
+- Transaction history and receipts
+- Referral program, loyalty system, achievements
+- Admin dashboard (analytics, user management, transaction monitoring)
+- Push notifications
+- Beneficiary management
+- PIN verification for sensitive operations
+- Rate limiting and brute-force protection
 
-- ✅ Rate limiting implemented
-- ✅ Brute force protection
-- ✅ RLS on all tables
-- ✅ PIN verification
-- ✅ Webhook signature validation
-- ✅ Environment variables secured
+### ✅ Go Financial Core — VTU Handlers (services/core/internal/vtu/)
+Real, Supabase-backed. This is the only path that moves real money.
 
-**Pentest Results:**
-- Critical: 0
-- High: 0
-- Medium: 0 (rate limiting fixed)
-- Low: 0
+| Endpoint | What it does |
+|---|---|
+| `POST /ledger/deposit` | Credits user wallet (idempotent, atomic via Supabase RPC) |
+| `POST /ledger/debit` | Debits wallet before provider call, enforces no-overdraft |
+| `POST /ledger/refund` | Credits back on provider failure, marks original tx failed |
+| `GET /wallet/{id}/balance` | Reads live balance from Supabase |
+| `GET /health` | Service health check |
 
-## 🚀 Deployment
+All protected by `CORE_SECRET` shared-key auth.
 
-### Environment Variables Required
+### ✅ Supabase Schema (supabase/migrations/)
+32 migrations applied. Key tables: `profiles`, `transactions`, `wallet_transactions`,
+`beneficiaries`, `notifications`, `gift_cards`, `data_vault`, `scheduled_purchases`,
+`achievements`, `user_achievements`, `user_sessions`, `user_plan_preferences`.
+
+Atomic balance operations go through the `update_user_balance` RPC.
+
+---
+
+## What Is Scaffolding (Exists But Does Not Work in Production)
+
+### ⚠️ Go Core — Abstract Engine (services/core/internal/engine/, ledger/, runs/, etc.)
+In-memory only. All state is wiped on every Core restart. These are the
+building blocks for the future double-entry ledger system, NOT for production use.
+
+Critical: the abstract engine endpoints are prefixed `/sim/` to make this explicit:
+- `POST /sim/transfers` — simulates a transfer in memory, does NOT touch Supabase
+- `POST /sim/refunds` — simulates a refund in memory, does NOT touch Supabase
+- `POST /sim/intents` — creates an in-memory intent, does NOT touch Supabase
+
+**Do not call `/sim/*` routes from production code. They do not move money.**
+
+### ⚠️ Go Core — Reconciliation (services/core/internal/reconciliation/)
+Creates `"pending"` entries in memory. There is no background worker or cron
+that ever calls `Resolve()`. Entries pile up as pending until restart.
+Needs: a Supabase-backed reconciliation table + a cron or webhook to resolve entries.
+
+### ⚠️ Go Core — Offline Service (services/core/internal/offline/)
+26-line stub. Only has `CreateEvent(id, kind)`. None of the vision is implemented:
+- No Offline Capability Token (OCT) issuance
+- No cryptographic signing
+- No offline budget manager
+- No device binding
+- No sync/reconciliation endpoint
+- No double-spend protection
+
+The full offline design (OCT → signed payment proofs → sync → ledger posting)
+requires significant work before it is safe to ship. See design docs for spec.
+
+### ⚠️ Go Core — Providers (services/core/internal/providers/)
+Mock provider only. The real VTU providers (Inlomax, etc.) are wired in the
+Next.js API routes, not in the Core provider registry. The abstract engine
+therefore cannot call real providers.
+
+### ⚠️ Go Core — Accounts / Merchant (services/core/internal/accounts/, merchant/)
+In-memory stubs. No persistence. TadaTag identity and merchant settlement
+systems described in the vision are not yet started.
+
+### ❌ Eve Agent (eve-agent/)
+Framework scaffold only. `agent.ts` is:
+```ts
+export default defineAgent({ model: "anthropic/claude-sonnet-4.6" });
+```
+The instructions.md defines the personality and tool descriptions, but no tools
+are implemented. The agent cannot check balances, buy airtime, or execute
+anything. This needs tool implementations wired to the Core VTU endpoints.
+
+### ❌ Mobile App (mobile/)
+Expo scaffold with a static screen. Displays NETWORKS and SERVICE_TYPES from
+`@tadapay/shared`. Not connected to Core or Supabase. No auth, no wallet,
+no purchase flow.
+
+---
+
+## Architecture: Two Ledger Systems (Important)
+
+The Core runs two completely separate systems:
+
+```
+┌──────────────────────────────────────────────────────┐
+│  REAL MONEY (Supabase-backed)                        │
+│  POST /ledger/deposit                                │
+│  POST /ledger/debit          ← Next.js calls these   │
+│  POST /ledger/refund                                 │
+│  GET  /wallet/{id}/balance                           │
+└──────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────┐
+│  SIMULATION (in-memory, wiped on restart)            │
+│  POST /sim/transfers                                 │
+│  POST /sim/refunds           ← DO NOT use for money  │
+│  POST /sim/intents                                   │
+│  POST /sim/accounts                                  │
+│  POST /sim/merchants                                 │
+└──────────────────────────────────────────────────────┘
+```
+
+---
+
+## Next Steps (Priority Order)
+
+### 1. Deploy Core to Production (Blocking everything)
+Core currently only runs on `localhost:8080`. Nothing works outside your
+laptop until it is deployed. Recommended: Railway (Go native, $5/mo).
+Required env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORE_SECRET`, `CORE_PORT`.
+
+### 2. Wire Eve Agent Tools
+Minimum viable: balance check + airtime purchase + data purchase.
+Each tool calls the Core VTU endpoints. This makes Eve actually useful.
+
+### 3. Mobile App Auth + Wallet Screen
+Minimum viable: Supabase auth, balance display, airtime purchase flow.
+
+### 4. Reconciliation Worker
+Add a Supabase table for reconciliation entries and a cron endpoint (or
+Postgres trigger) to mark transactions as reconciled after provider confirmation.
+
+### 5. Offline Engine (Future)
+Do not start until merchant layer and mobile app are production-ready.
+Requires: OCT issuance, device key management, SQLCipher local DB,
+cryptographic signing, sync endpoint, double-spend detection.
+
+---
+
+## Environment Variables
+
 ```bash
-# Supabase
+# Required for Next.js
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-
-# Flutterwave
 FLUTTERWAVE_SECRET_KEY=
 FLUTTERWAVE_PUBLIC_KEY=
 FLUTTERWAVE_ENCRYPTION_KEY=
-
-# Inlomax VTU
 INLOMAX_API_KEY=
 INLOMAX_BASE_URL=
+TADA_CORE_URL=              # URL of the deployed Go Core (e.g. https://core.tadapay.com)
+CORE_SECRET=                # Shared secret between Next.js and Core
 
-# OpenClaw (WhatsApp Bot)
-OPENCLAW_API_KEY=
-
-# Optional
-GROQ_API_KEY=
-RESEND_API_KEY=
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
+# Required for Go Core
+SUPABASE_URL=               # Same as NEXT_PUBLIC_SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY=  # Same key
+CORE_SECRET=                # Same as above
+CORE_PORT=8080              # Port to listen on
 ```
 
-### Deployment Checklist
-- ✅ TypeScript compilation passes
-- ✅ No console errors
-- ✅ Environment variables set
-- ✅ Database migrations applied
-- ✅ RLS policies enabled
-- ✅ Cron jobs configured (optional)
+---
 
-## 📝 Documentation
+## Deployment Checklist
 
-- ✅ `DATA_VAULT_SETUP_COMPLETE.md` - Data vault implementation
-- ✅ `SECURITY_IMPLEMENTATION.md` - Security features
-- ✅ `openclaw/README.md` - WhatsApp bot guide
-- ✅ `.kiro/steering/*.md` - Project guidelines
+- [x] TypeScript build passes (`bunx tsc --noEmit` — 0 errors)
+- [x] Go build passes (`go build ./...` in services/core)
+- [x] Go tests pass (`go test ./...` in services/core)
+- [ ] Core deployed to production host
+- [ ] `TADA_CORE_URL` set to production Core URL in Vercel
+- [ ] `CORE_SECRET` set in both Vercel and Core host
+- [ ] Database migrations applied to production Supabase
 
-## 🎯 Production Ready
 
-The platform is **production-ready** with:
-- Complete feature set
-- Robust security
-- Optimized performance
-- Comprehensive error handling
-- Mobile-responsive UI
-- WhatsApp bot integration
-
-## 🔄 Optional Enhancements
-
-### High Priority
-- [ ] Add pagination to data vault (when items > 100)
-- [ ] Set up Vercel cron for vault expiry processing
-- [ ] Add Zod validation schemas
-
-### Medium Priority
-- [ ] Real-time subscriptions for instant updates
-- [ ] Idempotency keys for API endpoints
-- [ ] Comprehensive logging system
-
-### Low Priority
-- [ ] Integration tests
-- [ ] Metrics/monitoring dashboard
-- [ ] Audit trail system
-
-## 📞 Support
-
-For issues or questions:
-1. Check Supabase logs
-2. Check Vercel deployment logs
-3. Verify environment variables
-4. Test API endpoints manually
-5. Review documentation files
-
-## 🎉 Summary
-
-TADA VTU is a fully functional, secure, and optimized VTU platform with innovative features like the Data Vault system and WhatsApp bot integration. All core features are implemented and tested.
-
-**Status:** ✅ Production Ready

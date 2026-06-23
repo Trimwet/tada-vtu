@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { BANK_TRANSFER_FEE } from '@/lib/api/flutterwave';
+import { coreDeposit } from '@/lib/api/core';
 
 // This endpoint polls Flutterwave for new bank transfers
 // Call this every 2 minutes via cron job
@@ -29,6 +30,12 @@ async function flutterwaveRequest(endpoint: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify cron secret — same pattern as the other cron routes
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     console.log('🔄 Starting transfer polling process...');
 
     const supabase = getSupabaseAdmin();
@@ -134,42 +141,30 @@ export async function GET(request: NextRequest) {
       // Calculate wallet credit (deduct platform fee)
       // FIX: Dedcut fee correctly. Use Math.max(amount - fee, 0) to avoid negative credits
       const walletCredit = Math.max(tx.amount - BANK_TRANSFER_FEE, 0);
-      const newBalance = (profile.balance || 0) + walletCredit;
 
-      // Update balance
-      await supabase
-        .from('profiles')
-        .update({ balance: newBalance })
-        .eq('id', userId);
-
-      // Create transaction record
+      // Credit wallet atomically via Core (handles idempotency, balance update, tx record, notification)
       const reference = `POLL-${Date.now()}-${tx.flw_ref.slice(-8)}`;
-      await supabase.from('transactions').insert({
-        user_id: userId,
-        type: 'deposit',
-        amount: walletCredit,
-        status: 'success',
-        description: `Bank transfer (₦${BANK_TRANSFER_FEE} fee deducted)`,
-        reference,
-        external_reference: tx.flw_ref,
-        response_data: {
-          payment_type: 'bank_transfer',
-          flw_ref: tx.flw_ref,
-          tx_ref: tx.tx_ref,
-          customer_email: tx.customer?.email,
-          transfer_amount: tx.amount,
-          platform_fee: BANK_TRANSFER_FEE,
-          processed_via: 'polling',
-        }
-      });
-
-      // Create notification
-      await supabase.from('notifications').insert({
-        user_id: userId,
-        type: 'success',
-        title: 'Wallet Funded! 💰',
-        message: `₦${walletCredit.toLocaleString()} has been added to your wallet via bank transfer.`,
-      });
+      try {
+        await coreDeposit({
+          userId,
+          amount: tx.amount,
+          walletCredit,
+          fee: BANK_TRANSFER_FEE,
+          reference,
+          externalReference: tx.flw_ref,
+          paymentType: 'bank_transfer',
+          description: `Bank transfer (₦${BANK_TRANSFER_FEE} fee deducted)`,
+          metadata: {
+            flw_ref: tx.flw_ref,
+            tx_ref: tx.tx_ref,
+            customer_email: tx.customer?.email,
+            processed_via: 'polling',
+          },
+        });
+      } catch (depositError) {
+        console.error('❌ Core deposit failed for transfer:', tx.flw_ref, depositError);
+        continue;
+      }
 
       console.log('✅ Processed transfer:', { userId: userId.slice(0, 8), amount: walletCredit, flwRef: tx.flw_ref });
       processedCount++;
@@ -194,19 +189,17 @@ export async function GET(request: NextRequest) {
 
           if (depositCount === 1) {
             const REFERRAL_BONUS = 100;
-            const { data: referrer } = await supabase
-              .from('profiles')
-              .select('balance')
-              .eq('id', profile.referred_by)
-              .single();
 
-            if (referrer) {
-              const referrerNewBalance = (referrer.balance || 0) + REFERRAL_BONUS;
-              await supabase
-                .from('profiles')
-                .update({ balance: referrerNewBalance })
-                .eq('id', profile.referred_by);
+            // Use the atomic RPC to credit the referrer — safe for concurrent runs
+            const { error: bonusError } = await supabase.rpc('update_user_balance', {
+              p_user_id: profile.referred_by,
+              p_amount: REFERRAL_BONUS,
+              p_type: 'credit',
+              p_description: `Referral bonus - ${userId.slice(0, 8)}`,
+              p_reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
+            });
 
+            if (!bonusError) {
               await supabase.from('transactions').insert({
                 user_id: profile.referred_by,
                 type: 'deposit',

@@ -90,22 +90,27 @@ func main() {
 	mux.HandleFunc("/wallet/",        middleware.RequireInternalAuth(vtuHandlers.Balance))
 
 	// ── Abstract engine endpoints (auth required) ─────────────────────────
-	// Used internally for intent/run/reconciliation lifecycle.
-	mux.HandleFunc("/accounts",      middleware.RequireInternalAuth(makeAccountsHandler(accountSvc)))
-	mux.HandleFunc("/balances",      middleware.RequireInternalAuth(makeBalancesHandler(l)))
-	mux.HandleFunc("/merchants",     middleware.RequireInternalAuth(makeMerchantsHandler(merchantSvc)))
-	mux.HandleFunc("/offline-events",middleware.RequireInternalAuth(makeOfflineHandler(offlineSvc)))
-	mux.HandleFunc("/transfers",     middleware.RequireInternalAuth(makeTransfersHandler(engineSvc)))
-	mux.HandleFunc("/refunds",       middleware.RequireInternalAuth(makeRefundsHandler(engineSvc)))
-	mux.HandleFunc("/intents",       middleware.RequireInternalAuth(makeIntentsHandler(engineSvc, tx)))
+	// ⚠️  SIMULATION ONLY — these endpoints use the IN-MEMORY engine.
+	// They do NOT touch Supabase and do NOT move real money.
+	// Real money endpoints are: /ledger/deposit, /ledger/debit, /ledger/refund
+	//
+	// These exist as scaffolding for the future double-entry ledger system.
+	// Do NOT call these from Next.js routes or Eve tools expecting real money movement.
+	mux.HandleFunc("/sim/accounts",       middleware.RequireInternalAuth(makeAccountsHandler(accountSvc)))
+	mux.HandleFunc("/sim/balances",       middleware.RequireInternalAuth(makeBalancesHandler(l)))
+	mux.HandleFunc("/sim/merchants",      middleware.RequireInternalAuth(makeMerchantsHandler(merchantSvc)))
+	mux.HandleFunc("/sim/offline-events", middleware.RequireInternalAuth(makeOfflineHandler(offlineSvc)))
+	mux.HandleFunc("/sim/transfers",      middleware.RequireInternalAuth(makeTransfersHandler(engineSvc)))
+	mux.HandleFunc("/sim/refunds",        middleware.RequireInternalAuth(makeRefundsHandler(engineSvc)))
+	mux.HandleFunc("/sim/intents",        middleware.RequireInternalAuth(makeIntentsHandler(engineSvc, tx)))
 
 	log.Printf("   POST /ledger/deposit     ← Next.js wallet funding")
 	log.Printf("   POST /ledger/debit       ← Next.js VTU purchase")
 	log.Printf("   POST /ledger/refund      ← Next.js provider failure refund")
 	log.Printf("   GET  /wallet/{id}/balance ← Next.js balance read")
-	log.Printf("   POST /transfers          ← engine transfer")
-	log.Printf("   POST /refunds            ← engine refund")
-	log.Printf("   POST /intents            ← engine intent")
+	log.Printf("   POST /sim/transfers      ← simulation only (in-memory, not Supabase)")
+	log.Printf("   POST /sim/refunds        ← simulation only (in-memory, not Supabase)")
+	log.Printf("   POST /sim/intents        ← simulation only (in-memory, not Supabase)")
 
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)

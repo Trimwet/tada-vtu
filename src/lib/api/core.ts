@@ -10,7 +10,7 @@
  *   CORE_SECRET  — Shared bearer token (must match CORE_SECRET in Core .env)
  */
 
-const CORE_URL = process.env.CORE_URL ?? 'http://localhost:8080';
+const CORE_URL = process.env.TADA_CORE_URL ?? process.env.CORE_URL ?? 'http://localhost:8080';
 const CORE_SECRET = process.env.CORE_SECRET ?? '';
 
 // ── Internal request helper ───────────────────────────────────────────────────

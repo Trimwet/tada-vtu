@@ -3,24 +3,20 @@ import { createClient } from '@supabase/supabase-js';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
 import { validateResellerApiKey, updateApiKeyUsage } from '@/lib/api/reseller-auth';
 import { sendTransactionWebhook } from '@/lib/api/webhooks';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
   return createClient(url, serviceKey);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // API Key authentication
-    const apiKey = request.headers.get('x-api-key');
+    // ── API Key authentication ────────────────────────────────────────────────
+    const apiKey    = request.headers.get('x-api-key');
     const apiSecret = request.headers.get('x-api-secret');
-
     const validation = await validateResellerApiKey(apiKey || '', apiSecret || '');
 
     if (!validation.valid) {
@@ -33,25 +29,21 @@ export async function POST(request: NextRequest) {
     const apiKeyRecord = validation.apiKey!;
     const body = await request.json();
     const { network, phone, planId, planName, amount, phone: recipientPhone } = body;
-
-    // Use recipientPhone if phone is not provided
     const targetPhone = phone || recipientPhone;
 
+    // ── Input validation ──────────────────────────────────────────────────────
     if (!network || !targetPhone || !planId || !amount) {
       return NextResponse.json(
         { status: false, message: 'Missing required fields: network, phone, planId, amount' },
         { status: 400 }
       );
     }
-
-    // Validate phone number format (Nigerian format)
     if (!/^0[789][01]\d{8}$/.test(targetPhone)) {
       return NextResponse.json(
         { status: false, message: 'Invalid phone number. Use format: 08012345678' },
         { status: 400 }
       );
     }
-
     const numAmount = Number(amount);
     if (isNaN(numAmount) || numAmount < 100) {
       return NextResponse.json(
@@ -60,92 +52,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getSupabaseAdmin();
+    const reference   = `TADA_V1_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const description = `${network} ${planName || 'Data'} - ${targetPhone} (API)`;
 
-    // Use the reseller's balance (the user who owns the API key)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('balance')
-      .eq('id', apiKeyRecord.user_id)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
-      return NextResponse.json(
-        { status: false, message: 'Reseller account not found' },
-        { status: 404 }
-      );
-    }
-
-    const currentBalance = profile.balance || 0;
-    if (currentBalance < numAmount) {
-      return NextResponse.json(
-        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
-        { status: 400 }
-      );
-    }
-
-    const reference = `TADA_V1_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-
-    // Create pending transaction FIRST
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: apiKeyRecord.user_id,
-        type: 'data',
-        amount: -numAmount,
-        status: 'pending',
-        reference: reference,
-        phone_number: targetPhone,
-        network: network.toUpperCase(),
-        description: `${network} ${planName || 'Data'} - ${targetPhone} (API)`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      console.error('Transaction creation error:', txnError);
+    // ── Step 1: Atomic debit via Core ─────────────────────────────────────────
+    let debitResult;
+    try {
+      debitResult = await coreDebit({
+        userId: apiKeyRecord.user_id,
+        amount: numAmount,
+        reference,
+        serviceType: 'data',
+        description,
+        metadata: { network, phone_number: targetPhone, plan_id: planId, plan_name: planName, source: 'reseller_api' },
+      });
+    } catch (debitError) {
+      const msg = debitError instanceof Error ? debitError.message : 'Debit failed';
+      if (msg.includes('insufficient funds')) {
+        const balanceMatch = msg.match(/balance ([\d.]+)/);
+        const bal = balanceMatch ? `₦${Number(balanceMatch[1]).toLocaleString()}` : 'insufficient';
+        return NextResponse.json(
+          { status: false, message: `Insufficient balance. You have ${bal}` },
+          { status: 400 }
+        );
+      }
+      if (msg.includes('profile not found')) {
+        return NextResponse.json({ status: false, message: 'Reseller account not found' }, { status: 404 });
+      }
+      console.error('[V1-DATA] Core debit failed:', debitError);
       return NextResponse.json(
         { status: false, message: 'Failed to initiate transaction. Please try again.' },
         { status: 500 }
       );
     }
 
+    // Patch transaction with reseller-specific columns Core doesn't set
+    const supabase = getSupabaseAdmin();
+    await supabase
+      .from('transactions')
+      .update({ phone_number: targetPhone, network: network.toUpperCase() })
+      .eq('reference', reference);
+
+    // ── Step 2: Call provider ─────────────────────────────────────────────────
     try {
       console.log(`[V1-DATA] Processing: ${network} ${planName} (ID: ${planId}) to ${targetPhone}`);
-
       const result = await purchaseDataInlomax({ serviceID: planId, phone: targetPhone });
-
       console.log(`[V1-DATA] Response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        const newBalance = currentBalance - numAmount;
-
-        // Deduct from reseller's wallet
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', apiKeyRecord.user_id);
-
-        if (updateError) {
-          console.error('Balance update error:', updateError);
-        }
-
-        // Update transaction as success
         await supabase
           .from('transactions')
-          .update({
-            status: 'success',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ status: 'success', external_reference: result.data?.reference })
+          .eq('reference', reference);
 
-        // Update API key monthly usage
         await updateApiKeyUsage(apiKeyRecord.id, numAmount);
 
-        // Send webhook notification (async, don't await)
         sendTransactionWebhook(apiKeyRecord.user_id, {
-          reference: transaction.reference,
+          reference,
           type: 'data',
           status: 'success',
           network,
@@ -158,60 +121,63 @@ export async function POST(request: NextRequest) {
           status: true,
           message: `${planName || 'Data'} sent to ${targetPhone} successfully!`,
           data: {
-            reference: transaction.reference,
+            reference,
             externalReference: result.data?.reference,
             network,
             phone: targetPhone,
             dataPlan: planName,
             amount: numAmount,
-            newBalance,
+            newBalance: debitResult.newBalance,
           },
         });
-      } else if (result.status === 'processing') {
+      }
+
+      if (result.status === 'processing') {
         await supabase
           .from('transactions')
-          .update({
-            status: 'pending',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ external_reference: result.data?.reference })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           message: 'Transaction is processing. You will be notified when complete.',
-          data: {
-            reference: transaction.reference,
-            status: 'processing',
-          },
-        });
-      } else {
-        await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
-
-        // Send webhook notification for failure (async, don't await)
-        sendTransactionWebhook(apiKeyRecord.user_id, {
-          reference: transaction.reference,
-          type: 'data',
-          status: 'failed',
-          network,
-          phone: targetPhone,
-          amount: numAmount,
-        });
-
-        return NextResponse.json({
-          status: false,
-          message: result.message || 'Data purchase failed. Please try again.',
+          data: { reference, status: 'processing' },
         });
       }
+
+      // Provider returned failure — refund
+      await coreRefund({
+        userId: apiKeyRecord.user_id,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[V1-DATA] Refund failed:', e));
+
+      sendTransactionWebhook(apiKeyRecord.user_id, {
+        reference,
+        type: 'data',
+        status: 'failed',
+        network,
+        phone: targetPhone,
+        amount: numAmount,
+      });
+
+      return NextResponse.json({
+        status: false,
+        message: result.message || 'Data purchase failed. Please try again.',
+      });
+
     } catch (apiError) {
       console.error('[V1-DATA] API Error:', apiError);
 
-      await supabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
+      await coreRefund({
+        userId: apiKeyRecord.user_id,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[V1-DATA] Refund failed:', e));
 
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(
@@ -219,14 +185,11 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
-
-      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: errorMessage },
+        { status: false, message: apiError instanceof Error ? apiError.message : 'Service temporarily unavailable' },
         { status: 500 }
       );
     }
-
   } catch (error) {
     console.error('[V1-DATA] Unexpected error:', error);
     return NextResponse.json(

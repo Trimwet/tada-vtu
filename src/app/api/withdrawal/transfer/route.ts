@@ -1,20 +1,34 @@
+/**
+ * POST /api/withdrawal/transfer
+ *
+ * Bank withdrawal via Flutterwave. All balance operations go through Go Core
+ * which enforces atomic updates, overdraft protection, and idempotency.
+ *
+ * Flow:
+ *   1. Authenticate via session
+ *   2. Verify PIN
+ *   3. Get Flutterwave transfer fee
+ *   4. Create withdrawals record (for webhook tracking)
+ *   5. coreDebit — atomic debit + pending tx record (idempotent)
+ *   6. Initiate Flutterwave transfer
+ *   7a. On success → update withdrawals record + notify
+ *   7b. On failure → coreRefund (atomic refund + failed tx record + notify) + update withdrawals
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { initiateTransfer, getTransferFee } from '@/lib/api/flutterwave-transfer';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 
 const MIN_WITHDRAWAL = 100;
 const MAX_WITHDRAWAL = 500000;
 
-// Simple PIN hash (matches the one used in auth routes)
 function hashPin(pin: string): string {
   return Buffer.from(pin + 'tada_salt_2024').toString('base64');
 }
-
 function verifyPin(pin: string, hash: string): boolean {
   return hashPin(pin) === hash;
 }
-
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -22,179 +36,120 @@ function getSupabaseAdmin() {
   return createSupabaseClient(url, serviceKey);
 }
 
-// POST /api/withdrawal/transfer - Initiate bank withdrawal via Flutterwave
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-
-    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { status: 'error', message: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
     }
 
     const { bankCode, bankName, accountNumber, accountName, amount, pin } = await request.json();
 
-    // Validate inputs
     if (!bankCode || !accountNumber || !accountName || !amount) {
-      return NextResponse.json(
-        { status: 'error', message: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: 'error', message: 'All fields are required' }, { status: 400 });
     }
-
     if (!pin || pin.length !== 4) {
-      return NextResponse.json(
-        { status: 'error', message: 'Please enter your 4-digit PIN' },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: 'error', message: 'Please enter your 4-digit PIN' }, { status: 400 });
     }
 
     const withdrawalAmount = parseFloat(amount);
     if (isNaN(withdrawalAmount) || withdrawalAmount < MIN_WITHDRAWAL) {
-      return NextResponse.json(
-        { status: 'error', message: `Minimum withdrawal is ₦${MIN_WITHDRAWAL}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: 'error', message: `Minimum withdrawal is ₦${MIN_WITHDRAWAL}` }, { status: 400 });
     }
-
     if (withdrawalAmount > MAX_WITHDRAWAL) {
-      return NextResponse.json(
-        { status: 'error', message: `Maximum withdrawal is ₦${MAX_WITHDRAWAL.toLocaleString()}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: 'error', message: `Maximum withdrawal is ₦${MAX_WITHDRAWAL.toLocaleString()}` }, { status: 400 });
     }
 
-    // Get transfer fee from Flutterwave
-    const transferFee = await getTransferFee(withdrawalAmount);
-    const totalDebit = withdrawalAmount + transferFee;
-
-    // Get user's current balance and PIN
+    // ── PIN verification (Supabase only — Core doesn't handle PINs) ──────────
     const adminSupabase = getSupabaseAdmin();
-    const { data: userData, error: userError } = await adminSupabase
+    const { data: profile, error: profileError } = await adminSupabase
       .from('profiles')
-      .select('balance, pin')
+      .select('pin')
       .eq('id', user.id)
       .single();
 
-    if (userError || !userData) {
-      return NextResponse.json(
-        { status: 'error', message: 'Failed to fetch user data' },
-        { status: 500 }
-      );
+    if (profileError || !profile) {
+      return NextResponse.json({ status: 'error', message: 'User not found' }, { status: 404 });
+    }
+    if (!profile.pin) {
+      return NextResponse.json({ status: 'error', message: 'Please set up your transaction PIN first' }, { status: 400 });
+    }
+    if (!verifyPin(pin, profile.pin)) {
+      return NextResponse.json({ status: 'error', message: 'Invalid transaction PIN' }, { status: 401 });
     }
 
-    // Verify PIN
-    if (!userData.pin) {
-      return NextResponse.json(
-        { status: 'error', message: 'Please set up your transaction PIN first' },
-        { status: 400 }
-      );
-    }
+    // ── Calculate fee ─────────────────────────────────────────────────────────
+    const transferFee = await getTransferFee(withdrawalAmount);
+    const totalDebit = withdrawalAmount + transferFee;
 
-    if (!verifyPin(pin, userData.pin)) {
-      return NextResponse.json(
-        { status: 'error', message: 'Invalid transaction PIN' },
-        { status: 401 }
-      );
-    }
-
-    // Check if user has sufficient balance (amount + fee)
-    if (userData.balance < totalDebit) {
-      return NextResponse.json(
-        { status: 'error', message: `Insufficient balance. You need ₦${totalDebit.toLocaleString()} (₦${withdrawalAmount.toLocaleString()} + ₦${transferFee.toLocaleString()} fee)` },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique reference
     const reference = `TADA-WD-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const description = `Withdrawal to ${accountName} (${accountNumber})`;
 
-    // Debit user's wallet first (atomic operation)
-    const newBalance = userData.balance - totalDebit;
-    const { error: debitError } = await adminSupabase
-      .from('profiles')
-      .update({ balance: newBalance })
-      .eq('id', user.id);
+    // ── Create withdrawal record (before debit so webhook has something to track) ─
+    const { error: withdrawalError } = await adminSupabase.from('withdrawals').insert({
+      user_id: user.id,
+      amount: withdrawalAmount,
+      fee: transferFee,
+      net_amount: withdrawalAmount,
+      account_number: accountNumber,
+      account_name: accountName,
+      bank_code: bankCode,
+      bank_name: bankName || 'Bank',
+      status: 'processing',
+      reference,
+    });
 
-    if (debitError) {
-      console.error('Failed to debit user:', debitError);
+    if (withdrawalError) {
+      console.error('[WITHDRAWAL/TRANSFER] withdrawals insert failed:', withdrawalError);
       return NextResponse.json(
-        { status: 'error', message: 'Failed to process withdrawal' },
+        { status: 'error', message: `Failed to create withdrawal record: ${withdrawalError.message}` },
         { status: 500 }
       );
     }
 
-    // Create pending transaction record
-    const { data: txRecord, error: txError } = await adminSupabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        type: 'withdrawal',
-        amount: -withdrawalAmount,
-        status: 'pending',
-        description: `Withdrawal to ${accountName} (${accountNumber})`,
-        reference: reference,
-        response_data: {
+    // ── Step 1: Atomic debit via Core ─────────────────────────────────────────
+    // Core enforces no-overdraft atomically — no TOCTOU, no direct balance writes.
+    // Core also creates the pending transaction record.
+    try {
+      await coreDebit({
+        userId: user.id,
+        amount: totalDebit,
+        reference,
+        serviceType: 'withdrawal',
+        description,
+        metadata: {
           bank_code: bankCode,
+          bank_name: bankName,
           account_number: accountNumber,
           account_name: accountName,
           fee: transferFee,
-          total_debit: totalDebit,
+          net_amount: withdrawalAmount,
         },
-      })
-      .select()
-      .single();
-
-    if (txError) {
-      console.error('Failed to create transaction record:', txError);
-      // Refund the user
-      await adminSupabase
-        .from('profiles')
-        .update({ balance: userData.balance })
-        .eq('id', user.id);
-
-      return NextResponse.json(
-        { status: 'error', message: 'Failed to process withdrawal' },
-        { status: 500 }
-      );
-    }
-
-    // Create record in withdrawals table for status tracking via webhook
-    const { error: withdrawalTableError } = await adminSupabase
-      .from('withdrawals')
-      .insert({
-        user_id: user.id,
-        amount: withdrawalAmount,
-        fee: transferFee,
-        net_amount: withdrawalAmount,
-        account_number: accountNumber,
-        account_name: accountName,
-        bank_code: bankCode,
-        bank_name: bankName || 'Bank',
-        status: 'pending',
-        reference: reference, // This is the crucial link for the webhook
       });
+    } catch (debitError) {
+      // Roll back the withdrawal record — debit never happened
+      await adminSupabase.from('withdrawals').delete().eq('reference', reference);
 
-    if (withdrawalTableError) {
-      console.error('Failed to create withdrawal table record:', withdrawalTableError);
-      // We don't necessarily need to fail the whole process here, but it's safer
-      // as the webhook relies on this record.
+      const msg = debitError instanceof Error ? debitError.message : 'Debit failed';
+      if (msg.includes('insufficient funds')) {
+        const balanceMatch = msg.match(/balance ([\d.]+)/);
+        const bal = balanceMatch ? `₦${Number(balanceMatch[1]).toLocaleString()}` : 'insufficient';
+        return NextResponse.json({
+          status: 'error',
+          message: `Insufficient balance. You need ₦${totalDebit.toLocaleString()} (₦${withdrawalAmount.toLocaleString()} + ₦${transferFee.toLocaleString()} fee). Current balance: ${bal}`,
+        }, { status: 400 });
+      }
+      if (msg.includes('profile not found')) {
+        return NextResponse.json({ status: 'error', message: 'User not found' }, { status: 404 });
+      }
+      console.error('[WITHDRAWAL/TRANSFER] Core debit failed:', debitError);
+      return NextResponse.json({ status: 'error', message: 'Failed to process withdrawal. Please try again.' }, { status: 500 });
     }
 
+    // ── Step 2: Initiate Flutterwave transfer ─────────────────────────────────
     try {
-      // Initiate transfer via Flutterwave
-      console.log('[WITHDRAWAL] Initiating Flutterwave transfer:', {
-        bankCode,
-        accountNumber,
-        accountName,
-        amount: withdrawalAmount,
-        reference,
-      });
-
+      console.log('[WITHDRAWAL/TRANSFER] Initiating Flutterwave transfer:', reference);
       const transferResult = await initiateTransfer({
         bankCode,
         accountNumber,
@@ -204,49 +159,23 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         narration: `TADA VTU Withdrawal - ${reference}`,
       });
-
-      console.log('[WITHDRAWAL] Flutterwave transfer result:', transferResult);
+      console.log('[WITHDRAWAL/TRANSFER] Result:', transferResult);
 
       if (!transferResult.success) {
-        // Transfer failed - refund user
-        console.error('Transfer failed, refunding user:', transferResult.message);
-
-        await adminSupabase
-          .from('profiles')
-          .update({ balance: userData.balance })
-          .eq('id', user.id);
-
-        await adminSupabase
-          .from('transactions')
-          .update({
-            status: 'failed',
-            response_data: {
-              ...txRecord.response_data,
-              error: transferResult.message,
-            }
-          })
-          .eq('id', txRecord.id);
-
-        return NextResponse.json(
-          { status: 'error', message: transferResult.message || 'Transfer failed. Your wallet has been refunded.' },
-          { status: 400 }
-        );
+        throw new Error(transferResult.message || 'Transfer failed');
       }
 
-      // Update transaction with Flutterwave reference
+      // Update transaction and withdrawal records with Flutterwave reference
       await adminSupabase
         .from('transactions')
-        .update({
-          external_reference: transferResult.reference,
-          response_data: {
-            ...txRecord.response_data,
-            flw_transfer_id: transferResult.transferId,
-            flw_status: transferResult.status,
-          },
-        })
-        .eq('id', txRecord.id);
+        .update({ external_reference: transferResult.reference })
+        .eq('reference', reference);
 
-      // Create notification
+      await adminSupabase
+        .from('withdrawals')
+        .update({ flw_reference: transferResult.reference, status: 'processing' })
+        .eq('reference', reference);
+
       await adminSupabase.from('notifications').insert({
         user_id: user.id,
         type: 'info',
@@ -261,36 +190,44 @@ export async function POST(request: NextRequest) {
           reference: transferResult.reference,
           amount: withdrawalAmount,
           fee: transferFee,
-          totalDebit: totalDebit,
+          totalDebit,
           accountName,
           accountNumber,
-          newBalance: newBalance,
           status: transferResult.status,
         },
       });
 
     } catch (transferError) {
-      // Transfer API error - refund user
-      console.error('Transfer API error, refunding:', transferError);
+      const errorMessage = transferError instanceof Error ? transferError.message : 'Transfer failed';
+      console.error('[WITHDRAWAL/TRANSFER] Transfer error:', errorMessage);
+
+      // ── Flutterwave failed — refund atomically via Core ───────────────────
+      // coreRefund: credits balance, marks original tx failed, inserts refund record, notifies user.
+      await coreRefund({
+        userId: user.id,
+        amount: totalDebit,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Withdrawal refund - ${reference}`,
+      }).catch((e) => console.error('[WITHDRAWAL/TRANSFER] Refund failed — MANUAL ACTION REQUIRED for ref:', reference, e));
 
       await adminSupabase
-        .from('profiles')
-        .update({ balance: userData.balance })
-        .eq('id', user.id);
+        .from('withdrawals')
+        .update({ status: 'failed', failure_reason: errorMessage })
+        .eq('reference', reference);
 
-      await adminSupabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', txRecord.id);
+      let userMessage = 'Transfer failed. Your balance has been refunded.';
+      if (errorMessage.includes('IP Whitelisting')) {
+        userMessage = 'Withdrawal service temporarily unavailable. Please try again later.';
+      } else if (errorMessage.includes('insufficient') || errorMessage.includes('balance')) {
+        userMessage = 'Flutterwave balance insufficient. Please contact support.';
+      }
 
-      return NextResponse.json(
-        { status: 'error', message: 'Transfer service unavailable. Please try again later.' },
-        { status: 500 }
-      );
+      return NextResponse.json({ status: 'error', message: userMessage }, { status: 500 });
     }
 
   } catch (error) {
-    console.error('Withdrawal error:', error);
+    console.error('[WITHDRAWAL/TRANSFER] Unexpected error:', error);
     return NextResponse.json(
       { status: 'error', message: error instanceof Error ? error.message : 'Withdrawal failed' },
       { status: 500 }

@@ -178,6 +178,70 @@ Error Tracking  → Sentry (optional, for production deep analysis)
 
 ---
 
+## Financial Core v2 — Transaction Operating Layer
+
+### Purpose
+
+The platform now includes a dedicated financial core service under [services/core](../services/core) that acts as the authoritative transaction operating layer for money movement. Its goal is to centralize financial intent handling so deposits, transfers, refunds, and related ledger updates are executed through one consistent workflow instead of being spread across the app.
+
+### Core Responsibilities
+
+- Accept financial intents from upstream clients.
+- Create and track transaction intents.
+- Execute ledger updates for deposits, transfers, and refunds.
+- Trigger provider execution for each financial action.
+- Create run records to track execution progress.
+- Generate reconciliation entries for downstream validation.
+- Expose a lightweight HTTP API for financial actions.
+
+### Current Implementation Scope
+
+The current financial core implementation includes:
+
+- deposit flow
+- transfer flow
+- refund flow
+- intent lifecycle state tracking
+- run lifecycle state tracking
+- ledger balance updates
+- reconciliation entry creation
+- account, merchant, and offline-event scaffolds
+
+### Runtime Shape
+
+The service is implemented as a Go-based core with the following structure:
+
+- [services/core/cmd/server/main.go](../services/core/cmd/server/main.go) — HTTP entrypoint
+- [services/core/internal/engine/service.go](../services/core/internal/engine/service.go) — orchestration layer for deposit, transfer, and refund flows
+- [services/core/internal/ledger/ledger.go](../services/core/internal/ledger/ledger.go) — balance and transfer logic
+- [services/core/internal/transactions/service.go](../services/core/internal/transactions/service.go) — intent tracking
+- [services/core/internal/runs/service.go](../services/core/internal/runs/service.go) — execution run tracking
+- [services/core/internal/providers/provider.go](../services/core/internal/providers/provider.go) — provider execution abstraction
+- [services/core/internal/reconciliation/service.go](../services/core/internal/reconciliation/service.go) — reconciliation record creation
+
+### API Surface
+
+The current server exposes:
+
+- POST /accounts
+- GET /balances
+- POST /merchants
+- POST /offline-events
+- POST /transfers
+- POST /refunds
+- POST /intents
+- GET /health
+
+### Architectural Positioning
+
+The financial core is positioned as a backend service that sits behind the existing product experience and becomes the authoritative layer for money movement. The rest of the platform should eventually call into this core rather than re-implementing financial logic in multiple places.
+
+### Notes on Maturity
+
+This is still an early implementation focused on workflow structure and orchestration. It does not yet include full persistence, real external provider integrations, or production-grade security controls, but it establishes the intended operating model for the platform.
+
+---
+
 ## Skeletal Structure — File System
 
 ```

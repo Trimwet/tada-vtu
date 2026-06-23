@@ -122,6 +122,8 @@ export function useSupabaseUser() {
       kyc_level: 0,
       is_active: true,
       avatar_url: null,
+      whatsapp_number: null,
+      whatsapp_linked_at: null,
       created_at: user.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

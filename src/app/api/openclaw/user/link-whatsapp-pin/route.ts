@@ -88,7 +88,6 @@ async function handler(request: NextRequest) {
     // Link WhatsApp number to user account
     const { error: updateError } = await supabase
       .from('profiles')
-      // @ts-expect-error - whatsapp_number and whatsapp_linked_at fields may not be in type definition
       .update({ 
         whatsapp_number: normalizedPhone,
         whatsapp_linked_at: new Date().toISOString()

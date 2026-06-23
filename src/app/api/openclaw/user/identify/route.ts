@@ -143,7 +143,6 @@ async function handler(request: NextRequest) {
           // Link this WhatsApp number to the account
           await supabase
             .from('profiles')
-            // @ts-expect-error - whatsapp_number field added in migration 028
             .update({
               whatsapp_number: normalizedPhone,
               whatsapp_linked_at: new Date().toISOString(),
