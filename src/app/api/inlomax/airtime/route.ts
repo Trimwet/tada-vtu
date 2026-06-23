@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseAirtime, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
   return createClient(url, serviceKey);
 }
 
@@ -19,10 +16,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { network, phone, amount, userId } = body;
 
-    // Rate limiting - use userId or IP
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
     const rateLimit = checkRateLimit(`airtime:${identifier}`, RATE_LIMITS.transaction);
-    
+
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { status: false, message: `Too many requests. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.` },
@@ -30,15 +26,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate required fields
     if (!network || !phone || !amount) {
-      return NextResponse.json(
-        { status: false, message: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: false, message: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate phone number format (Nigerian format)
     if (!/^0[789][01]\d{8}$/.test(phone)) {
       return NextResponse.json(
         { status: false, message: 'Invalid phone number. Use format: 08012345678' },
@@ -54,153 +45,117 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // User must be authenticated for purchases
     if (!userId) {
-      return NextResponse.json(
-        { status: false, message: 'Authentication required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ status: false, message: 'Authentication required' }, { status: 401 });
     }
 
-    const supabase = getSupabaseAdmin();
-
-    // Get user profile and balance
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('balance')
-      .eq('id', userId)
-      .single();
-
-    if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
-      return NextResponse.json(
-        { status: false, message: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-
-    // Check balance
-    const currentBalance = profile.balance || 0;
-    if (currentBalance < numAmount) {
-      return NextResponse.json(
-        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique reference
     const reference = `AIR_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const description = `${network} ₦${numAmount} Airtime - ${phone}`;
 
-    // Create pending transaction FIRST
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: userId,
-        type: 'airtime',
-        amount: -numAmount,
-        status: 'pending',
-        reference: reference,
-        phone_number: phone,
-        network: network.toUpperCase(),
-        description: `${network} ₦${numAmount} Airtime - ${phone}`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      console.error('Transaction creation error:', txnError);
+    // ── Step 1: Atomic debit via Core ────────────────────────────────────────
+    let debitResult;
+    try {
+      debitResult = await coreDebit({
+        userId,
+        amount: numAmount,
+        reference,
+        serviceType: 'airtime',
+        description,
+        metadata: { network, phone_number: phone },
+      });
+    } catch (debitError) {
+      const msg = debitError instanceof Error ? debitError.message : 'Debit failed';
+      if (msg.includes('insufficient funds')) {
+        const balanceMatch = msg.match(/balance ([\d.]+)/);
+        const bal = balanceMatch ? `₦${Number(balanceMatch[1]).toLocaleString()}` : 'insufficient';
+        return NextResponse.json(
+          { status: false, message: `Insufficient balance. You have ${bal}` },
+          { status: 400 }
+        );
+      }
+      if (msg.includes('profile not found')) {
+        return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
+      }
+      console.error('[AIRTIME/INLOMAX] Core debit failed:', debitError);
       return NextResponse.json(
-        { status: false, message: 'Failed to initiate transaction. Please try again.' },
+        { status: false, message: 'Failed to process payment. Please try again.' },
         { status: 500 }
       );
     }
 
+    // ── Step 2: Patch transaction metadata ───────────────────────────────────
+    const supabase = getSupabaseAdmin();
+    await supabase
+      .from('transactions')
+      .update({ phone_number: phone, network: network.toUpperCase() })
+      .eq('reference', reference);
+
+    // ── Step 3: Call provider ─────────────────────────────────────────────────
     try {
-      // Call Inlomax API
-      console.log(`[AIRTIME] Calling Inlomax API: ${network} ₦${numAmount} to ${phone}`);
+      console.log(`[AIRTIME/INLOMAX] Calling API: ${network} ₦${numAmount} to ${phone}`);
       const result = await purchaseAirtime({ network, phone, amount: numAmount });
-      console.log(`[AIRTIME] Inlomax response:`, result.status, result.message);
+      console.log(`[AIRTIME/INLOMAX] Response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        const newBalance = currentBalance - numAmount;
-        
-        // Deduct from wallet
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Balance update error:', updateError);
-          // Transaction succeeded but balance update failed - log for manual review
-        }
-
-        // Update transaction as success
         await supabase
           .from('transactions')
-          .update({
-            status: 'success',
-            external_reference: result.data?.reference,
-            response_data: result,
-          })
-          .eq('id', transaction.id);
+          .update({ status: 'success', external_reference: result.data?.reference, response_data: result })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
-          transactionId: transaction.reference,
+          transactionId: reference,
           message: `₦${numAmount} airtime sent to ${phone} successfully!`,
           data: {
-            reference: transaction.reference,
+            reference,
             externalReference: result.data?.reference,
             network,
             phone,
             amount: numAmount,
-            newBalance,
+            newBalance: debitResult.newBalance,
           },
         });
-      } else if (result.status === 'processing') {
-        // Transaction is processing - mark as pending
+      }
+
+      if (result.status === 'processing') {
         await supabase
           .from('transactions')
-          .update({
-            status: 'pending',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ external_reference: result.data?.reference })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           processing: true,
-          transactionId: transaction.reference,
+          transactionId: reference,
           message: 'Transaction is processing. You will be notified when complete.',
-          data: {
-            reference: transaction.reference,
-            status: 'processing',
-          },
-        });
-      } else {
-        // Transaction failed
-        await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
-
-        return NextResponse.json({
-          status: false,
-          message: result.message || 'Airtime purchase failed. Please try again.',
+          data: { reference, status: 'processing' },
         });
       }
-    } catch (apiError) {
-      console.error('[AIRTIME] API Error:', apiError);
-      
-      // Mark transaction as failed
-      await supabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
 
-      // Handle insufficient admin balance gracefully
+      // Provider failed — refund the user
+      await coreRefund({
+        userId,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[AIRTIME/INLOMAX] Refund failed:', e));
+
+      return NextResponse.json({
+        status: false,
+        message: result.message || 'Airtime purchase failed. Please try again.',
+      });
+    } catch (apiError) {
+      console.error('[AIRTIME/INLOMAX] Provider error:', apiError);
+
+      await coreRefund({
+        userId,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[AIRTIME/INLOMAX] Refund failed:', e));
+
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(
           { status: false, message: 'Service is unavailable. Please try again later.' },
@@ -208,15 +163,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: errorMessage },
+        { status: false, message: apiError instanceof Error ? apiError.message : 'Service temporarily unavailable' },
         { status: 500 }
       );
     }
-
   } catch (error) {
-    console.error('[AIRTIME] Unexpected error:', error);
+    console.error('[AIRTIME/INLOMAX] Unexpected error:', error);
     return NextResponse.json(
       { status: false, message: 'An unexpected error occurred. Please try again.' },
       { status: 500 }

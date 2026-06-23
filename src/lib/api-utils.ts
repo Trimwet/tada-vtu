@@ -22,7 +22,6 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
       
-      // Don't retry on certain errors
       if (isNonRetryableError(error)) {
         throw error;
       }
@@ -38,11 +37,9 @@ export async function withRetry<T>(
   throw lastError!;
 }
 
-// Check if error should not be retried
 function isNonRetryableError(error: unknown): boolean {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
-    // Don't retry validation errors, auth errors, or insufficient balance
     return (
       message.includes('invalid') ||
       message.includes('unauthorized') ||
@@ -54,12 +51,10 @@ function isNonRetryableError(error: unknown): boolean {
   return false;
 }
 
-// Sleep utility
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Timeout wrapper
 export async function withTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,
@@ -72,7 +67,6 @@ export async function withTimeout<T>(
   return Promise.race([operation, timeoutPromise]);
 }
 
-// Safe JSON parse
 export function safeJsonParse<T>(json: string, fallback: T): T {
   try {
     return JSON.parse(json);
@@ -81,10 +75,8 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
   }
 }
 
-// Format error for user display
 export function formatErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    // Clean up technical error messages
     const message = error.message;
     
     if (message.includes('fetch')) {
@@ -106,14 +98,12 @@ export function formatErrorMessage(error: unknown): string {
   return 'An unexpected error occurred. Please try again.';
 }
 
-// API response type
 export interface ApiResponse<T = unknown> {
   status: boolean;
   message: string;
   data?: T;
 }
 
-// Type-safe API call wrapper
 export async function apiCall<T>(
   url: string,
   options: RequestInit = {}
@@ -139,11 +129,13 @@ export async function apiCall<T>(
 }
 
 // Debounce utility
+// ReturnType<typeof setTimeout> works in both Node.js and browser environments,
+// unlike NodeJS.Timeout (Node-only) or number (browser-only).
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   waitMs: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
   
   return (...args: Parameters<T>) => {
     if (timeoutId) {
@@ -153,7 +145,6 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   };
 }
 
-// Throttle utility
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limitMs: number
@@ -169,7 +160,6 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
   };
 }
 
-// Format currency
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
@@ -179,7 +169,6 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-// Format phone number for display
 export function formatPhoneNumber(phone: string): string {
   if (phone.length === 11) {
     return `${phone.slice(0, 4)} ${phone.slice(4, 7)} ${phone.slice(7)}`;
@@ -187,7 +176,6 @@ export function formatPhoneNumber(phone: string): string {
   return phone;
 }
 
-// Mask sensitive data
 export function maskPhone(phone: string): string {
   if (phone.length >= 8) {
     return phone.slice(0, 4) + '****' + phone.slice(-3);

@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction, verifyTransactionByRef } from '@/lib/api/flutterwave';
-import { createClient } from '@supabase/supabase-js';
 import { processDeposit } from '@/lib/api/deposit-processor';
-
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
-  return createClient(url, serviceKey);
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +23,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (result?.data?.status === 'successful') {
-      const supabase = getSupabaseAdmin();
       const txRef = result.data.tx_ref;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const meta = (result.data as any).meta_data || (result.data as any).meta || {};
@@ -43,9 +34,8 @@ export async function GET(request: NextRequest) {
       console.log('Payment verification:', { txRef, flwRef, totalPaid: result.data.amount, walletCredit, serviceCharge, userId });
 
       if (userId) {
-        // processDeposit handles duplicate detection via external_reference (flw_ref)
-        // so it's safe to call even if the webhook already processed it
-        const depositResult = await processDeposit(supabase, {
+        // processDeposit is idempotent — safe to call even if webhook already processed it
+        const depositResult = await processDeposit({
           userId,
           amount: result.data.amount,
           walletCredit: Math.max(walletCredit, 0),
@@ -54,11 +44,11 @@ export async function GET(request: NextRequest) {
           externalReference: flwRef,
           paymentType: result.data.payment_type || 'card',
           description: `Wallet funding via card (₦${serviceCharge} service fee paid)`,
-          metadata: { flutterwave_ref: flwRef, service_charge: serviceCharge, total_paid: result.data.amount }
+          metadata: { flutterwave_ref: flwRef, service_charge: serviceCharge, total_paid: result.data.amount },
         });
 
         if (depositResult.alreadyProcessed) {
-          console.log('Verify: deposit already processed by webhook, returning success');
+          console.log('Verify: deposit already processed by webhook');
         }
       }
 

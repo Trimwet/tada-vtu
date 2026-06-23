@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
   return createClient(url, serviceKey);
 }
 
@@ -51,18 +48,15 @@ export async function POST(request: NextRequest) {
     const numAmount = amount;
     const supabase = getSupabaseAdmin();
 
+    // ── PIN verification (Supabase only — Core doesn't handle PINs) ──────────
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('balance, pin')
+      .select('pin')
       .eq('id', userId)
       .single();
 
     if (profileError || !profile) {
-      console.error('Profile fetch error:', profileError);
-      return NextResponse.json(
-        { status: false, message: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
     }
 
     if (!profile.pin) {
@@ -73,127 +67,116 @@ export async function POST(request: NextRequest) {
     }
 
     if (!pin) {
-      return NextResponse.json(
-        { status: false, message: 'Transaction PIN is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: false, message: 'Transaction PIN is required' }, { status: 400 });
     }
 
     if (!verifyPin(pin, profile.pin)) {
-      return NextResponse.json(
-        { status: false, message: 'Incorrect transaction PIN' },
-        { status: 400 }
-      );
-    }
-
-    const currentBalance = profile.balance || 0;
-    if (currentBalance < numAmount) {
-      return NextResponse.json(
-        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ status: false, message: 'Incorrect transaction PIN' }, { status: 400 });
     }
 
     const reference = `TADA_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const description = `${network} ${planName || 'Data'} - ${phone}`;
 
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: userId,
-        type: 'data',
-        amount: -numAmount,
-        status: 'pending',
-        reference: reference,
-        phone_number: phone,
-        network: network.toUpperCase(),
-        description: `${network} ${planName || 'Data'} - ${phone}`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      console.error('Transaction creation error:', txnError);
+    // ── Step 1: Atomic debit via Core ────────────────────────────────────────
+    let debitResult;
+    try {
+      debitResult = await coreDebit({
+        userId,
+        amount: numAmount,
+        reference,
+        serviceType: 'data',
+        description,
+        metadata: { network, phone_number: phone, plan_id: planId, plan_name: planName },
+      });
+    } catch (debitError) {
+      const msg = debitError instanceof Error ? debitError.message : 'Debit failed';
+      if (msg.includes('insufficient funds')) {
+        const balanceMatch = msg.match(/balance ([\d.]+)/);
+        const bal = balanceMatch ? `₦${Number(balanceMatch[1]).toLocaleString()}` : 'insufficient';
+        return NextResponse.json(
+          { status: false, message: `Insufficient balance. You have ${bal}` },
+          { status: 400 }
+        );
+      }
+      if (msg.includes('profile not found')) {
+        return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
+      }
+      console.error('[DATA] Core debit failed:', debitError);
       return NextResponse.json(
-        { status: false, message: 'Failed to initiate transaction. Please try again.' },
+        { status: false, message: 'Failed to process payment. Please try again.' },
         { status: 500 }
       );
     }
 
+    // ── Step 2: Patch transaction metadata ───────────────────────────────────
+    await supabase
+      .from('transactions')
+      .update({ phone_number: phone, network: network.toUpperCase() })
+      .eq('reference', reference);
+
+    // ── Step 3: Call provider ─────────────────────────────────────────────────
     try {
       console.log(`[DATA] Processing: ${network} ${planName} (ID: ${planId}) to ${phone}`);
-
       const result = await purchaseDataInlomax({ serviceID: planId, phone });
-
       console.log(`[DATA] Response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        const newBalance = currentBalance - numAmount;
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Balance update error:', updateError);
-        }
-
         await supabase
           .from('transactions')
-          .update({
-            status: 'success',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ status: 'success', external_reference: result.data?.reference })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           message: `${planName || 'Data'} sent to ${phone} successfully!`,
           data: {
-            reference: transaction.reference,
+            reference,
             externalReference: result.data?.reference,
             network,
             phone,
             dataPlan: planName,
             amount: numAmount,
-            newBalance,
+            newBalance: debitResult.newBalance,
           },
         });
-      } else if (result.status === 'processing') {
+      }
+
+      if (result.status === 'processing') {
         await supabase
           .from('transactions')
-          .update({
-            status: 'pending',
-            external_reference: result.data?.reference,
-          })
-          .eq('id', transaction.id);
+          .update({ external_reference: result.data?.reference })
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           message: 'Transaction is processing. You will be notified when complete.',
-          data: {
-            reference: transaction.reference,
-            status: 'processing',
-          },
-        });
-      } else {
-        await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
-
-        return NextResponse.json({
-          status: false,
-          message: result.message || 'Data purchase failed. Please try again.',
+          data: { reference, status: 'processing' },
         });
       }
-    } catch (apiError) {
-      console.error('[DATA] API Error:', apiError);
 
-      await supabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
+      // Provider failed — refund the user
+      await coreRefund({
+        userId,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[DATA] Refund failed:', e));
+
+      return NextResponse.json({
+        status: false,
+        message: result.message || 'Data purchase failed. Please try again.',
+      });
+    } catch (apiError) {
+      console.error('[DATA] Provider error:', apiError);
+
+      await coreRefund({
+        userId,
+        amount: numAmount,
+        reference: `REFUND_${reference}`,
+        originalReference: reference,
+        description: `Refund: ${description}`,
+      }).catch((e) => console.error('[DATA] Refund failed:', e));
 
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(
@@ -202,13 +185,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: errorMessage },
+        { status: false, message: apiError instanceof Error ? apiError.message : 'Service temporarily unavailable' },
         { status: 500 }
       );
     }
-
   } catch (error) {
     console.error('[DATA] Unexpected error:', error);
     return NextResponse.json(

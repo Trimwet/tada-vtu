@@ -1,109 +1,75 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+/**
+ * Deposit processor — handles wallet funding via Flutterwave.
+ *
+ * All financial writes go through the Go Core service (src/lib/api/core.ts).
+ * This module no longer holds a Supabase client — Core owns the money.
+ */
+
+import { coreDeposit, CoreDepositResult } from './core';
 import { calculateWalletCreditFromTransfer } from './flutterwave';
 
 export interface DepositData {
-    userId: string;
-    amount: number; // The gross amount from Flutterwave
-    walletCredit: number; // The net amount to credit user
-    fee: number; // The fee deducted
-    reference: string;
-    externalReference: string;
-    paymentType: string;
-    description: string;
-    metadata?: any;
+  userId: string;
+  /** Gross amount from Flutterwave */
+  amount: number;
+  /** Net amount credited to the user after fees */
+  walletCredit: number;
+  /** Platform fee deducted */
+  fee: number;
+  reference: string;
+  externalReference: string;
+  paymentType: string;
+  description: string;
+  metadata?: Record<string, unknown>;
 }
 
-// Calculate deposit amounts from transfer (used by webhook)
+/** Calculate deposit amounts from a bank transfer (used by webhook). */
 export function calculateDepositFromTransfer(transferAmount: number): {
-    walletCredit: number;
-    fee: number;
+  walletCredit: number;
+  fee: number;
 } {
-    const result = calculateWalletCreditFromTransfer(transferAmount);
-    return {
-        walletCredit: result.walletCredit,
-        fee: result.platformFee,
-    };
+  const result = calculateWalletCreditFromTransfer(transferAmount);
+  return { walletCredit: result.walletCredit, fee: result.platformFee };
 }
 
-export async function processDeposit(supabase: SupabaseClient, data: DepositData) {
-    const { userId, amount, walletCredit, fee, reference, externalReference, paymentType, description, metadata } = data;
+/**
+ * Process a wallet deposit via Core.
+ *
+ * Core handles:
+ *   - Duplicate detection (idempotency by reference)
+ *   - Atomic balance credit via Supabase RPC
+ *   - Transaction record creation
+ *   - User notification
+ *
+ * Safe to call multiple times with the same reference (webhook + verify race).
+ */
+export async function processDeposit(data: DepositData): Promise<CoreDepositResult> {
+  const { userId, amount, walletCredit, fee, reference, externalReference, paymentType, description, metadata } = data;
 
-    console.log(`🚀 [DEPOSIT-ENGINE] Initializing credit for user ${userId}`);
-    console.log(`   - Type: ${paymentType}`);
-    console.log(`   - Reference: ${reference}`);
-    console.log(`   - Amount: ₦${amount} (Net: ₦${walletCredit}, Fee: ₦${fee})`);
+  console.log(`🚀 [DEPOSIT] user=${userId} ref=${reference} credit=₦${walletCredit} fee=₦${fee}`);
 
-    try {
-        // 1. Check for existing transaction to prevent double-crediting
-        const { data: existingTx } = await supabase
-            .from('transactions')
-            .select('id')
-            .eq('external_reference', externalReference)
-            .single();
+  try {
+    const result = await coreDeposit({
+      userId,
+      amount,
+      walletCredit: Math.max(walletCredit, 0),
+      fee,
+      reference,
+      externalReference,
+      paymentType,
+      description,
+      metadata,
+    });
 
-        if (existingTx) {
-            console.log(`[DEPOSIT-PROCESSOR] Deposit already processed: ${externalReference}`);
-            return { success: true, message: 'Already processed', alreadyProcessed: true };
-        }
-
-        // 2. Get current profile balance
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('balance, referred_by')
-            .eq('id', userId)
-            .single();
-
-        if (profileError || !profile) {
-            throw new Error(`User profile not found: ${userId}`);
-        }
-
-        // 3. Update Balance (Using atomic RPC for safety and to record wallet_transaction)
-        const { error: balanceError } = await supabase.rpc('update_user_balance', {
-            p_user_id: userId,
-            p_amount: walletCredit,
-            p_type: 'credit',
-            p_description: description,
-            p_reference: reference
-        });
-
-        if (balanceError) throw balanceError;
-
-        // 4. Create Transaction Record
-        const { error: txError } = await supabase.from('transactions').insert({
-            user_id: userId,
-            type: 'deposit',
-            amount: walletCredit,
-            status: 'success',
-            description: description,
-            reference,
-            external_reference: externalReference,
-            response_data: {
-                payment_type: paymentType,
-                gross_amount: amount,
-                fee_deducted: fee,
-                ...metadata
-            }
-        });
-
-        if (txError) throw txError;
-
-        // 5. Create Notification
-        await supabase.from('notifications').insert({
-            user_id: userId,
-            type: 'success',
-            title: 'Wallet Funded! 💰',
-            message: `₦${walletCredit.toLocaleString()} has been added to your wallet via ${paymentType.replace('_', ' ')}.`,
-        });
-
-        console.log(`✅ [DEPOSIT-ENGINE] Success! User ${userId} balance updated (+₦${walletCredit})`);
-
-        const currentBalance = profile.balance || 0;
-        const newBalance = currentBalance + walletCredit;
-
-        return { success: true, newBalance };
-
-    } catch (error) {
-        console.error('[DEPOSIT-PROCESSOR] Critical Error processing deposit:', error);
-        throw error;
+    if (result.alreadyProcessed) {
+      console.log(`[DEPOSIT] idempotent — already processed: ${reference}`);
+    } else {
+      console.log(`✅ [DEPOSIT] done user=${userId} new_balance=₦${result.newBalance}`);
     }
+
+    return result;
+  } catch (error) {
+    console.error(`❌ [DEPOSIT] failed ref=${reference}:`, error);
+    throw error;
+  }
 }

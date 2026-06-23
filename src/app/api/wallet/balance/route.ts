@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { coreBalance } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error('Missing Supabase configuration');
-  }
-
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
   return createClient(url, serviceKey);
 }
 
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    
-    // Security: Require Authorization header
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { status: false, message: 'Authorization required' },
@@ -25,12 +21,12 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    
-    // Verify the token with Supabase
-    const supabase = getSupabaseAdmin();
-    const { data: { user: supabaseUser }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !supabaseUser) {
+    // Verify the user's JWT with Supabase auth — Core doesn't handle user JWTs
+    const supabase = getSupabaseAdmin();
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return NextResponse.json(
         { status: false, message: 'Invalid or expired token' },
         { status: 401 }
@@ -47,39 +43,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Security: Ensure user can only access their own balance
-    if (requestedUserId !== supabaseUser.id) {
-      return NextResponse.json(
-        { status: false, message: 'Unauthorized access' },
-        { status: 403 }
-      );
+    // Security: only allow users to read their own balance
+    if (requestedUserId !== user.id) {
+      return NextResponse.json({ status: false, message: 'Unauthorized access' }, { status: 403 });
     }
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('balance')
-      .eq('id', requestedUserId)
-      .single();
-
-    if (error || !profile) {
-      console.error('Profile fetch error:', error);
-      return NextResponse.json(
-        { status: false, message: 'User not found' },
-        { status: 404 }
-      );
-    }
+    // Read balance from Core — this is the authoritative source
+    const result = await coreBalance(requestedUserId);
 
     return NextResponse.json({
       status: true,
       data: {
-        balance: profile.balance || 0,
+        balance: result.balance,
         currency: 'NGN',
       },
     });
   } catch (error) {
     console.error('[WALLET-BALANCE] Error:', error);
+    const msg = error instanceof Error ? error.message : 'Failed to fetch balance';
     return NextResponse.json(
-      { status: false, message: 'Failed to fetch balance' },
+      { status: false, message: msg },
       { status: 500 }
     );
   }

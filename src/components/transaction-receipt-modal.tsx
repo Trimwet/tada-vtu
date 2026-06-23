@@ -93,7 +93,8 @@ export function TransactionReceiptModal({
   const downloadPDF = async () => {
     setIsDownloading(true);
     try {
-      const { jsPDF } = await import('jspdf');
+      // jspdf v2+ ships jsPDF as the default export, not a named export
+      const { default: jsPDF } = await import('jspdf');
 
       // Pre-load logo
       const logoImg = new Image();
@@ -149,7 +150,6 @@ export function TransactionReceiptModal({
       doc.setFontSize(28);
       doc.setFont("helvetica", "bold");
       
-      // Draw Naira Symbol Manually
       const amountX = pageWidth / 2;
       const amountY = 45;
       const amountPrefix = transaction.amount > 0 ? "+" : "";
@@ -159,10 +159,8 @@ export function TransactionReceiptModal({
       const totalWidth = nWidth + doc.getTextWidth(amountStr) + 2;
       const startX = (pageWidth - totalWidth) / 2;
 
-      // Draw N
       doc.text("N", startX, amountY);
       
-      // Draw Slashes (Thicker and wider)
       doc.setDrawColor(statusColor[0], statusColor[1], statusColor[2]);
       doc.setLineWidth(0.7);
       const slashY1 = amountY - 4.8;
@@ -170,7 +168,6 @@ export function TransactionReceiptModal({
       doc.line(startX - 0.5, slashY1, startX + nWidth + 0.5, slashY1);
       doc.line(startX - 0.5, slashY2, startX + nWidth + 0.5, slashY2);
 
-      // Draw Amount
       doc.text(amountStr, startX + nWidth + 2, amountY);
       
       doc.setTextColor(0, 0, 0);
@@ -273,7 +270,7 @@ export function TransactionReceiptModal({
         <Card className="border-0 shadow-2xl flex-1 flex flex-col">
           <CardHeader className="text-center pb-3 shrink-0">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8"></div> {/* Spacer */}
+              <div className="w-8"></div>
               <LogoInline size="sm" />
               <button
                 onClick={onClose}
@@ -289,7 +286,6 @@ export function TransactionReceiptModal({
           </CardHeader>
 
           <CardContent className="flex-1 flex flex-col justify-between space-y-4 pb-4">
-            {/* Transaction Status & Amount - Compact */}
             <div className="text-center">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${
                 transaction.amount > 0 ? 'bg-green-500/10' : 'bg-muted'
@@ -308,7 +304,6 @@ export function TransactionReceiptModal({
               </p>
             </div>
 
-            {/* Transaction Details - Compact Grid */}
             <div className="space-y-2 text-xs">
               <div className="grid grid-cols-2 gap-x-3 gap-y-2">
                 <div>
@@ -335,7 +330,6 @@ export function TransactionReceiptModal({
                   </div>
                 )}
 
-                {/* Balance Information - Compact */}
                 {(transaction as any).balance_before !== undefined && (transaction as any).balance_after !== undefined && (
                   <>
                     <div>
@@ -350,14 +344,12 @@ export function TransactionReceiptModal({
                 )}
               </div>
 
-              {/* Description - Full width */}
               <div className="pt-2 border-t border-border">
                 <span className="text-muted-foreground block mb-1">Description</span>
                 <span className="font-medium text-xs leading-relaxed">{transaction.description}</span>
               </div>
             </div>
 
-            {/* Actions - Compact */}
             <div className="flex gap-2 pt-3 shrink-0">
               <Button
                 variant="outline"
