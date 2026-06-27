@@ -15,7 +15,6 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   isJidBroadcast,
   makeCacheableSignalKeyStore,
-  makeInMemoryStore,
   type WAMessage,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
@@ -100,8 +99,6 @@ async function connect(attempt = 0): Promise<void> {
   // Always reload session from Supabase on reconnect — it may have been updated.
   const { state, saveCreds } = await useSupabaseAuthState();
   const { version } = await fetchLatestBaileysVersion();
-  const store = makeInMemoryStore({});
-
   const sock = makeWASocket({
     version,
     auth: {
@@ -116,8 +113,6 @@ async function connect(attempt = 0): Promise<void> {
     logger: { level: "warn" } as never,
     markOnlineOnConnect: false,
   });
-
-  store.bind(sock.ev);
 
   // ── QR code ────────────────────────────────────────────────────────────────
   sock.ev.on("connection.update", async (update) => {
