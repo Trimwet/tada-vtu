@@ -38,39 +38,80 @@ async function askEve(
   senderPhone: string,
   conversationId: string
 ): Promise<string> {
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${CORE_SECRET}`,
+    "x-tada-user-id": senderPhone,
+  };
+
   try {
-    const res = await fetch(`${NEXT_APP_URL}/eve/v1/session`, {
+    // Step 1 — create session
+    const startRes = await fetch(`${NEXT_APP_URL}/eve/v1/session`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${CORE_SECRET}`,
-        "x-tada-user-id": senderPhone,
-      },
-      body: JSON.stringify({
-        message,
-        conversationId,
-      }),
+      headers,
+      body: JSON.stringify({ message, conversationId }),
     });
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error(`[eve-bridge] HTTP ${res.status}:`, text);
+    if (!startRes.ok) {
+      const text = await startRes.text().catch(() => "");
+      console.error(`[eve-bridge] session start HTTP ${startRes.status}:`, text);
       return "❌ Sorry, I ran into an issue. Please try again in a moment.";
     }
 
-    const json = (await res.json()) as Record<string, unknown>;
-    console.log("[eve-bridge] response:", JSON.stringify(json));
-    const reply =
-      (json.reply as string) ??
-      (json.text as string) ??
-      (json.content as string) ??
-      ((json.choices as any)?.[0]?.message?.content as string) ??
-      null;
-    if (!reply) {
-      console.error("[eve-bridge] unexpected shape:", JSON.stringify(json));
+    const { sessionId } = (await startRes.json()) as { sessionId: string };
+    console.log(`[eve-bridge] session started: ${sessionId}`);
+
+    // Step 2 — stream the response
+    const streamRes = await fetch(
+      `${NEXT_APP_URL}/eve/v1/session/${sessionId}/stream`,
+      { headers }
+    );
+
+    if (!streamRes.ok || !streamRes.body) {
+      console.error(`[eve-bridge] stream HTTP ${streamRes.status}`);
+      return "❌ Sorry, I ran into an issue. Please try again in a moment.";
+    }
+
+    // Collect SSE stream and extract the last text content
+    const reader = streamRes.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let lastText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const raw = line.slice(5).trim();
+        if (raw === "[DONE]") continue;
+        try {
+          const event = JSON.parse(raw) as Record<string, unknown>;
+          // Eve SSE events: look for text/message content
+          const text =
+            (event.text as string) ??
+            (event.content as string) ??
+            (event.reply as string) ??
+            ((event as any)?.delta?.text as string) ??
+            null;
+          if (text) lastText = text;
+        } catch {
+          // non-JSON line, skip
+        }
+      }
+    }
+
+    if (!lastText) {
+      console.error("[eve-bridge] no text extracted from stream");
       return "❌ Something went wrong. Please try again.";
     }
-    return reply;
+
+    console.log(`[eve-bridge] reply: ${lastText.slice(0, 100)}`);
+    return lastText;
+
   } catch (err) {
     console.error("[eve-bridge] Fetch error:", err);
     return "❌ Could not reach the assistant. Please try again shortly.";
