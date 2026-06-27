@@ -27,7 +27,32 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      const result = await coreBalance(requestedUserId);
+
+      // Resolve phone numbers to Supabase UUIDs.
+      // Eve sends the WhatsApp phone number (e.g. "2349161125529") as userId;
+      // the profiles table keyed by UUID, but has a whatsapp_number column.
+      let resolvedUserId = requestedUserId;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedUserId);
+      if (!isUUID) {
+        const supabase = getSupabaseAdmin();
+        // Try whatsapp_number with and without leading +
+        const normalised = requestedUserId.replace(/^\+/, '');
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .or(`whatsapp_number.eq.${normalised},whatsapp_number.eq.+${normalised}`)
+          .maybeSingle();
+        if (profile) {
+          resolvedUserId = profile.id;
+        } else {
+          return NextResponse.json(
+            { status: false, message: 'No TADAPAY account linked to this WhatsApp number. Please link your account first.' },
+            { status: 404 }
+          );
+        }
+      }
+
+      const result = await coreBalance(resolvedUserId);
       return NextResponse.json({
         status: true,
         data: { balance: result.balance, currency: 'NGN' },

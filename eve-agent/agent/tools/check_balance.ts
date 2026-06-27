@@ -38,7 +38,7 @@ export default defineTool({
             "Content-Type": "application/json",
             "x-core-secret": coreSecret,
           },
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(25000),
         }
       );
 

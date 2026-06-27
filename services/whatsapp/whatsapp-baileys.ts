@@ -93,11 +93,14 @@ async function askEve(
     }
     console.log(`[eve-bridge] session ${existingToken ? "resumed" : "started"}: ${sessionId}`);
 
-    // Step 2 — stream the response
+    // Step 2 — stream the response (60s hard timeout to prevent infinite hangs)
+    const streamController = new AbortController();
+    const streamTimeout = setTimeout(() => streamController.abort(), 60_000);
+
     const streamRes = await fetch(
       `${NEXT_APP_URL}/eve/v1/session/${sessionId}/stream`,
-      { headers }
-    );
+      { headers, signal: streamController.signal }
+    ).finally(() => clearTimeout(streamTimeout));
 
     if (!streamRes.ok || !streamRes.body) {
       console.error(`[eve-bridge] stream HTTP ${streamRes.status}`);
