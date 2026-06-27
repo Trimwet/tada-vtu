@@ -72,11 +72,11 @@ async function askEve(
       return "❌ Sorry, I ran into an issue. Please try again in a moment.";
     }
 
-    // Collect SSE stream and extract the last text content
+    // Collect Eve's NDJSON stream and extract the final message from step.completed
     const reader = streamRes.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    let lastText = "";
+    let finalMessage = "";
 
     while (true) {
       const { done, value } = await reader.read();
@@ -85,33 +85,31 @@ async function askEve(
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {
-        if (line.trim()) console.log("[eve-stream] raw line:", line.slice(0, 200));
-        if (!line.startsWith("data:")) continue;
-        const raw = line.slice(5).trim();
-        if (raw === "[DONE]") continue;
+        const trimmed = line.trim();
+        if (!trimmed) continue;
         try {
-          const event = JSON.parse(raw) as Record<string, unknown>;
-          // Eve SSE events: look for text/message content
-          const text =
-            (event.text as string) ??
-            (event.content as string) ??
-            (event.reply as string) ??
-            ((event as any)?.delta?.text as string) ??
-            null;
-          if (text) lastText = text;
+          const event = JSON.parse(trimmed) as { type: string; data: Record<string, unknown> };
+          // step.completed carries the full assembled message
+          if (event.type === "step.completed" && typeof event.data?.message === "string") {
+            finalMessage = event.data.message as string;
+          }
+          // Fallback: accumulate from message.appended if step.completed never fires
+          if (event.type === "message.appended" && typeof event.data?.messageSoFar === "string") {
+            finalMessage = event.data.messageSoFar as string;
+          }
         } catch {
           // non-JSON line, skip
         }
       }
     }
 
-    if (!lastText) {
+    if (!finalMessage) {
       console.error("[eve-bridge] no text extracted from stream");
       return "❌ Something went wrong. Please try again.";
     }
 
-    console.log(`[eve-bridge] reply: ${lastText.slice(0, 100)}`);
-    return lastText;
+    console.log(`[eve-bridge] reply: ${finalMessage.slice(0, 100)}`);
+    return finalMessage;
 
   } catch (err) {
     console.error("[eve-bridge] Fetch error:", err);
