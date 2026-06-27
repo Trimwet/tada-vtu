@@ -58,12 +58,19 @@ async function askEve(
       return "❌ Sorry, I ran into an issue. Please try again in a moment.";
     }
 
-    const json = (await res.json()) as { reply?: string; error?: string };
-    return (
-      json.reply ??
-      json.error ??
-      "❌ Something went wrong. Please try again."
-    );
+    const json = (await res.json()) as Record<string, unknown>;
+    console.log("[eve-bridge] response:", JSON.stringify(json));
+    const reply =
+      (json.reply as string) ??
+      (json.text as string) ??
+      (json.content as string) ??
+      ((json.choices as any)?.[0]?.message?.content as string) ??
+      null;
+    if (!reply) {
+      console.error("[eve-bridge] unexpected shape:", JSON.stringify(json));
+      return "❌ Something went wrong. Please try again.";
+    }
+    return reply;
   } catch (err) {
     console.error("[eve-bridge] Fetch error:", err);
     return "❌ Could not reach the assistant. Please try again shortly.";
