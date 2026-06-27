@@ -207,7 +207,7 @@ import { createServer } from "node:http";
 const PORT = Number(process.env.PORT ?? 3001);
 
 createServer((req, res) => {
-  if (req.url === "/health" && req.method === "GET") {
+  if (req.url === "/health" && (req.method === "GET" || req.method === "HEAD")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", ts: Date.now() }));
   } else {
