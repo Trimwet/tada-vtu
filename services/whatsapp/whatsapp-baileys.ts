@@ -85,6 +85,7 @@ async function askEve(
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {
+        if (line.trim()) console.log("[eve-stream] raw line:", line.slice(0, 200));
         if (!line.startsWith("data:")) continue;
         const raw = line.slice(5).trim();
         if (raw === "[DONE]") continue;
