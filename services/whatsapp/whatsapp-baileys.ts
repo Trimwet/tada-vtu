@@ -33,6 +33,25 @@ const BASE_DELAY_MS = 2_000;
 
 // ─── Eve agent bridge ─────────────────────────────────────────────────────────
 
+// Cache continuation tokens per user so Eve can resume the same session.
+// Key: senderPhone, Value: { token, expiresAt }
+const eveTokens = new Map<string, { token: string; expiresAt: number }>();
+const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes of inactivity → new session
+
+function getToken(phone: string): string | undefined {
+  const entry = eveTokens.get(phone);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    eveTokens.delete(phone);
+    return undefined;
+  }
+  return entry.token;
+}
+
+function setToken(phone: string, token: string) {
+  eveTokens.set(phone, { token, expiresAt: Date.now() + TOKEN_TTL_MS });
+}
+
 async function askEve(
   message: string,
   senderPhone: string,
@@ -45,11 +64,19 @@ async function askEve(
   };
 
   try {
-    // Step 1 — create session
+    // Step 1 — create or resume session (pass continuation token if we have one)
+    const existingToken = getToken(senderPhone);
+    const startBody: Record<string, string> = { message };
+    if (existingToken) {
+      startBody.token = existingToken;
+    } else {
+      startBody.conversationId = conversationId;
+    }
+
     const startRes = await fetch(`${NEXT_APP_URL}/eve/v1/session`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ message, conversationId }),
+      body: JSON.stringify(startBody),
     });
 
     if (!startRes.ok) {
@@ -58,8 +85,13 @@ async function askEve(
       return "❌ Sorry, I ran into an issue. Please try again in a moment.";
     }
 
-    const { sessionId } = (await startRes.json()) as { sessionId: string };
-    console.log(`[eve-bridge] session started: ${sessionId}`);
+    const startJson = (await startRes.json()) as { sessionId: string; continuationToken?: string };
+    const { sessionId } = startJson;
+    // Save the continuation token for the next message from this user
+    if (startJson.continuationToken) {
+      setToken(senderPhone, startJson.continuationToken);
+    }
+    console.log(`[eve-bridge] session ${existingToken ? "resumed" : "started"}: ${sessionId}`);
 
     // Step 2 — stream the response
     const streamRes = await fetch(
@@ -88,13 +120,22 @@ async function askEve(
         const trimmed = line.trim();
         if (!trimmed) continue;
         try {
-          const event = JSON.parse(trimmed) as { type: string; data: Record<string, unknown> };
-          // step.completed carries the full assembled message
-          if (event.type === "step.completed" && typeof event.data?.message === "string") {
+          const event = JSON.parse(trimmed) as { type: string; data: Record<string, unknown>; continuationToken?: string };
+          // Grab updated continuation token from any event that carries one
+          if (event.continuationToken) {
+            setToken(senderPhone, event.continuationToken);
+          }
+          // step.completed: capture text from ANY step (tool-call steps may have no message;
+          // the LLM's final response step will have data.message)
+          if (event.type === "step.completed" && typeof event.data?.message === "string" && event.data.message) {
             finalMessage = event.data.message as string;
           }
-          // Fallback: accumulate from message.appended if step.completed never fires
-          if (event.type === "message.appended" && typeof event.data?.messageSoFar === "string") {
+          // turn.completed may carry the assembled turn message
+          if (event.type === "turn.completed" && typeof (event.data as any)?.message === "string" && (event.data as any).message) {
+            finalMessage = (event.data as any).message as string;
+          }
+          // message.appended: keep updating so we always have the latest partial
+          if (event.type === "message.appended" && typeof event.data?.messageSoFar === "string" && event.data.messageSoFar) {
             finalMessage = event.data.messageSoFar as string;
           }
         } catch {
@@ -222,7 +263,13 @@ async function connect(attempt = 0): Promise<void> {
       if (!text?.trim()) continue;
 
       const senderJid = msg.key.remoteJid;
-      const senderPhone = jidToPhone(senderJid);
+      // Prefer the real phone number JID (s.whatsapp.net) over the LID.
+      // msg.key.participant is set in groups; for DMs the remoteJid IS the phone JID.
+      const phoneJid =
+        msg.key.participant ?? // group sender
+        (senderJid.endsWith("@s.whatsapp.net") ? senderJid : null) ?? // DM phone jid
+        senderJid; // fallback (lid)
+      const senderPhone = jidToPhone(phoneJid);
 
       // Use the chat JID as the conversation ID for context continuity.
       const conversationId = senderJid;
