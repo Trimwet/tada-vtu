@@ -13,12 +13,41 @@
 
 services:
   - type: web
+    name: tadapay-core
+    runtime: go
+    region: oregon
+
+    rootDir: services/core
+    buildCommand: go build -o bin/server ./cmd/server
+    startCommand: ./bin/server
+
+    autoDeploy: true
+    healthCheckPath: /health
+    plan: free
+
+    envVars:
+      - key: CORE_PORT
+        value: "8080"
+
+      - key: SUPABASE_URL
+        sync: false   # set in Render dashboard
+
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false   # set in Render dashboard (fallback used by main.go)
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false   # set in Render dashboard — KEEP SECRET
+
+      - key: CORE_SECRET
+        sync: false   # shared with Next.js + Eve + WhatsApp bot
+
+  - type: web
     name: tadapay-whatsapp-bot
     runtime: node
     region: oregon          # closest to your Supabase region; change if needed
 
     # Build: install deps from the whatsapp service subfolder
-    rootDir: tada-vtu/services/whatsapp
+    rootDir: services/whatsapp
     buildCommand: npm install
     startCommand: npm start
 
