@@ -1,44 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleWhatsAppMessage } from '@/lib/stateful-vtu-wrapper';
+import { processWhatsAppInboundMessage } from '@/lib/whatsapp/bridge';
+import { checkRateLimit } from '@/lib/rate-limiter';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function sendWhatsAppMessage(to: string, body: string) {
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  if (!accessToken || !phoneNumberId) return; // credentials not configured yet
+  await fetch(
+    `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to,
+        type: 'text',
+        text: { body },
+      }),
+    }
+  );
+}
+
+// ── GET — webhook verification ────────────────────────────────────────────────
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get('hub.mode');
+  const token = searchParams.get('hub.verify_token');
+  const challenge = searchParams.get('hub.challenge');
+
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    return new Response(challenge ?? '', { status: 200 });
+  }
+  return NextResponse.json({ status: 'WhatsApp webhook active' });
+}
+
+// ── POST — incoming message ───────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  let message = '';
+  let phoneNumber = '';
+
   try {
     const body = await request.json();
-    
-    // Extract message and phone number from WhatsApp webhook
-    const message = body.message?.text || '';
-    const phoneNumber = body.from || '';
-    
+
+    // Support both Cloud API webhook shape and the legacy mock shape.
+    const entry = body.entry?.[0]?.changes?.[0]?.value;
+    if (entry) {
+      // Official Cloud API format
+      const msg = entry.messages?.[0];
+      if (!msg) return NextResponse.json({ ok: true }); // delivery receipt, ignore
+      message = msg.text?.body ?? msg.type ?? '';
+      phoneNumber = msg.from ?? '';
+    } else {
+      // Legacy / mock format
+      message = body.message?.text ?? body.message ?? '';
+      phoneNumber = body.from ?? '';
+    }
+
     if (!message || !phoneNumber) {
       return NextResponse.json({ error: 'Invalid webhook data' }, { status: 400 });
     }
 
-    // Process message with stateful VTU system
-    const result = await handleWhatsAppMessage(message, phoneNumber);
-    
-    console.log(`📤 Reply: ${result.reply.substring(0, 100)}...`);
+    // ── Per-phone rate limit: 30 messages per 15-minute window ───────────────
+    const rl = checkRateLimit(`wa:${phoneNumber}`);
+    if (!rl.allowed) {
+      console.warn(`[WhatsApp] Rate limit hit for ${phoneNumber}`);
+      // Return 200 to WhatsApp (avoid retries) but don't process the message
+      return NextResponse.json({ ok: true });
+    }
 
-    // Return response for WhatsApp
-    return NextResponse.json({
-      reply: result.reply
+    // ── Forward message to Eve Agent via the shared bridge ───────────────────
+    const { replyText } = await processWhatsAppInboundMessage({
+      phoneNumber,
+      message,
     });
 
-  } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json({ 
-      reply: '❌ An error occurred. Please try again later.' 
-    }, { status: 500 });
-  }
-}
+    console.log(`[WhatsApp] Reply to ${phoneNumber}: ${replyText.substring(0, 120)}...`);
 
-// Verify webhook (if needed)
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const challenge = searchParams.get('hub.challenge');
-  
-  if (challenge) {
-    return new Response(challenge);
+    // ── Send reply via WhatsApp (no-op if credentials not configured) ────────
+    await sendWhatsAppMessage(phoneNumber, replyText);
+
+    return NextResponse.json({ reply: replyText });
+
+  } catch (error) {
+    console.error('[WhatsApp] Webhook error:', error);
+    return NextResponse.json(
+      { reply: '❌ An error occurred. Please try again later.' },
+      { status: 500 }
+    );
   }
-  
-  return NextResponse.json({ status: 'WhatsApp webhook active' });
 }

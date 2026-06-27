@@ -146,13 +146,21 @@ export async function POST(request: NextRequest) {
       }
 
       // Provider returned failure — refund
-      await coreRefund({
-        userId: apiKeyRecord.user_id,
-        amount: numAmount,
-        reference: `REFUND_${reference}`,
-        originalReference: reference,
-        description: `Refund: ${description}`,
-      }).catch((e) => console.error('[V1-DATA] Refund failed:', e));
+      try {
+        await coreRefund({
+          userId: apiKeyRecord.user_id,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[V1-DATA] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
       sendTransactionWebhook(apiKeyRecord.user_id, {
         reference,
@@ -171,13 +179,21 @@ export async function POST(request: NextRequest) {
     } catch (apiError) {
       console.error('[V1-DATA] API Error:', apiError);
 
-      await coreRefund({
-        userId: apiKeyRecord.user_id,
-        amount: numAmount,
-        reference: `REFUND_${reference}`,
-        originalReference: reference,
-        description: `Refund: ${description}`,
-      }).catch((e) => console.error('[V1-DATA] Refund failed:', e));
+      try {
+        await coreRefund({
+          userId: apiKeyRecord.user_id,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[V1-DATA] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(

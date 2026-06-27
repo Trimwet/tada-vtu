@@ -159,8 +159,6 @@ export function BuyAgainCard({ transactions, onBuyAgain }: BuyAgainProps) {
     const icons: Record<string, string> = {
       airtime: "call",
       data: "wifi",
-      cable: "tv",
-      electricity: "flash",
     };
     return icons[type] || "card";
   };
@@ -245,8 +243,6 @@ export function QuickRechargeCard({
     const icons: Record<string, string> = {
       airtime: "call",
       data: "wifi",
-      cable: "tv",
-      electricity: "flash",
     };
     return icons[type] || "card";
   };

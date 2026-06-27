@@ -1,0 +1,64 @@
+# render.yaml
+#
+# Deploys the WhatsApp bot as a standalone Render Web Service.
+# The Next.js app (tada-vtu) is deployed separately (Vercel / Railway).
+#
+# Usage:
+#   1. Push this file to your repo root (or tada-vtu/ root).
+#   2. In the Render dashboard → "New Blueprint" → point to this file.
+#   3. Set the env vars marked (sync: false) — they are secret and NOT stored here.
+#
+# UptimeRobot: add a monitor for https://<your-service>.onrender.com/health
+# so Render's free tier doesn't sleep the container between messages.
+
+services:
+  - type: web
+    name: tadapay-whatsapp-bot
+    runtime: node
+    region: oregon          # closest to your Supabase region; change if needed
+
+    # Build: install deps from the whatsapp service subfolder
+    rootDir: tada-vtu/services/whatsapp
+    buildCommand: npm install
+    startCommand: npm start
+
+    # Keep the container alive — Render will restart on non-zero exit.
+    # 401 (logged out) → process.exit(1) → Render restarts → QR shown again.
+    # Any other crash → Render restarts → exponential backoff reconnects.
+    autoDeploy: true
+
+    # Health check — must return 200 within 30s after deploy
+    healthCheckPath: /health
+
+    # Render free tier sleeps after 15 min inactivity.
+    # UptimeRobot pings /health every 5 min to keep it warm.
+    # Alternatively, upgrade to Starter ($7/mo) for always-on.
+    plan: free              # change to "starter" for production
+
+    envVars:
+      # ── Next.js app URL (where Eve agent lives) ──────────────────────────
+      - key: NEXT_APP_URL
+        value: https://tadavtu.vercel.app   # update with your actual Vercel URL
+
+      # ── Supabase (service role — bypasses RLS) ───────────────────────────
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false    # set in Render dashboard
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false    # set in Render dashboard — KEEP SECRET
+
+      # ── Shared secret between Next.js and the bot ────────────────────────
+      - key: CORE_SECRET
+        sync: false    # must match CORE_SECRET in your Next.js env
+
+      # ── Optional: bot's own phone number for self-message filtering ───────
+      - key: BOT_PHONE
+        sync: false    # e.g. 2347058748217 (digits only, no +)
+
+      # ── Port (Render sets this automatically; keep in sync with bot) ──────
+      - key: PORT
+        value: "3001"
+
+      # ── Node env ─────────────────────────────────────────────────────────
+      - key: NODE_ENV
+        value: production

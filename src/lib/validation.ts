@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parse as parseEmojis, type EmojiEntity } from 'twemoji-parser';
 
 // Phone number validation for Nigerian numbers
 export const phoneSchema = z.string()
@@ -17,10 +18,27 @@ export const amountSchema = z.number()
   .max(500000, 'Maximum amount is ₦500,000')
   .int('Amount must be a whole number');
 
-// PIN validation
-export const pinSchema = z.string()
-  .length(4, 'PIN must be exactly 4 digits')
-  .regex(/^\d{4}$/, 'PIN must contain only numbers');
+// PIN validation (accepts 4 digits or 4 emojis)
+export const pinSchema = z.string().superRefine((val, ctx) => {
+  // Option 1: 4-digit PIN
+  if (/^\d{4}$/.test(val)) return;
+
+  // Option 2: 4-emoji PIN
+  let parsed: EmojiEntity[] = [];
+  try {
+    parsed = parseEmojis(val);
+  } catch (e) {}
+
+  const parsedTextLength = parsed.reduce((sum, item) => sum + item.text.length, 0);
+  const isEmojiPin = parsed.length === 4 && parsedTextLength === val.length;
+
+  if (isEmojiPin) return;
+
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message: 'PIN must be exactly 4 digits or 4 emojis',
+  });
+});
 
 // Email validation
 export const emailSchema = z.string()

@@ -74,7 +74,7 @@ export function calculateRetryTime(
 
 // Validate scheduled purchase input
 export interface ScheduledPurchaseInput {
-  service_type: 'airtime' | 'data' | 'cable' | 'electricity';
+  service_type: 'airtime' | 'data';
   amount: number;
   recipient_phone?: string;
   network?: string;
@@ -108,14 +108,6 @@ export function validateScheduledPurchase(input: ScheduledPurchaseInput): {
     if (!input.network) {
       errors.push('Network is required for airtime/data purchases');
     }
-  }
-
-  if (input.service_type === 'electricity' && !input.meter_number) {
-    errors.push('Meter number is required for electricity purchases');
-  }
-
-  if (input.service_type === 'cable' && !input.smartcard_number) {
-    errors.push('Smartcard number is required for cable TV purchases');
   }
 
   // Validate amount

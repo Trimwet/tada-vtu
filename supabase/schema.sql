@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('deposit', 'airtime', 'data', 'cable', 'electricity', 'betting')),
+  type TEXT NOT NULL CHECK (type IN ('deposit', 'airtime', 'data', 'cable', 'electricity', 'betting', 'refund')),
   amount DECIMAL(12,2) NOT NULL,
   phone_number TEXT,
   service_id TEXT,

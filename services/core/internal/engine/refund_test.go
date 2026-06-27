@@ -19,7 +19,7 @@ func TestProcessRefundCompletesWorkflow(t *testing.T) {
 	tx := transactions.NewService()
 	runSvc := runs.NewService()
 	providerRegistry := providers.NewRegistry()
-	reconSvc := reconciliation.NewService()
+	reconSvc := reconciliation.NewService(nil)
 	svc := NewService(l, tx, runSvc, providerRegistry, reconSvc)
 
 	result, err := svc.ProcessRefund("acct-1", 2000, "req-1")

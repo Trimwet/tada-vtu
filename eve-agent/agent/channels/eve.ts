@@ -1,5 +1,5 @@
 import { eveChannel } from "eve/channels/eve";
-import { localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { localDev, vercelOidc } from "eve/channels/auth";
 
 export default eveChannel({
   auth: [
@@ -7,9 +7,22 @@ export default eveChannel({
     localDev(),
     // Lets the eve TUI and your Vercel deployments reach the deployed agent.
     vercelOidc(),
-    // This placeholder will not allow browser requests in production.
-    // Replace it with your app's auth provider, like Auth.js or Clerk,
-    // or use none() for a public demo.
-    placeholderAuth(),
+    // Allows Go Core (and the Next.js WhatsApp webhook) to call Eve using
+    // the shared CORE_SECRET as a Bearer token.  The x-tada-user-id header
+    // carries the Supabase profile ID so Eve can scope actions to the right user.
+    async (request) => {
+      const authHeader = request.headers.get("Authorization");
+      const secret = process.env.CORE_SECRET;
+      if (secret && authHeader === `Bearer ${secret}`) {
+        const userId = request.headers.get("x-tada-user-id");
+        return {
+          authenticator: "http-basic",
+          principalId: userId || "vtu-core-system",
+          principalType: "user",
+          attributes: {},
+        };
+      }
+      return null;
+    },
   ],
 });

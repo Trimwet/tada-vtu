@@ -3,7 +3,7 @@ package reconciliation
 import "testing"
 
 func TestRecordCreatesPendingEntry(t *testing.T) {
-	svc := NewService()
+	svc := NewService(nil)
 	entry, err := svc.Record("acct-1", "deposit", 5000, "req-1")
 	if err != nil {
 		t.Fatalf("Record returned error: %v", err)

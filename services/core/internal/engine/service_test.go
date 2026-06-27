@@ -15,7 +15,7 @@ func TestProcessDepositCompletesWorkflow(t *testing.T) {
 	tx := transactions.NewService()
 	runSvc := runs.NewService()
 	providerRegistry := providers.NewRegistry()
-	reconSvc := reconciliation.NewService()
+	reconSvc := reconciliation.NewService(nil)
 	svc := NewService(l, tx, runSvc, providerRegistry, reconSvc)
 
 	result, err := svc.ProcessDeposit("acct-1", 5000, "req-1")
@@ -51,7 +51,7 @@ func TestProcessTransferMovesFundsBetweenAccounts(t *testing.T) {
 	tx := transactions.NewService()
 	runSvc := runs.NewService()
 	providerRegistry := providers.NewRegistry()
-	reconSvc := reconciliation.NewService()
+	reconSvc := reconciliation.NewService(nil)
 	svc := NewService(l, tx, runSvc, providerRegistry, reconSvc)
 
 	result, err := svc.ProcessTransfer("source", "destination", 400, "req-2")

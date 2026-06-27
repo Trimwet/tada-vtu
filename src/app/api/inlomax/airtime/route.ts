@@ -11,10 +11,18 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey);
 }
 
+function hashPin(pin: string): string {
+  return Buffer.from(pin + 'tada_salt_2024').toString('base64');
+}
+
+function verifyPin(pin: string, hash: string): boolean {
+  return hashPin(pin) === hash;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { network, phone, amount, userId } = body;
+    const { network, phone, amount, userId, pin } = body;
 
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
     const rateLimit = checkRateLimit(`airtime:${identifier}`, RATE_LIMITS.transaction);
@@ -47,6 +55,33 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ status: false, message: 'Authentication required' }, { status: 401 });
+    }
+
+    // ── PIN verification (Supabase only — Core doesn't handle PINs) ──────────
+    const supabase = getSupabaseAdmin();
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('pin')
+      .eq('id', userId)
+      .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
+    }
+
+    if (!profile.pin) {
+      return NextResponse.json(
+        { status: false, message: 'Please set up your transaction PIN first' },
+        { status: 400 }
+      );
+    }
+
+    if (!pin) {
+      return NextResponse.json({ status: false, message: 'Transaction PIN is required' }, { status: 400 });
+    }
+
+    if (!verifyPin(pin, profile.pin)) {
+      return NextResponse.json({ status: false, message: 'Incorrect transaction PIN' }, { status: 400 });
     }
 
     const reference = `AIR_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
@@ -84,7 +119,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Step 2: Patch transaction metadata ───────────────────────────────────
-    const supabase = getSupabaseAdmin();
     await supabase
       .from('transactions')
       .update({ phone_number: phone, network: network.toUpperCase() })

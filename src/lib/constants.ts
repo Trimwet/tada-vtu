@@ -54,9 +54,6 @@ export const NETWORKS: Array<{ value: string; label: string; color: string }> = 
 export const SERVICE_TYPES = [
   { value: "airtime", label: "Airtime", icon: "Phone" },
   { value: "data", label: "Data", icon: "Wifi" },
-  { value: "cable", label: "Cable TV", icon: "Tv" },
-  { value: "electricity", label: "Electricity", icon: "Zap" },
-  { value: "betting", label: "Betting", icon: "DollarSign" },
 ];
 
 

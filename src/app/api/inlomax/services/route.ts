@@ -10,8 +10,6 @@ export async function GET() {
       const services = {
         airtime: ['MTN', 'Airtel', 'Glo', '9mobile'],
         data: ['MTN', 'Airtel', 'Glo', '9mobile'],
-        cable: ['DSTV', 'GOTV', 'Startimes'],
-        electricity: ['IKEDC', 'EKEDC', 'AEDC', 'KEDCO', 'PHED', 'JED', 'IBEDC', 'KAEDCO', 'BEDC'],
       };
       return NextResponse.json({ status: 'success', data: services });
     }
@@ -20,9 +18,16 @@ export async function GET() {
     const result = await getServices();
     
     if (result.status === 'success' && result.data) {
+      const data = result.data as {
+        airtime?: unknown[];
+        data?: unknown[];
+      };
       return NextResponse.json({
         status: 'success',
-        data: result.data
+        data: {
+          airtime: data.airtime ?? [],
+          data: data.data ?? [],
+        }
       });
     }
 

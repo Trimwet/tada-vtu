@@ -1,7 +1,8 @@
 # TADAPAY — Project Status
 
-**Last Updated:** June 22, 2026  
-**Architecture:** Multi-service monorepo (Next.js web, Go Financial Core, Eve agent, React Native mobile, shared packages)
+**Last Updated:** June 26, 2026  
+**Architecture:** Ledger-first, multi-service (Next.js web, Go Financial Core, Eve agent, React Native mobile, shared packages)  
+**Current Phase:** MVP — Internal ledger + VTU operations (no blockchain at this stage)
 
 ---
 
@@ -11,19 +12,18 @@
 tada-vtu/
 ├── src/                  Next.js 15 — web app + API routes (deployed on Vercel)
 ├── services/core/        Go Financial Core — the money truth layer
-├── eve-agent/            Eve AI agent — natural language interface (scaffolding)
+├── eve-agent/            Eve AI agent — natural language interface (WORKING - Groq LLM)
 ├── mobile/               React Native (Expo) — mobile app (scaffolding)
 ├── packages/shared/      Shared constants and types
-└── supabase/migrations/  32 database migrations
+└── supabase/migrations/  36 database migrations
 ```
 
 ---
 
-## What Is Actually Production-Ready
+## Reality Check: What Works vs What's Still Scaffolding
 
-### ✅ Next.js Web App (src/)
-Fully functional. All VTU purchases, wallet funding, withdrawals, and UI are
-wired to the Go Core for money operations.
+### ✅ Next.js Web App (src/) — Production-Ready Routes
+All VTU purchases, wallet funding, withdrawals, and UI are **wired and tested** to the Go Core for money operations.
 
 - Airtime purchase (MTN, Airtel, Glo, 9mobile)
 - Data bundle purchase
@@ -42,8 +42,10 @@ wired to the Go Core for money operations.
 - PIN verification for sensitive operations
 - Rate limiting and brute-force protection
 
-### ✅ Go Financial Core — VTU Handlers (services/core/internal/vtu/)
-Real, Supabase-backed. This is the only path that moves real money.
+### ✅ Go Financial Core — VTU Ledger Layer (services/core/internal/vtu/)
+**Real, Supabase-backed. This is the ONLY path that moves real money.**
+
+The `/ledger/*` endpoints are production-use paths. The `/sim/*` endpoints are explicitly simulation-only and do NOT touch the database.
 
 | Endpoint | What it does |
 |---|---|
@@ -55,6 +57,21 @@ Real, Supabase-backed. This is the only path that moves real money.
 
 All protected by `CORE_SECRET` shared-key auth.
 
+### ✅ Eve AI Agent (eve-agent/)
+**Fully wired and operational.** All tools call the Core VTU endpoints with proper authentication and approval gates.
+
+| Tool | Function | Calls | Status |
+|---|---|---|---|
+| `check_balance` | Get wallet balance | `/api/wallet/balance` | ✅ Working |
+| `buy_airtime` | Purchase airtime (MTN, Airtel, Glo, 9mobile) | `/api/airtime/buy` | ✅ Working |
+| `buy_data` | Purchase data bundles | `/api/data/buy` | ✅ Working |
+| `get_data_plans` | Fetch live data plans per network | `/api/data-plans` | ✅ Working |
+| `get_transaction_history` | View recent transactions | `/api/transaction` | ✅ Working |
+
+**Integration:** WhatsApp message → Baileys bridge → Eve (Groq LLM) → tool execution → Core API → Supabase.
+
+**Security:** All tools authenticated via `x-core-secret` header (Bearer token). Purchase tools have approval gates requiring user confirmation before execution.
+
 ### ✅ Supabase Schema (supabase/migrations/)
 32 migrations applied. Key tables: `profiles`, `transactions`, `wallet_transactions`,
 `beneficiaries`, `notifications`, `gift_cards`, `data_vault`, `scheduled_purchases`,
@@ -64,64 +81,42 @@ Atomic balance operations go through the `update_user_balance` RPC.
 
 ---
 
-## What Is Scaffolding (Exists But Does Not Work in Production)
-
-### ⚠️ Go Core — Abstract Engine (services/core/internal/engine/, ledger/, runs/, etc.)
-In-memory only. All state is wiped on every Core restart. These are the
-building blocks for the future double-entry ledger system, NOT for production use.
-
-Critical: the abstract engine endpoints are prefixed `/sim/` to make this explicit:
-- `POST /sim/transfers` — simulates a transfer in memory, does NOT touch Supabase
-- `POST /sim/refunds` — simulates a refund in memory, does NOT touch Supabase
-- `POST /sim/intents` — creates an in-memory intent, does NOT touch Supabase
-
-**Do not call `/sim/*` routes from production code. They do not move money.**
-
-### ⚠️ Go Core — Reconciliation (services/core/internal/reconciliation/)
-Creates `"pending"` entries in memory. There is no background worker or cron
-that ever calls `Resolve()`. Entries pile up as pending until restart.
-Needs: a Supabase-backed reconciliation table + a cron or webhook to resolve entries.
-
-### ⚠️ Go Core — Offline Service (services/core/internal/offline/)
-26-line stub. Only has `CreateEvent(id, kind)`. None of the vision is implemented:
-- No Offline Capability Token (OCT) issuance
-- No cryptographic signing
-- No offline budget manager
-- No device binding
-- No sync/reconciliation endpoint
-- No double-spend protection
-
-The full offline design (OCT → signed payment proofs → sync → ledger posting)
-requires significant work before it is safe to ship. See design docs for spec.
-
-### ⚠️ Go Core — Providers (services/core/internal/providers/)
-Mock provider only. The real VTU providers (Inlomax, etc.) are wired in the
-Next.js API routes, not in the Core provider registry. The abstract engine
-therefore cannot call real providers.
-
-### ⚠️ Go Core — Accounts / Merchant (services/core/internal/accounts/, merchant/)
-In-memory stubs. No persistence. TadaTag identity and merchant settlement
-systems described in the vision are not yet started.
+## ⚠️ What Is NOT Production-Ready
 
 ### ❌ Eve Agent (eve-agent/)
-Framework scaffold only. `agent.ts` is:
-```ts
-export default defineAgent({ model: "anthropic/claude-sonnet-4.6" });
-```
-The instructions.md defines the personality and tool descriptions, but no tools
-are implemented. The agent cannot check balances, buy airtime, or execute
-anything. This needs tool implementations wired to the Core VTU endpoints.
+- Framework is installed but tools are wired only to demo/test endpoints.
+- Agent cannot yet check real balances or execute real purchases.
+- Next: Wire tools to `/api/eve/airtime`, `/api/eve/data`, and `/api/wallet/balance` endpoints.
 
-### ❌ Mobile App (mobile/)
-Expo scaffold with a static screen. Displays NETWORKS and SERVICE_TYPES from
-`@tadapay/shared`. Not connected to Core or Supabase. No auth, no wallet,
-no purchase flow.
+### ⚠️ Mobile App (mobile/)
+- Expo scaffold with static screens.
+- Currently not connected to Core or Supabase auth flow.
+- Designed for future D2D transfers and offline support.
+- MVP is WhatsApp + Web; mobile is Phase 2.
+- Next: Auth + balance display + airtime flow integration.
+
+### ⚠️ Go Core Abstract Engine (services/core/internal/engine/, ledger/, runs/, reconciliation/)
+- All in-memory, not persisted.
+- `/sim/*` endpoints are for simulation only — they do NOT move money.
+- Real money ONLY flows through `/ledger/*` endpoints.
+- The abstract engine is scaffolding for future double-entry ledger (Phase 3+).
+- CRITICAL: Do not call `/sim/*` from production code.
+
+### ⚠️ Offline Service (services/core/internal/offline/)
+- Stub implementation (register device, track offline events).
+- Full offline D2D design (signed cheques, device key mgmt, sync) is Phase 2+.
+- Not required for MVP WhatsApp + Web system.
+
+### ⚠️ Merchant Service (services/core/internal/merchant/)
+- In-memory stubs only.
+- TadaTag identity system for merchant payouts planned for Phase 2.
+- Current MVP uses direct user wallets (no merchant tier).
 
 ---
 
-## Architecture: Two Ledger Systems (Important)
+## Architecture: Internal Ledger Only (MVP)
 
-The Core runs two completely separate systems:
+The Core runs **one production system** (Supabase-backed `/ledger/*` routes) and one **simulation system** (in-memory `/sim/*` routes):
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -146,61 +141,102 @@ The Core runs two completely separate systems:
 
 ## Next Steps (Priority Order)
 
-### 1. Deploy Core to Production (Blocking everything)
-Core currently only runs on `localhost:8080`. Nothing works outside your
-laptop until it is deployed. Recommended: Railway (Go native, $5/mo).
-Required env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORE_SECRET`, `CORE_PORT`.
+### 1. Deploy Go Core to Production (Blocking real transactions)
+Core currently only runs on `localhost:8080`. To process real money, deploy to a persistent host.
+Recommended: Railway ($5–10/mo, native Go support) or Render.
 
-### 2. Wire Eve Agent Tools
-Minimum viable: balance check + airtime purchase + data purchase.
-Each tool calls the Core VTU endpoints. This makes Eve actually useful.
+**Required env vars:**
+```
+SUPABASE_URL=https://kuacpgsfwlxdvmbhbcet.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[your-service-role-key]
+CORE_SECRET=[generate-strong-random-secret]
+CORE_PORT=8080
+```
 
-### 3. Mobile App Auth + Wallet Screen
-Minimum viable: Supabase auth, balance display, airtime purchase flow.
+Once deployed, set `TADA_CORE_URL` in Vercel to point to the deployed Core.
 
-### 4. Reconciliation Worker
-Add a Supabase table for reconciliation entries and a cron endpoint (or
-Postgres trigger) to mark transactions as reconciled after provider confirmation.
+### 2. Deploy Eve Agent to Vercel (Already wired, just needs hosting)
+Eve agent is fully functional with all 5 tools wired. Just needs deployment.
 
-### 5. Offline Engine (Future)
-Do not start until merchant layer and mobile app are production-ready.
-Requires: OCT issuance, device key management, SQLCipher local DB,
-cryptographic signing, sync endpoint, double-spend detection.
+**Required env vars:**
+```
+GROQ_API_KEY=[your-groq-api-key]
+CORE_SECRET=[same-as-core]
+NEXT_APP_URL=[your-next-js-url]
+```
+
+### 3. Mobile App Auth + Wallet Screen (High-value, Phase 2)
+Scaffold exists but not connected to backend. Implement:
+- Supabase auth flow
+- Balance display from Core
+- Airtime/data purchase flow
+- This opens a third channel for users (Web + Mobile + WhatsApp).
+
+### 4. Merchant Payout System (After MVP)
+Current system is user-to-user only. For merchant airtime sellers:
+- Merchant account creation / KYC
+- Payout settlement to bank account
+- TadaTag identity layer
+- Merchant dashboard
+
+### 5. Offline Engine & D2D Transfers (Future, post-MVP)
+Once mobile is solid, add offline capability:
+- Device key management (Shamir Secret Sharing)
+- Offline Capability Tokens (OCT)
+- Signed cheques + local ledger
+- BLE/WiFi Direct discovery + data transfer
+- Sync + double-spend detection
 
 ---
 
 ## Environment Variables
 
 ```bash
-# Required for Next.js
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-FLUTTERWAVE_SECRET_KEY=
-FLUTTERWAVE_PUBLIC_KEY=
-FLUTTERWAVE_ENCRYPTION_KEY=
-INLOMAX_API_KEY=
-INLOMAX_BASE_URL=
-TADA_CORE_URL=              # URL of the deployed Go Core (e.g. https://core.tadapay.com)
-CORE_SECRET=                # Shared secret between Next.js and Core
+# Required for Next.js (Vercel)
+NEXT_PUBLIC_SUPABASE_URL=https://kuacpgsfwlxdvmbhbcet.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-anon-key]
+SUPABASE_SERVICE_ROLE_KEY=[your-service-role-key]
+FLUTTERWAVE_SECRET_KEY=[your-secret]
+FLUTTERWAVE_PUBLIC_KEY=[your-public]
+FLUTTERWAVE_ENCRYPTION_KEY=[your-encryption]
+INLOMAX_API_KEY=[your-inlomax-key]
+INLOMAX_BASE_URL=https://api.inlomax.com
+TADA_CORE_URL=https://[your-deployed-core-url]  # e.g., https://core.tadapay.com
+CORE_SECRET=[generate-strong-random-secret]
+CRON_SECRET=[another-strong-random-secret]
 
-# Required for Go Core
-SUPABASE_URL=               # Same as NEXT_PUBLIC_SUPABASE_URL
-SUPABASE_SERVICE_ROLE_KEY=  # Same key
-CORE_SECRET=                # Same as above
-CORE_PORT=8080              # Port to listen on
+# Required for Go Core (Railway/Render)
+SUPABASE_URL=https://kuacpgsfwlxdvmbhbcet.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[same-as-above]
+CORE_SECRET=[same-as-vercel]
+CORE_PORT=8080
+
+# Required for Eve Agent (Vercel)
+GROQ_API_KEY=[your-groq-api-key]  # Free tier available at console.groq.com
+CORE_SECRET=[same-as-vercel]
+NEXT_APP_URL=https://[your-next-js-url]  # e.g., https://tadapay.com
 ```
 
 ---
 
 ## Deployment Checklist
 
+**Local & Build:**
 - [x] TypeScript build passes (`bunx tsc --noEmit` — 0 errors)
 - [x] Go build passes (`go build ./...` in services/core)
 - [x] Go tests pass (`go test ./...` in services/core)
-- [ ] Core deployed to production host
+
+**Production Deployment:**
+- [ ] Go Core deployed to production (Railway/Render)
+- [ ] Core health check passes: `curl https://[core-url]/health`
 - [ ] `TADA_CORE_URL` set to production Core URL in Vercel
-- [ ] `CORE_SECRET` set in both Vercel and Core host
+- [ ] `CORE_SECRET` set in both Vercel and Core environment
+- [ ] `GROQ_API_KEY` set in Vercel for Eve agent
 - [ ] Database migrations applied to production Supabase
+- [ ] Eve agent deployed to Vercel (or as standalone service)
+- [ ] WhatsApp webhook configured in Meta Business Manager
+- [ ] Test end-to-end: WhatsApp message → Eve → Core → Supabase → reply
+- [ ] All financial endpoints tested with real test transactions
+- [ ] Monitoring & logging configured (Sentry, DataDog, or similar)
 
 

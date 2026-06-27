@@ -9,10 +9,12 @@
 
 The repository is currently split between two architectural layers:
 
-- The main branch is the product-facing VTU platform: Next.js app, Supabase data layer, existing VTU flows, payments, admin tools, and data-vault functionality.
-- The financial branch adds a new money-operations core: a standalone Go-based financial engine for intents, ledger effects, execution runs, provider orchestration, and reconciliation.
+- **Next.js main app** (Vercel): Product UI, API routes, customer-facing dashboard, admin panel.
+- **Go Financial Core** (Railway): Single-writer ledger service. Real money routes (`/ledger/debit`, `/ledger/deposit`, `/ledger/refund`) are Supabase-backed and production-ready.
+- **Eve AI Agent** (Vercel): WhatsApp bot with working tools (balance check, airtime purchase, data purchase). Uses Groq LLM.
+- **Supabase**: Postgres database, Row-Level Security, atomic RPC functions for debit/deposit/refund.
 
-The grand plan is to keep the product experience on the main stack, while moving money movement into a dedicated financial core that becomes the canonical execution layer.
+The architecture keeps the product experience on Next.js, routes all financial operations through the Go Core VTU handlers, and adds natural-language access via Eve.
 
 ---
 
@@ -34,10 +36,13 @@ A standalone Go service now exists under [services/core](../services/core) with 
   Workflow orchestration for deposit, transfer, and refund flows.
 
 - [services/core/internal/ledger](../services/core/internal/ledger)  
-  Core ledger operations for credit, debit, and transfer.
+  **In-memory only for simulation**. Real ledger operations (debit, credit, transfer) go through [services/core/internal/store/supabase.go](../services/core/internal/store/supabase.go) via atomic RPCs.
+
+- [services/core/internal/vtu](../services/core/internal/vtu)  
+  **PRODUCTION ROUTES**: HTTP handlers for `/ledger/debit`, `/ledger/deposit`, `/ledger/refund`, `/wallet/{id}/balance`. Calls Supabase atomic RPCs.
 
 - [services/core/internal/merchant](../services/core/internal/merchant)  
-  Merchant registration scaffold.
+  Merchant registration scaffold (not yet used).
 
 - [services/core/internal/offline](../services/core/internal/offline)  
   Offline-event creation for delayed/queued finance flows.
@@ -66,16 +71,15 @@ A standalone Go service now exists under [services/core](../services/core) with 
 
 #### Exposed API surface
 
-The current server exposes routes for:
+**Production routes (Supabase-backed, real money):**
+- `GET /health` — service status
+- `POST /ledger/deposit` — credit wallet (idempotent, atomic)
+- `POST /ledger/debit` — debit wallet (idempotent, atomic, no overdraft)
+- `POST /ledger/refund` — refund failed transaction (idempotent, atomic)
+- `GET /wallet/{userId}/balance` — read current balance
 
-- health checks
-- account creation and lookup
-- balance lookup
-- merchant creation
-- offline-event creation
-- transfer execution
-- refund execution
-- intent creation and lookup
+**Simulation routes (in-memory, do NOT use for real money):**
+- `POST /sim/transfers`, `/sim/refunds`, `/sim/intents` — scaffolding only, wiped on restart
 
 #### Verification status
 

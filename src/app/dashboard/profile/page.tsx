@@ -193,6 +193,11 @@ export default function ProfilePage() {
       href: "/dashboard/settings",
     },
     {
+      name: "Link WhatsApp",
+      icon: "logo-whatsapp",
+      href: "/link-whatsapp",
+    },
+    {
       name: "Help & Support",
       icon: "help-circle-outline",
       href: "https://wa.me/2347058748217?text=Hello%20TADA%20VTU%2C%20I%20need%20assistance%20with...",

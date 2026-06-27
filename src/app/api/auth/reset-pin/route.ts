@@ -65,9 +65,12 @@ async function handler(request: NextRequest) {
     }
 
     // Validate new PIN
-    if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+    const { pinSchema, validateFormData } = await import('@/lib/validation');
+    const validation = validateFormData(pinSchema, newPin);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { success: false, message: 'New PIN must be exactly 4 digits' },
+        { success: false, message: validation.errors?.[0] || 'Invalid new PIN format' },
         { status: 400 }
       );
     }

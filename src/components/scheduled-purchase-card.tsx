@@ -63,10 +63,6 @@ export function ScheduledPurchaseCard({
         return "call";
       case "data":
         return "wifi";
-      case "cable":
-        return "tv";
-      case "electricity":
-        return "flash";
       default:
         return "card";
     }
@@ -212,7 +208,7 @@ export function NoSchedulesCard({ onCreate }: { onCreate: () => void }) {
         </div>
         <h3 className="font-medium text-foreground mb-1">No Scheduled Purchases</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Set up automatic purchases for airtime, data, or bills
+          Set up automatic purchases for airtime or data
         </p>
         <Button onClick={onCreate} className="bg-green-500 hover:bg-green-600">
           <IonIcon name="add" size="18px" className="mr-1" />

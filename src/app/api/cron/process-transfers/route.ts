@@ -190,31 +190,20 @@ export async function GET(request: NextRequest) {
           if (depositCount === 1) {
             const REFERRAL_BONUS = 100;
 
-            // Use the atomic RPC to credit the referrer — safe for concurrent runs
-            const { error: bonusError } = await supabase.rpc('update_user_balance', {
-              p_user_id: profile.referred_by,
-              p_amount: REFERRAL_BONUS,
-              p_type: 'credit',
-              p_description: `Referral bonus - ${userId.slice(0, 8)}`,
-              p_reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
-            });
-
-            if (!bonusError) {
-              await supabase.from('transactions').insert({
-                user_id: profile.referred_by,
-                type: 'deposit',
+            const refBonusRef = `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`;
+            try {
+              await coreDeposit({
+                userId: profile.referred_by,
                 amount: REFERRAL_BONUS,
-                status: 'success',
+                walletCredit: REFERRAL_BONUS,
+                fee: 0,
+                reference: refBonusRef,
+                externalReference: refBonusRef,
+                paymentType: 'referral_bonus',
                 description: `Referral bonus - ${userId.slice(0, 8)}`,
-                reference: `REF_BONUS_${Date.now()}_${userId.slice(0, 8)}`,
               });
-
-              await supabase.from('notifications').insert({
-                user_id: profile.referred_by,
-                type: 'success',
-                title: 'Referral Bonus! 🎉',
-                message: `You earned ₦${REFERRAL_BONUS} because someone you referred made their first deposit!`,
-              });
+            } catch (bonusError) {
+              console.error('❌ Failed to credit referral bonus:', bonusError);
             }
           }
         }

@@ -59,8 +59,9 @@ export function TransactionReceiptModal({
   };
 
   const getTransactionIcon = (type: string, amount: number) => {
+    if (type === 'refund') return "arrow-undo-outline";
     if (amount > 0) return "arrow-down-circle";
-    
+
     switch (type) {
       case 'airtime': return "call";
       case 'data': return "wifi";
@@ -68,6 +69,7 @@ export function TransactionReceiptModal({
       case 'electricity': return "flash";
       case 'betting': return "football";
       case 'withdrawal': return "arrow-up-circle";
+      case 'deposit': return "arrow-down-circle";
       default: return "receipt";
     }
   };

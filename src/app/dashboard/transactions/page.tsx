@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'withdrawal';
+type FilterType = 'all' | 'deposit' | 'airtime' | 'data' | 'withdrawal' | 'refund';
 type StatusFilter = 'all' | 'success' | 'pending' | 'failed';
 
 const PAGE_SIZE = 20;
@@ -102,6 +102,7 @@ export default function TransactionsPage() {
       airtime: 'call',
       data: 'wifi',
       withdrawal: 'arrow-up-circle',
+      refund: 'arrow-undo-outline',
       gift_room_create: 'gift-outline',
       gift_room_refund: 'arrow-undo-outline',
       gift_room_claim: 'gift',
@@ -134,6 +135,7 @@ export default function TransactionsPage() {
     { key: 'airtime', label: 'Airtime' },
     { key: 'data', label: 'Data' },
     { key: 'withdrawal', label: 'Withdrawals' },
+    { key: 'refund', label: 'Refunds' },
   ];
 
   return (
@@ -260,15 +262,17 @@ export default function TransactionsPage() {
                   {/* Icon */}
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                     transaction.status === 'failed' ? 'bg-red-500/10' :
-                    transaction.amount > 0 ? 'bg-green-500/10' :
-                    transaction.amount < 0 ? 'bg-blue-500/10' :
-                    'bg-muted'
+                  transaction.type === 'refund' ? 'bg-amber-500/10' :
+                  transaction.amount > 0 ? 'bg-green-500/10' : 
+                  transaction.amount < 0 ? 'bg-blue-500/10' :
+                  'bg-muted'
                   }`}>
                     <IonIcon
                       name={getTransactionIcon(transaction.type, transaction.description)}
                       size="20px"
                       className={
                         transaction.status === 'failed' ? 'text-red-500' :
+                        transaction.type === 'refund' ? 'text-amber-500' :
                         transaction.amount > 0 ? 'text-green-500' :
                         transaction.amount < 0 ? 'text-blue-500' :
                         'text-muted-foreground'
@@ -302,6 +306,7 @@ export default function TransactionsPage() {
                       <div className="text-right shrink-0">
                         <p className={`font-semibold text-sm ${
                           transaction.status === 'failed' ? 'text-red-500' :
+                          transaction.type === 'refund' ? 'text-amber-500' :
                           transaction.amount > 0 ? 'text-green-500' :
                           'text-foreground'
                         }`}>

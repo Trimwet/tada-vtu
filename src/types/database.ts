@@ -65,6 +65,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      whatsapp_pending_links: {
+        Row: {
+          id: string;
+          whatsapp_number: string;
+          verification_code: string;
+          user_id: string | null;
+          expires_at: string;
+          created_at: string | null;
+          verified_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          whatsapp_number: string;
+          verification_code: string;
+          user_id?: string | null;
+          expires_at: string;
+          created_at?: string | null;
+          verified_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          whatsapp_number?: string;
+          verification_code?: string;
+          user_id?: string | null;
+          expires_at?: string;
+          created_at?: string | null;
+          verified_at?: string | null;
+        };
+        Relationships: [];
+      };
       achievements: {
         Row: {
           id: string;
@@ -129,7 +159,7 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          type: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift';
+          type: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift' | 'refund';
           amount: number;
           phone_number: string | null;
           service_id: string | null;
@@ -145,7 +175,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          type: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift';
+          type: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift' | 'refund';
           amount: number;
           phone_number?: string | null;
           service_id?: string | null;
@@ -161,7 +191,7 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
-          type?: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift';
+          type?: 'deposit' | 'airtime' | 'data' | 'cable' | 'electricity' | 'betting' | 'withdrawal' | 'gift' | 'refund';
           amount?: number;
           phone_number?: string | null;
           service_id?: string | null;
@@ -535,7 +565,7 @@ export type ScheduleStatus = 'success' | 'failed' | 'insufficient_balance' | 'se
 export interface ScheduledPurchase {
   id: string;
   user_id: string;
-  service_type: 'airtime' | 'data' | 'cable' | 'electricity';
+  service_type: 'airtime' | 'data';
   amount: number;
   recipient_phone: string | null;
   network: string | null;

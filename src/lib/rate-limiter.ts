@@ -115,3 +115,45 @@ export function cleanupExpiredEntries(): void {
 
 // Cleanup every 5 minutes
 setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
+
+// ── WhatsApp-specific rate limiter ───────────────────────────────────────────
+// Normal WhatsApp conversations are multi-turn: balance check + plan lookup +
+// confirmation + buy = 6+ messages easily. The generic checkRateLimit (5
+// attempts → 30-min lockout) would block legitimate users within one flow.
+//
+// This implementation uses a simple sliding-window counter:
+//   - 30 messages per 15-minute window
+//   - No lockout — just silently drops once the limit is hit
+//   - Resets automatically when the window expires
+
+const WA_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const WA_MAX_MESSAGES = 30;
+const waStore = new Map<string, { count: number; windowStart: number }>();
+
+export function checkWhatsAppRateLimit(phoneNumber: string): boolean {
+  const now = Date.now();
+  const entry = waStore.get(phoneNumber);
+
+  if (!entry || now - entry.windowStart > WA_WINDOW_MS) {
+    // New window
+    waStore.set(phoneNumber, { count: 1, windowStart: now });
+    return true;
+  }
+
+  entry.count++;
+  if (entry.count > WA_MAX_MESSAGES) return false;
+
+  waStore.set(phoneNumber, entry);
+  return true;
+}
+
+// Include waStore in the periodic cleanup
+const _origCleanup = cleanupExpiredEntries;
+function _cleanupAll(): void {
+  _origCleanup();
+  const now = Date.now();
+  for (const [phone, entry] of waStore) {
+    if (now - entry.windowStart > WA_WINDOW_MS) waStore.delete(phone);
+  }
+}
+setInterval(_cleanupAll, 5 * 60 * 1000);

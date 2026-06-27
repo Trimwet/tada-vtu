@@ -21,7 +21,7 @@ export interface User {
   updatedAt: Date;
 }
 
-export type ServiceType = 'airtime' | 'data' | 'cable' | 'electricity' | 'betting';
+export type ServiceType = 'airtime' | 'data';
 export type NetworkProvider = 'MTN' | 'Airtel' | 'Glo' | '9mobile';
 export type TransactionStatus = 'pending' | 'success' | 'failed';
 export type TransactionType = 'deposit' | 'purchase' | 'referral_bonus' | 'refund';

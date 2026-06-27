@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -47,6 +47,17 @@ next-env.d.ts
 whatsapp-bot/node_modules/
 whatsapp-bot/.wwebjs_auth/
 whatsapp-bot/.wwebjs_cache/
+
+# Baileys live session — contains private keys, NEVER commit
+.baileys-auth/
+
+# Go build cache
+.gocache/
+
+# compiled test binaries
+*_test.exe
+test_bin.exe
+services/core/cmd/server/test_bin.exe
 
 .vercel
 .env*.local

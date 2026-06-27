@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { purchaseData as purchaseDataInlomax, ServiceUnavailableError } from '@/lib/api/inlomax';
+import { coreDebit, coreRefund } from '@/lib/api/core';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 function getSupabaseAdmin() {
@@ -54,10 +55,10 @@ export async function POST(request: NextRequest) {
     const numAmount = amount;
     const supabase = getSupabaseAdmin();
 
-    // Get user profile and balance
+    // ── PIN verification (Supabase only — Core doesn't handle PINs) ──────────
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('balance, pin')
+      .select('pin')
       .eq('id', userId)
       .single();
 
@@ -91,65 +92,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
-    // Check balance
-    const currentBalance = profile.balance || 0;
-    if (currentBalance < numAmount) {
-      return NextResponse.json(
-        { status: false, message: `Insufficient balance. You have ₦${currentBalance.toLocaleString()}` },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique reference
     const reference = `INL_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const description = `${network} ${planName || 'Data'} - ${phone}`;
 
-    // Create pending transaction FIRST
-    const { data: transaction, error: txnError } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: userId,
-        type: 'data',
-        amount: -numAmount,
-        status: 'pending',
-        reference: reference,
-        phone_number: phone,
-        network: network.toUpperCase(),
-        description: `${network} ${planName || 'Data'} - ${phone}`,
-      })
-      .select()
-      .single();
-
-    if (txnError) {
-      console.error('Transaction creation error:', txnError);
+    // ── Step 1: Atomic debit via Core ────────────────────────────────────────
+    let debitResult;
+    try {
+      debitResult = await coreDebit({
+        userId,
+        amount: numAmount,
+        reference,
+        serviceType: 'data',
+        description,
+        metadata: { network, phone_number: phone, plan_id: planId, plan_name: planName },
+      });
+    } catch (debitError) {
+      const msg = debitError instanceof Error ? debitError.message : 'Debit failed';
+      if (msg.includes('insufficient funds')) {
+        const balanceMatch = msg.match(/balance ([\d.]+)/);
+        const bal = balanceMatch ? `₦${Number(balanceMatch[1]).toLocaleString()}` : 'insufficient';
+        return NextResponse.json(
+          { status: false, message: `Insufficient balance. You have ${bal}` },
+          { status: 400 }
+        );
+      }
+      if (msg.includes('profile not found')) {
+        return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
+      }
+      console.error('[DATA/INLOMAX] Core debit failed:', debitError);
       return NextResponse.json(
-        { status: false, message: 'Failed to initiate transaction. Please try again.' },
+        { status: false, message: 'Failed to process payment. Please try again.' },
         { status: 500 }
       );
     }
 
+    // ── Step 2: Patch transaction metadata ───────────────────────────────────
+    await supabase
+      .from('transactions')
+      .update({ phone_number: phone, network: network.toUpperCase() })
+      .eq('reference', reference);
+
+    // ── Step 3: Call provider ─────────────────────────────────────────────────
     try {
-      // Call Inlomax API - planId is the serviceID
-      console.log(`[DATA] Calling Inlomax API: ${network} ${planName} (ID: ${planId}) to ${phone}`);
-
+      console.log(`[DATA/INLOMAX] Calling Inlomax API: ${network} ${planName} (ID: ${planId}) to ${phone}`);
       const result = await purchaseDataInlomax({ serviceID: planId, phone });
-
-      console.log(`[DATA] Inlomax response:`, result.status, result.message);
+      console.log(`[DATA/INLOMAX] Response:`, result.status, result.message);
 
       if (result.status === 'success') {
-        const newBalance = currentBalance - numAmount;
-
-        // Deduct from wallet
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Balance update error:', updateError);
-        }
-
-        // Update transaction as success
         await supabase
           .from('transactions')
           .update({
@@ -157,64 +146,86 @@ export async function POST(request: NextRequest) {
             external_reference: result.data?.reference,
             response_data: result,
           })
-          .eq('id', transaction.id);
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
-          transactionId: transaction.reference,
+          transactionId: reference,
           message: `${planName || 'Data'} sent to ${phone} successfully!`,
           data: {
-            reference: transaction.reference,
+            reference,
             externalReference: result.data?.reference,
             network,
             phone,
             dataPlan: planName,
             amount: numAmount,
-            newBalance,
+            newBalance: debitResult.newBalance,
           },
         });
-      } else if (result.status === 'processing') {
-        // Transaction is processing
+      }
+
+      if (result.status === 'processing') {
         await supabase
           .from('transactions')
           .update({
             status: 'pending',
             external_reference: result.data?.reference,
           })
-          .eq('id', transaction.id);
+          .eq('reference', reference);
 
         return NextResponse.json({
           status: true,
           processing: true,
-          transactionId: transaction.reference,
+          transactionId: reference,
           message: 'Transaction is processing. You will be notified when complete.',
           data: {
-            reference: transaction.reference,
+            reference,
             status: 'processing',
           },
         });
-      } else {
-        // Transaction failed
-        await supabase
-          .from('transactions')
-          .update({ status: 'failed' })
-          .eq('id', transaction.id);
-
-        return NextResponse.json({
-          status: false,
-          message: result.message || 'Data purchase failed. Please try again.',
-        });
       }
+
+      // Provider returned failure — refund immediately
+      try {
+        await coreRefund({
+          userId,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[DATA/INLOMAX] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json({
+        status: false,
+        message: result.message || 'Data purchase failed. Please try again.',
+      });
     } catch (apiError) {
-      console.error('[DATA] API Error:', apiError);
+      console.error('[DATA/INLOMAX] Provider error:', apiError);
 
-      // Mark transaction as failed
-      await supabase
-        .from('transactions')
-        .update({ status: 'failed' })
-        .eq('id', transaction.id);
+      // Provider threw — refund the user
+      try {
+        await coreRefund({
+          userId,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[DATA/INLOMAX] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
-      // Handle insufficient admin balance gracefully
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(
           { status: false, message: 'Service is unavailable. Please try again later.' },
@@ -222,15 +233,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const errorMessage = apiError instanceof Error ? apiError.message : 'Service temporarily unavailable';
       return NextResponse.json(
-        { status: false, message: errorMessage },
+        { status: false, message: apiError instanceof Error ? apiError.message : 'Service temporarily unavailable' },
         { status: 500 }
       );
     }
-
   } catch (error) {
-    console.error('[DATA] Unexpected error:', error);
+    console.error('[DATA/INLOMAX] Unexpected error:', error);
     return NextResponse.json(
       { status: false, message: 'An unexpected error occurred. Please try again.' },
       { status: 500 }

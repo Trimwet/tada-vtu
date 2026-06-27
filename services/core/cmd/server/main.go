@@ -36,20 +36,20 @@ func main() {
 		port = "8080"
 	}
 
+	// ── VTU layer (Supabase-connected, used by Next.js)
+	db := store.New()
+	vtuHandlers := vtu.New(db)
+
 	// ── Abstract financial engine (in-memory, intent/run/reconciliation model)
 	l := ledger.NewLedger()
 	tx := transactions.NewService()
 	runSvc := runs.NewService()
 	providerRegistry := providers.NewRegistry()
-	reconSvc := reconciliation.NewService()
+	reconSvc := reconciliation.NewService(db)
 	accountSvc := accounts.NewService()
 	merchantSvc := merchant.NewService()
 	offlineSvc := offline.NewService()
 	engineSvc := engine.NewService(l, tx, runSvc, providerRegistry, reconSvc)
-
-	// ── VTU layer (Supabase-connected, used by Next.js)
-	db := store.New()
-	vtuHandlers := vtu.New(db)
 
 	// ── Startup health checks ──────────────────────────────────────────────
 	log.Printf("🚀 TADAPAY Core starting on port %s", port)
@@ -85,9 +85,9 @@ func main() {
 	// ── VTU ledger endpoints (Supabase-backed, auth required) ────────────
 	// These are what Next.js calls for every money movement.
 	mux.HandleFunc("/ledger/deposit", middleware.RequireInternalAuth(vtuHandlers.Deposit))
-	mux.HandleFunc("/ledger/debit",   middleware.RequireInternalAuth(vtuHandlers.Debit))
-	mux.HandleFunc("/ledger/refund",  middleware.RequireInternalAuth(vtuHandlers.Refund))
-	mux.HandleFunc("/wallet/",        middleware.RequireInternalAuth(vtuHandlers.Balance))
+	mux.HandleFunc("/ledger/debit", middleware.RequireInternalAuth(vtuHandlers.Debit))
+	mux.HandleFunc("/ledger/refund", middleware.RequireInternalAuth(vtuHandlers.Refund))
+	mux.HandleFunc("/wallet/", middleware.RequireInternalAuth(vtuHandlers.Balance))
 
 	// ── Abstract engine endpoints (auth required) ─────────────────────────
 	// ⚠️  SIMULATION ONLY — these endpoints use the IN-MEMORY engine.
@@ -96,13 +96,13 @@ func main() {
 	//
 	// These exist as scaffolding for the future double-entry ledger system.
 	// Do NOT call these from Next.js routes or Eve tools expecting real money movement.
-	mux.HandleFunc("/sim/accounts",       middleware.RequireInternalAuth(makeAccountsHandler(accountSvc)))
-	mux.HandleFunc("/sim/balances",       middleware.RequireInternalAuth(makeBalancesHandler(l)))
-	mux.HandleFunc("/sim/merchants",      middleware.RequireInternalAuth(makeMerchantsHandler(merchantSvc)))
+	mux.HandleFunc("/sim/accounts", middleware.RequireInternalAuth(makeAccountsHandler(accountSvc)))
+	mux.HandleFunc("/sim/balances", middleware.RequireInternalAuth(makeBalancesHandler(l)))
+	mux.HandleFunc("/sim/merchants", middleware.RequireInternalAuth(makeMerchantsHandler(merchantSvc)))
 	mux.HandleFunc("/sim/offline-events", middleware.RequireInternalAuth(makeOfflineHandler(offlineSvc)))
-	mux.HandleFunc("/sim/transfers",      middleware.RequireInternalAuth(makeTransfersHandler(engineSvc)))
-	mux.HandleFunc("/sim/refunds",        middleware.RequireInternalAuth(makeRefundsHandler(engineSvc)))
-	mux.HandleFunc("/sim/intents",        middleware.RequireInternalAuth(makeIntentsHandler(engineSvc, tx)))
+	mux.HandleFunc("/sim/transfers", middleware.RequireInternalAuth(makeTransfersHandler(engineSvc)))
+	mux.HandleFunc("/sim/refunds", middleware.RequireInternalAuth(makeRefundsHandler(engineSvc)))
+	mux.HandleFunc("/sim/intents", middleware.RequireInternalAuth(makeIntentsHandler(engineSvc, tx)))
 
 	log.Printf("   POST /ledger/deposit     ← Next.js wallet funding")
 	log.Printf("   POST /ledger/debit       ← Next.js VTU purchase")
@@ -132,7 +132,9 @@ func makeAccountsHandler(svc *accounts.Service) http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		var req struct{ ID string `json:"id"` }
+		var req struct {
+			ID string `json:"id"`
+		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -194,15 +196,12 @@ func makeOfflineHandler(svc *offline.Service) http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		var req struct {
-			ID   string `json:"id"`
-			Kind string `json:"kind"`
-		}
+		var req offline.CreateEventRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		event, err := svc.CreateEvent(req.ID, req.Kind)
+		event, err := svc.CreateEvent(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

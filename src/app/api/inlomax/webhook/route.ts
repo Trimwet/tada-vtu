@@ -1,62 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { webhookMiddleware } from '@/lib/webhook-security';
+import { coreRefund } from '@/lib/api/core';
 
-// Webhook handler for Inlomax transaction updates
-// Configure this URL in your Inlomax dashboard: https://yourdomain.com/api/inlomax/webhook
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Missing Supabase configuration');
+  return createClient(url, serviceKey);
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    
-    // Log the webhook payload for debugging
-    console.log('Inlomax Webhook received:', JSON.stringify(body, null, 2));
+    // 1. Signature Verification (graceful bypass in local development if secret is not set)
+    let payload;
+    if (process.env.INLOMAX_WEBHOOK_SECRET) {
+      const verification = await webhookMiddleware(request, 'inlomax');
+      if (verification instanceof Response) {
+        return verification;
+      }
+      payload = verification;
+    } else {
+      console.warn('⚠️ INLOMAX_WEBHOOK_SECRET is not configured. Webhook signature verification bypassed.');
+      payload = await request.json();
+    }
+
+    console.log('Inlomax Webhook received:', JSON.stringify(payload, null, 2));
 
     const { 
-      transaction_id,
-      status,
+      transaction_id, // Inlomax reference (corresponds to external_reference in database)
+      status,         // 'success' | 'failed' | 'pending'
       type,
       amount,
       phone,
       network,
       message 
-    } = body;
+    } = payload;
 
-    // Verify the webhook is from Inlomax (add signature verification in production)
-    // const signature = request.headers.get('x-inlomax-signature');
-    // if (!verifySignature(body, signature)) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-    // }
+    if (!transaction_id) {
+      return NextResponse.json({ status: false, message: 'Missing transaction_id' }, { status: 400 });
+    }
 
-    // Process based on transaction status
+    // 2. Query the transaction
+    const supabase = getSupabaseAdmin();
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('external_reference', transaction_id)
+      .single();
+
+    if (txError || !transaction) {
+      console.warn(`[INLOMAX-WEBHOOK] Transaction not found for external_reference: ${transaction_id}`);
+      return NextResponse.json({ status: true, message: 'Transaction not found locally' });
+    }
+
+    // If transaction is already resolved (not pending), do nothing
+    if (transaction.status !== 'pending') {
+      console.log(`[INLOMAX-WEBHOOK] Transaction ${transaction.reference} is already resolved: status=${transaction.status}`);
+      return NextResponse.json({ status: true, message: 'Transaction already resolved' });
+    }
+
+    // 3. Process status update
     switch (status) {
       case 'success':
-        // Update transaction in database
-        // await updateTransaction(transaction_id, 'completed');
-        // Send notification to user
-        // await sendNotification(userId, `Your ${type} purchase of ₦${amount} was successful`);
-        console.log(`Transaction ${transaction_id} completed successfully`);
+        // Update local transaction status to success
+        await supabase
+          .from('transactions')
+          .update({ 
+            status: 'success',
+            response_data: {
+              ...transaction.response_data,
+              webhook_payload: payload,
+              completed_at: new Date().toISOString()
+            }
+          })
+          .eq('id', transaction.id);
+
+        // Notify user
+        await supabase.from('notifications').insert({
+          user_id: transaction.user_id,
+          type: 'success',
+          title: 'Purchase Successful! 🎉',
+          message: `Your purchase of ${transaction.description || (transaction.type + ' ₦' + Math.abs(transaction.amount))} was successful.`,
+        });
+
+        console.log(`[INLOMAX-WEBHOOK] Transaction ${transaction.reference} updated to success`);
         break;
 
       case 'failed':
-        // Update transaction in database
-        // await updateTransaction(transaction_id, 'failed');
-        // Refund user wallet
-        // await refundWallet(userId, amount);
-        // Send notification
-        // await sendNotification(userId, `Your ${type} purchase failed. ₦${amount} has been refunded.`);
-        console.log(`Transaction ${transaction_id} failed: ${message}`);
+        // Refund atomically via Core (coreRefund)
+        console.log(`[INLOMAX-WEBHOOK] Transaction ${transaction.reference} failed. Refunding user ${transaction.user_id}`);
+        try {
+          await coreRefund({
+            userId: transaction.user_id,
+            amount: Math.abs(Number(transaction.amount)),
+            reference: `REFUND_${transaction.reference}`,
+            originalReference: transaction.reference,
+            description: `Refund: Failed purchase (${transaction.description || transaction.type})`,
+          });
+        } catch (refundError) {
+          console.error(`[INLOMAX-WEBHOOK] Refund failed for transaction ${transaction.reference}:`, refundError);
+          return NextResponse.json(
+            { status: false, message: 'Refund processing failed' },
+            { status: 500 }
+          );
+        }
         break;
 
       case 'pending':
-        // Update transaction status
-        // await updateTransaction(transaction_id, 'pending');
-        console.log(`Transaction ${transaction_id} is pending`);
+        console.log(`[INLOMAX-WEBHOOK] Transaction ${transaction.reference} is pending`);
         break;
 
       default:
-        console.log(`Unknown status: ${status}`);
+        console.warn(`[INLOMAX-WEBHOOK] Unknown status: ${status}`);
     }
 
-    // Always return 200 to acknowledge receipt
     return NextResponse.json({ 
       status: true, 
       message: 'Webhook processed successfully' 
@@ -64,15 +122,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Webhook processing error:', error);
-    // Still return 200 to prevent retries for parsing errors
     return NextResponse.json({ 
       status: false, 
       message: 'Webhook processing failed' 
-    });
+    }, { status: 500 });
   }
 }
 
-// GET method for webhook verification (some providers require this)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const challenge = searchParams.get('challenge');

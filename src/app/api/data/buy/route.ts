@@ -34,6 +34,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { network, phone, planId, amount, planName, userId, pin } = validation.data!;
+    const clientIdempotencyKey: string | undefined = body.idempotencyKey;
+
+    // Auth: same dual-caller model as airtime/buy.
+    // Trusted agent callers (Eve, Go Core) pass x-core-secret and skip PIN.
+    // Frontend callers must supply a valid PIN.
+    const coreSecretHeader = request.headers.get('x-core-secret');
+    const expectedCoreSecret = process.env.CORE_SECRET;
+    const isTrustedAgent = expectedCoreSecret && coreSecretHeader === expectedCoreSecret;
 
     const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
     const rateLimit = checkRateLimit(`data:${identifier}`, RATE_LIMITS.transaction);
@@ -48,34 +56,47 @@ export async function POST(request: NextRequest) {
     const numAmount = amount;
     const supabase = getSupabaseAdmin();
 
-    // ── PIN verification (Supabase only — Core doesn't handle PINs) ──────────
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('pin')
-      .eq('id', userId)
-      .single();
+    // PIN verification — skipped for trusted agent callers whose identity was
+    // already confirmed by Eve's channel auth (CORE_SECRET + x-tada-user-id).
+    // For all other callers (frontend), PIN is mandatory.
+    if (!isTrustedAgent) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('pin')
+        .eq('id', userId)
+        .single();
 
-    if (profileError || !profile) {
-      return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
-    }
+      if (profileError || !profile) {
+        return NextResponse.json({ status: false, message: 'User not found' }, { status: 404 });
+      }
 
-    if (!profile.pin) {
-      return NextResponse.json(
-        { status: false, message: 'Please set up your transaction PIN first' },
-        { status: 400 }
-      );
-    }
+      if (!profile.pin) {
+        return NextResponse.json(
+          { status: false, message: 'Please set up your transaction PIN first' },
+          { status: 400 }
+        );
+      }
 
-    if (!pin) {
-      return NextResponse.json({ status: false, message: 'Transaction PIN is required' }, { status: 400 });
-    }
+      if (!pin) {
+        return NextResponse.json({ status: false, message: 'Transaction PIN is required' }, { status: 400 });
+      }
 
-    if (!verifyPin(pin, profile.pin)) {
-      return NextResponse.json({ status: false, message: 'Incorrect transaction PIN' }, { status: 400 });
+      if (!verifyPin(pin, profile.pin)) {
+        return NextResponse.json({ status: false, message: 'Incorrect transaction PIN' }, { status: 400 });
+      }
     }
 
     const reference = `TADA_DATA_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const description = `${network} ${planName || 'Data'} - ${phone}`;
+
+    // See airtime/buy/route.ts for the rationale: prefer a client-supplied
+    // key that survives retries; otherwise fall back to a short-window
+    // fingerprint so accidental double-submits within the same 5-second
+    // bucket are deduped by the atomic_debit RPC rather than each minting
+    // a fresh `reference` and bypassing idempotency.
+    const idempotencyKey: string =
+      clientIdempotencyKey ||
+      `dedupe:data:${userId}:${network}:${phone}:${planId}:${numAmount}:${Math.floor(Date.now() / 5000)}`;
 
     // ── Step 1: Atomic debit via Core ────────────────────────────────────────
     let debitResult;
@@ -84,6 +105,7 @@ export async function POST(request: NextRequest) {
         userId,
         amount: numAmount,
         reference,
+        idempotencyKey,
         serviceType: 'data',
         description,
         metadata: { network, phone_number: phone, plan_id: planId, plan_name: planName },
@@ -155,13 +177,22 @@ export async function POST(request: NextRequest) {
       }
 
       // Provider failed — refund the user
-      await coreRefund({
-        userId,
-        amount: numAmount,
-        reference: `REFUND_${reference}`,
-        originalReference: reference,
-        description: `Refund: ${description}`,
-      }).catch((e) => console.error('[DATA] Refund failed:', e));
+      try {
+        await coreRefund({
+          userId,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          idempotencyKey: `REFUND_${idempotencyKey}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[DATA] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
       return NextResponse.json({
         status: false,
@@ -170,13 +201,22 @@ export async function POST(request: NextRequest) {
     } catch (apiError) {
       console.error('[DATA] Provider error:', apiError);
 
-      await coreRefund({
-        userId,
-        amount: numAmount,
-        reference: `REFUND_${reference}`,
-        originalReference: reference,
-        description: `Refund: ${description}`,
-      }).catch((e) => console.error('[DATA] Refund failed:', e));
+      try {
+        await coreRefund({
+          userId,
+          amount: numAmount,
+          reference: `REFUND_${reference}`,
+          idempotencyKey: `REFUND_${idempotencyKey}`,
+          originalReference: reference,
+          description: `Refund: ${description}`,
+        });
+      } catch (refundError) {
+        console.error('[DATA] Refund failed:', refundError);
+        return NextResponse.json(
+          { status: false, message: 'Data purchase failed, but the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
       if (apiError instanceof ServiceUnavailableError) {
         return NextResponse.json(

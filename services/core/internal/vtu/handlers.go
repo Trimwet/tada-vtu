@@ -68,70 +68,58 @@ func (h *Handlers) Deposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[DEPOSIT] start user=%s ref=%s credit=%.2f", req.UserID, req.Reference, req.WalletCredit)
+	log.Printf("[DEPOSIT] start user=%s ref=%s ext=%s credit=%.2f", req.UserID, req.Reference, req.ExternalReference, req.WalletCredit)
 
-	// Idempotency
-	exists, err := h.db.TransactionExists(req.Reference)
+	// Single atomic DB transaction: idempotency lookup (keyed on externalReference
+	// — the payment provider's stable, unique ref that doesn't change between
+	// webhook retries), FOR UPDATE balance lock, credit, wallet_transactions
+	// audit row, transactions record, and idempotency cache — all in one call.
+	// This replaces the previous TransactionExists → CreditBalance →
+	// InsertTransaction sequence which had the same TOCTOU race as the debit
+	// path fixed in migration 035.
+	result, err := h.db.AtomicDeposit(
+		req.ExternalReference, // idempotency key — stable across retries
+		req.UserID,
+		req.WalletCredit,
+		req.Description,
+		req.Reference,
+		req.ExternalReference,
+		req.PaymentType,
+		req.Amount,
+		req.Fee,
+		req.Metadata,
+	)
 	if err != nil {
-		log.Printf("[DEPOSIT] idempotency check failed: %v", err)
-		jsonError(w, "idempotency check failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if exists {
-		log.Printf("[DEPOSIT] duplicate rejected: %s", req.Reference)
-		jsonOK(w, map[string]any{"success": true, "alreadyProcessed": true})
+		log.Printf("[DEPOSIT] atomic_deposit failed user=%s ref=%s err=%v", req.UserID, req.Reference, err)
+		jsonError(w, "deposit failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Atomic credit via RPC
-	if err := h.db.CreditBalance(req.UserID, req.WalletCredit, req.Description, req.Reference); err != nil {
-		log.Printf("[DEPOSIT] balance RPC failed: %v", err)
-		jsonError(w, "balance update failed: "+err.Error(), http.StatusInternalServerError)
-		return
+	if result.AlreadyProcessed {
+		log.Printf("[DEPOSIT] idempotent replay ext=%s", req.ExternalReference)
+	} else {
+		h.db.InsertNotification(map[string]any{
+			"user_id": req.UserID,
+			"type":    "success",
+			"title":   "Wallet Funded! 💰",
+			"message": fmt.Sprintf("₦%.0f has been added to your wallet.", req.WalletCredit),
+		})
+		log.Printf("[DEPOSIT] done user=%s new_balance=%.2f", req.UserID, result.NewBalance)
 	}
 
-	// Transaction record
-	if err := h.db.InsertTransaction(map[string]any{
-		"user_id":            req.UserID,
-		"type":               "deposit",
-		"amount":             req.WalletCredit,
-		"status":             "success",
-		"description":        req.Description,
-		"reference":          req.Reference,
-		"external_reference": req.ExternalReference,
-		"response_data": map[string]any{
-			"payment_type": req.PaymentType,
-			"gross_amount": req.Amount,
-			"fee_deducted": req.Fee,
-			"source":       "tada-core",
-		},
-	}); err != nil {
-		log.Printf("[DEPOSIT] transaction insert failed: %v", err)
-		jsonError(w, "transaction insert failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	h.db.InsertNotification(map[string]any{
-		"user_id": req.UserID,
-		"type":    "success",
-		"title":   "Wallet Funded! 💰",
-		"message": fmt.Sprintf("₦%.0f has been added to your wallet.", req.WalletCredit),
-	})
-
-	newBalance, _ := h.db.GetBalance(req.UserID)
-	log.Printf("[DEPOSIT] done user=%s new_balance=%.2f", req.UserID, newBalance)
-	jsonOK(w, map[string]any{"success": true, "newBalance": newBalance, "alreadyProcessed": false})
+	jsonOK(w, map[string]any{"success": true, "newBalance": result.NewBalance, "alreadyProcessed": result.AlreadyProcessed})
 }
 
 // ── Debit ─────────────────────────────────────────────────────────────────────
 
 type debitRequest struct {
-	UserID      string         `json:"userId"`
-	Amount      float64        `json:"amount"`
-	Reference   string         `json:"reference"`
-	ServiceType string         `json:"serviceType"`
-	Description string         `json:"description"`
-	Metadata    map[string]any `json:"metadata"`
+	UserID         string         `json:"userId"`
+	Amount         float64        `json:"amount"`
+	Reference      string         `json:"reference"`
+	IdempotencyKey string         `json:"idempotencyKey"`
+	ServiceType    string         `json:"serviceType"`
+	Description    string         `json:"description"`
+	Metadata       map[string]any `json:"metadata"`
 }
 
 func (h *Handlers) Debit(w http.ResponseWriter, r *http.Request) {
@@ -154,67 +142,43 @@ func (h *Handlers) Debit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[DEBIT] start user=%s ref=%s amount=%.2f service=%s", req.UserID, req.Reference, req.Amount, req.ServiceType)
+	// idempotencyKey is what protects against double-charges on retry. Callers
+	// SHOULD send a key that stays stable across client-side retries of the
+	// same logical purchase attempt (not a fresh value per HTTP attempt). If
+	// none is supplied we fall back to reference, which still closes the
+	// concurrent-duplicate-request race below but does not protect against a
+	// caller that mints a brand-new reference on every retry.
+	idempotencyKey := req.IdempotencyKey
+	if idempotencyKey == "" {
+		idempotencyKey = req.Reference
+	}
 
-	// Idempotency
-	exists, err := h.db.TransactionExists(req.Reference)
+	log.Printf("[DEBIT] start user=%s ref=%s key=%s amount=%.2f service=%s", req.UserID, req.Reference, idempotencyKey, req.Amount, req.ServiceType)
+
+	// Single atomic DB transaction: idempotency lookup, balance row lock,
+	// balance check, balance update, and pending-transaction insert all
+	// happen inside one Postgres function call (atomic_debit). This closes
+	// the TOCTOU race that existed when those steps were separate calls —
+	// previously two concurrent requests for the same reference could both
+	// pass the idempotency check before either had written a row.
+	result, err := h.db.AtomicDebit(idempotencyKey, req.UserID, req.Amount, req.Description, req.Reference, req.ServiceType, req.Metadata)
 	if err != nil {
-		jsonError(w, "idempotency check failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if exists {
-		balance, _ := h.db.GetBalance(req.UserID)
-		jsonOK(w, map[string]any{"success": true, "newBalance": balance, "amountDebited": req.Amount})
-		return
-	}
-
-	// Balance check — Core enforces no overdraft
-	currentBalance, err := h.db.GetBalance(req.UserID)
-	if err != nil {
-		jsonError(w, "balance check failed: "+err.Error(), http.StatusNotFound)
-		return
-	}
-	if currentBalance < req.Amount {
-		log.Printf("[DEBIT] insufficient funds user=%s balance=%.2f requested=%.2f", req.UserID, currentBalance, req.Amount)
-		jsonError(w,
-			fmt.Sprintf("insufficient funds: balance %.2f, requested %.2f", currentBalance, req.Amount),
-			http.StatusPaymentRequired, // 402
-		)
+		msg := err.Error()
+		switch {
+		case strings.Contains(msg, "insufficient funds"):
+			log.Printf("[DEBIT] insufficient funds user=%s requested=%.2f", req.UserID, req.Amount)
+			jsonError(w, msg, http.StatusPaymentRequired) // 402
+		case strings.Contains(msg, "profile not found"):
+			jsonError(w, fmt.Sprintf("profile not found: %s", req.UserID), http.StatusNotFound)
+		default:
+			log.Printf("[DEBIT] atomic_debit failed user=%s ref=%s err=%v", req.UserID, req.Reference, err)
+			jsonError(w, "balance update failed: "+msg, http.StatusInternalServerError)
+		}
 		return
 	}
 
-	// Atomic debit via RPC
-	if err := h.db.DebitBalance(req.UserID, req.Amount, req.Description, req.Reference); err != nil {
-		jsonError(w, "balance update failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Pending transaction record (status updated by provider layer after delivery)
-	if err := h.db.InsertTransaction(map[string]any{
-		"user_id":            req.UserID,
-		"type":               req.ServiceType,
-		"amount":             -req.Amount,
-		"status":             "pending",
-		"description":        req.Description,
-		"reference":          req.Reference,
-		"external_reference": req.Reference,
-		"response_data": map[string]any{
-			"service_type": req.ServiceType,
-			"source":       "tada-core",
-			"metadata":     req.Metadata,
-		},
-	}); err != nil {
-		// CRITICAL: balance already debited — log loudly but don't fail the response
-		log.Printf("[DEBIT] CRITICAL transaction insert failed ref=%s user=%s err=%v", req.Reference, req.UserID, err)
-	}
-
-	newBalance, err := h.db.GetBalance(req.UserID)
-	if err != nil {
-		newBalance = currentBalance - req.Amount // safe estimate
-	}
-
-	log.Printf("[DEBIT] done user=%s new_balance=%.2f debited=%.2f", req.UserID, newBalance, req.Amount)
-	jsonOK(w, map[string]any{"success": true, "newBalance": newBalance, "amountDebited": req.Amount})
+	log.Printf("[DEBIT] done user=%s new_balance=%.2f debited=%.2f", req.UserID, result.NewBalance, result.AmountDebited)
+	jsonOK(w, map[string]any{"success": true, "newBalance": result.NewBalance, "amountDebited": result.AmountDebited})
 }
 
 // ── Refund ────────────────────────────────────────────────────────────────────
@@ -223,6 +187,7 @@ type refundRequest struct {
 	UserID            string  `json:"userId"`
 	Amount            float64 `json:"amount"`
 	Reference         string  `json:"reference"`
+	IdempotencyKey    string  `json:"idempotencyKey"`
 	OriginalReference string  `json:"originalReference"`
 	Description       string  `json:"description"`
 }
@@ -247,42 +212,26 @@ func (h *Handlers) Refund(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[REFUND] start user=%s ref=%s original=%s amount=%.2f", req.UserID, req.Reference, req.OriginalReference, req.Amount)
+	idempotencyKey := req.IdempotencyKey
+	if idempotencyKey == "" {
+		idempotencyKey = req.Reference
+	}
 
-	// Idempotency
-	exists, err := h.db.TransactionExists(req.Reference)
+	log.Printf("[REFUND] start user=%s ref=%s key=%s original=%s amount=%.2f", req.UserID, req.Reference, idempotencyKey, req.OriginalReference, req.Amount)
+
+	// Single atomic DB transaction: idempotency lookup, credit, marking the
+	// original transaction failed, and inserting the refund record all
+	// happen inside one Postgres function call (atomic_refund).
+	result, err := h.db.AtomicRefund(idempotencyKey, req.UserID, req.Amount, req.Description, req.Reference, req.OriginalReference)
 	if err != nil {
-		jsonError(w, "idempotency check failed: "+err.Error(), http.StatusInternalServerError)
+		msg := err.Error()
+		if strings.Contains(msg, "profile not found") {
+			jsonError(w, fmt.Sprintf("profile not found: %s", req.UserID), http.StatusNotFound)
+			return
+		}
+		log.Printf("[REFUND] atomic_refund failed user=%s ref=%s err=%v", req.UserID, req.Reference, err)
+		jsonError(w, "refund failed: "+msg, http.StatusInternalServerError)
 		return
-	}
-	if exists {
-		balance, _ := h.db.GetBalance(req.UserID)
-		jsonOK(w, map[string]any{"success": true, "newBalance": balance})
-		return
-	}
-
-	// Credit the user back
-	if err := h.db.CreditBalance(req.UserID, req.Amount, req.Description, req.Reference); err != nil {
-		jsonError(w, "refund credit failed: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Mark original transaction as failed
-	if err := h.db.UpdateTransaction(req.OriginalReference, map[string]any{"status": "failed"}); err != nil {
-		log.Printf("[REFUND] original txn update failed (non-fatal): %v", err)
-	}
-
-	// Refund record
-	if err := h.db.InsertTransaction(map[string]any{
-		"user_id":            req.UserID,
-		"type":               "refund",
-		"amount":             req.Amount,
-		"status":             "success",
-		"description":        req.Description,
-		"reference":          req.Reference,
-		"external_reference": req.OriginalReference,
-	}); err != nil {
-		log.Printf("[REFUND] refund record insert failed: %v", err)
 	}
 
 	h.db.InsertNotification(map[string]any{
@@ -292,9 +241,8 @@ func (h *Handlers) Refund(w http.ResponseWriter, r *http.Request) {
 		"message": fmt.Sprintf("₦%.0f has been refunded to your wallet.", req.Amount),
 	})
 
-	newBalance, _ := h.db.GetBalance(req.UserID)
-	log.Printf("[REFUND] done user=%s new_balance=%.2f", req.UserID, newBalance)
-	jsonOK(w, map[string]any{"success": true, "newBalance": newBalance})
+	log.Printf("[REFUND] done user=%s new_balance=%.2f", req.UserID, result.NewBalance)
+	jsonOK(w, map[string]any{"success": true, "newBalance": result.NewBalance})
 }
 
 // ── Balance ───────────────────────────────────────────────────────────────────

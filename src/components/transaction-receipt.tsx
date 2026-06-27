@@ -41,6 +41,7 @@ export function TransactionReceipt({ isOpen, onClose, transaction }: Transaction
       electricity: "Electricity Payment",
       deposit: "Wallet Funding",
       betting: "Betting Funding",
+      refund: "Refund",
     };
     return labels[type] || type;
   };

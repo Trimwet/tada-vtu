@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+// Store is a write-only interface for persisting reconciliation entries.
+// Passing nil disables persistence (useful in tests and the in-memory simulation).
+type Store interface {
+	InsertReconciliationEntry(record map[string]any) error
+	UpdateReconciliationEntry(id string, status string) error
+}
+
 type Entry struct {
 	ID        string `json:"id"`
 	AccountID string `json:"account_id"`
@@ -21,10 +28,16 @@ type Entry struct {
 type Service struct {
 	mu      sync.RWMutex
 	entries map[string]*Entry
+	store   Store
 }
 
-func NewService() *Service {
-	return &Service{entries: make(map[string]*Entry)}
+// NewService creates a reconciliation service.
+// Pass a non-nil Store to enable Supabase persistence; pass nil for in-memory only.
+func NewService(store Store) *Service {
+	return &Service{
+		entries: make(map[string]*Entry),
+		store:   store,
+	}
 }
 
 func newID(prefix string) string {
@@ -60,6 +73,22 @@ func (s *Service) Record(accountID, kind string, amount int64, requestID string)
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 	s.entries[entry.ID] = entry
+
+	// Persist to Supabase if a store was provided.
+	if s.store != nil {
+		if err := s.store.InsertReconciliationEntry(map[string]any{
+			"id":         entry.ID,
+			"account_id": entry.AccountID,
+			"kind":       entry.Kind,
+			"amount":     entry.Amount,
+			"request_id": entry.RequestID,
+			"status":     entry.Status,
+		}); err != nil {
+			// Non-fatal: the in-memory record is already written; log and continue.
+			fmt.Printf("[reconciliation] warn: failed to persist entry %s: %v\n", entry.ID, err)
+		}
+	}
+
 	return entry, nil
 }
 
@@ -73,6 +102,14 @@ func (s *Service) Resolve(id string) error {
 		return fmt.Errorf("entry not found: %s", id)
 	}
 	entry.Status = "reconciled"
+
+	// Sync resolved status to Supabase.
+	if s.store != nil {
+		if err := s.store.UpdateReconciliationEntry(id, "reconciled"); err != nil {
+			fmt.Printf("[reconciliation] warn: failed to update entry %s: %v\n", id, err)
+		}
+	}
+
 	return nil
 }
 

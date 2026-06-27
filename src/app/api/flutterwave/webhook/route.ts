@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { calculateWalletCreditFromTransfer } from '@/lib/api/flutterwave';
 import { processDeposit } from '@/lib/api/deposit-processor';
+import { coreRefund } from '@/lib/api/core';
 
 // Force dynamic to prevent caching issues
 export const dynamic = 'force-dynamic';
@@ -191,20 +192,22 @@ export async function POST(request: NextRequest) {
           message: `Your withdrawal of ₦${withdrawal.amount.toLocaleString()} has been completed.`,
         });
       } else if (status === 'FAILED' && withdrawal.status !== 'failed') {
-        // Refund user via Supabase RPC — withdrawal refunds go directly because
-        // they aren't VTU purchases and there's no Core reference to link back to.
         const totalRefund = Number(withdrawal.amount) + Number(withdrawal.fee || 0);
-        await supabase.rpc('update_user_balance', {
-          p_user_id: withdrawal.user_id,
-          p_amount: totalRefund,
-          p_type: 'credit',
-          p_description: `Refund: Withdrawal failed (${reference})`,
-        });
+        try {
+          await coreRefund({
+            userId: withdrawal.user_id,
+            amount: totalRefund,
+            reference: `REFUND_${reference}`,
+            originalReference: reference,
+            description: `Refund: Withdrawal failed (${reference})`,
+          });
+        } catch (refundError) {
+          console.error('[FLW-WEBHOOK] Withdrawal refund failed:', refundError);
+        }
         await supabase
           .from('withdrawals')
           .update({ status: 'failed', failure_reason: data.complete_message || 'Declined' })
           .eq('reference', reference);
-        await supabase.from('transactions').update({ status: 'failed' }).eq('reference', reference);
       }
     }
 

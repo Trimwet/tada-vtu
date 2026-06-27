@@ -203,13 +203,21 @@ export async function POST(request: NextRequest) {
 
       // ── Flutterwave failed — refund atomically via Core ───────────────────
       // coreRefund: credits balance, marks original tx failed, inserts refund record, notifies user.
-      await coreRefund({
-        userId: user.id,
-        amount: totalDebit,
-        reference: `REFUND_${reference}`,
-        originalReference: reference,
-        description: `Withdrawal refund - ${reference}`,
-      }).catch((e) => console.error('[WITHDRAWAL/TRANSFER] Refund failed — MANUAL ACTION REQUIRED for ref:', reference, e));
+      try {
+        await coreRefund({
+          userId: user.id,
+          amount: totalDebit,
+          reference: `REFUND_${reference}`,
+          originalReference: reference,
+          description: `Withdrawal refund - ${reference}`,
+        });
+      } catch (refundError) {
+        console.error('[WITHDRAWAL/TRANSFER] Refund failed — MANUAL ACTION REQUIRED for ref:', reference, refundError);
+        return NextResponse.json(
+          { status: 'error', message: 'Transfer failed and the refund could not be completed automatically. Support has been alerted.' },
+          { status: 502 }
+        );
+      }
 
       await adminSupabase
         .from('withdrawals')

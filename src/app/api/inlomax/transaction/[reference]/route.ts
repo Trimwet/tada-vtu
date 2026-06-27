@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTransaction } from '@/lib/api/inlomax';
 import { createClient } from '@supabase/supabase-js';
+import { coreRefund } from '@/lib/api/core';
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -71,27 +72,15 @@ export async function GET(
       if ((inlomaxStatus === 'failed' || inlomaxStatus === 'refunded') && localStatus === 'pending') {
         const refundAmount = Math.abs(localTransaction.amount);
         
-        // Update user balance
-        await supabase
-          .from('profiles')
-          .update({ 
-            balance: localTransaction.profiles.balance + refundAmount 
-          })
-          .eq('id', localTransaction.user_id);
+        await coreRefund({
+          userId: localTransaction.user_id,
+          amount: refundAmount,
+          reference: `REFUND_${localTransaction.reference}`,
+          originalReference: localTransaction.reference,
+          description: `Refund: ${localTransaction.description || 'Failed transaction'}`,
+        });
 
-        // Create refund wallet transaction
-        await supabase
-          .from('wallet_transactions')
-          .insert({
-            user_id: localTransaction.user_id,
-            type: 'credit',
-            amount: refundAmount,
-            description: `Refund for failed transaction - ${reference}`,
-            reference: `REFUND_${reference}`,
-            balance_before: localTransaction.profiles.balance,
-            balance_after: localTransaction.profiles.balance + refundAmount
-          });
-
+        updateData.status = 'failed';
         updateData.response_data.refunded = true;
         updateData.response_data.refund_amount = refundAmount;
       }

@@ -11,8 +11,31 @@ function getSupabaseAdmin() {
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
+    const { searchParams } = new URL(request.url);
+    const requestedUserId = searchParams.get('userId');
 
+    // ── Agent access (Eve tools, internal services) ──────────────────────────
+    // Accepts x-core-secret header — same pattern as /api/airtime/buy and
+    // /api/data/buy. No user JWT required for trusted internal callers.
+    const coreSecret = request.headers.get('x-core-secret');
+    const validCoreSecret = process.env.CORE_SECRET;
+
+    if (coreSecret && validCoreSecret && coreSecret === validCoreSecret) {
+      if (!requestedUserId) {
+        return NextResponse.json(
+          { status: false, message: 'userId parameter is required' },
+          { status: 400 }
+        );
+      }
+      const result = await coreBalance(requestedUserId);
+      return NextResponse.json({
+        status: true,
+        data: { balance: result.balance, currency: 'NGN' },
+      });
+    }
+
+    // ── Standard user access (app / web dashboard) ───────────────────────────
+    const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { status: false, message: 'Authorization required' },
@@ -21,8 +44,6 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-
-    // Verify the user's JWT with Supabase auth — Core doesn't handle user JWTs
     const supabase = getSupabaseAdmin();
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
@@ -33,9 +54,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const requestedUserId = searchParams.get('userId');
-
     if (!requestedUserId) {
       return NextResponse.json(
         { status: false, message: 'userId parameter is required' },
@@ -43,27 +61,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Security: only allow users to read their own balance
     if (requestedUserId !== user.id) {
       return NextResponse.json({ status: false, message: 'Unauthorized access' }, { status: 403 });
     }
 
-    // Read balance from Core — this is the authoritative source
     const result = await coreBalance(requestedUserId);
-
     return NextResponse.json({
       status: true,
-      data: {
-        balance: result.balance,
-        currency: 'NGN',
-      },
+      data: { balance: result.balance, currency: 'NGN' },
     });
   } catch (error) {
     console.error('[WALLET-BALANCE] Error:', error);
     const msg = error instanceof Error ? error.message : 'Failed to fetch balance';
-    return NextResponse.json(
-      { status: false, message: msg },
-      { status: 500 }
-    );
+    return NextResponse.json({ status: false, message: msg }, { status: 500 });
   }
 }
