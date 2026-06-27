@@ -39,15 +39,15 @@ async function askEve(
   conversationId: string
 ): Promise<string> {
   try {
-    const res = await fetch(`${NEXT_APP_URL}/api/v1/agent/chat`, {
+    const res = await fetch(`${NEXT_APP_URL}/eve/v1/session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-core-secret": CORE_SECRET,
+        "Authorization": `Bearer ${CORE_SECRET}`,
+        "x-tada-user-id": senderPhone,
       },
       body: JSON.stringify({
         message,
-        phone: senderPhone,
         conversationId,
       }),
     });
