@@ -110,7 +110,7 @@ async function connect(attempt = 0): Promise<void> {
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
     generateHighQualityLinkPreview: false,
     // Keep the socket quiet — only log warnings and above.
-    logger: { level: "warn" } as never,
+    logger: { level: "warn", child: () => ({ level: "warn", child: () => {}, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error }) as never, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error } as never,
     markOnlineOnConnect: false,
   });
 
