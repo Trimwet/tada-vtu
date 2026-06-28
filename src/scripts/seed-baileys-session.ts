@@ -6,15 +6,18 @@
  * as a single JSONB blob to Supabase (baileys_sessions table, id = 'default').
  *
  * Run this ONCE from your local machine BEFORE deploying to Render:
- *   bun run src/scripts/seed-baileys-session.ts
+ *   bun run whatsapp:seed
  *
- * After running:
- *   1. Confirm the Supabase row exists (id = 'default').
- *   2. Deploy the bot to Render — it will pick up the session and reconnect
- *      WITHOUT showing a QR code.
+ * The script is idempotent — running it again safely overwrites the row.
  *
- * The script is idempotent — running it again overwrites the existing row.
- * It does NOT delete or modify the local .baileys-auth directory.
+ * ── Why the two-pass parse matters ───────────────────────────────────────────
+ * creds.json stores keys as { type: "Buffer", data: "<base64>" }.
+ * If we pass those plain objects straight through BufferJSON.replacer it sees
+ * { type: "Buffer" } and does Buffer.from(data) — treating the base64 STRING
+ * as UTF-8 bytes, which corrupts every key (length 44 instead of 32).
+ *
+ * Fix: parse each file with BufferJSON.reviver first → real Buffer instances →
+ * then BufferJSON.replacer encodes them correctly for Supabase storage.
  */
 
 import fs from 'node:fs';
@@ -28,9 +31,6 @@ import { BufferJSON } from 'baileys';
 const AUTH_DIR = path.resolve(process.cwd(), '.baileys-auth');
 const SESSION_ID = 'default';
 const TABLE = 'baileys_sessions';
-
-// Load env from .env.local if running locally.
-// Bun automatically reads .env.local, so no dotenv import needed.
 
 function requireEnv(key: string): string {
   const val = process.env[key];
@@ -46,99 +46,89 @@ const supabase = createClient(
   { auth: { persistSession: false } },
 );
 
-// ── Read all files in .baileys-auth ───────────────────────────────────────────
+// ── Read auth dir with correct Buffer revival ──────────────────────────────────
 
 function readAuthDir(): { creds: unknown; keys: Record<string, unknown> } {
   if (!fs.existsSync(AUTH_DIR)) {
-    throw new Error(`Auth directory not found: ${AUTH_DIR}\nRun the bot locally first to generate a session.`);
+    throw new Error(`Auth directory not found: ${AUTH_DIR}`);
   }
 
   const files = fs.readdirSync(AUTH_DIR).filter(f => f.endsWith('.json'));
-  if (files.length === 0) {
-    throw new Error(`No .json files found in ${AUTH_DIR}. The auth directory looks empty.`);
-  }
-
   console.log(`[seed] Found ${files.length} files in ${AUTH_DIR}`);
 
-  // creds.json is special — it's the credentials object.
   const credsFile = path.join(AUTH_DIR, 'creds.json');
   if (!fs.existsSync(credsFile)) {
-    throw new Error(`creds.json not found in ${AUTH_DIR}. Is this a valid Baileys auth directory?`);
+    throw new Error(`creds.json not found in ${AUTH_DIR}`);
   }
 
-  const creds = JSON.parse(fs.readFileSync(credsFile, 'utf8')) as unknown;
-  console.log('[seed] ✅ creds.json read');
+  // ── CRITICAL: parse with BufferJSON.reviver to get real Buffer instances ──
+  // Without this, { type: 'Buffer', data: '<base64>' } stays a plain object.
+  // BufferJSON.replacer then corrupts it by treating the base64 string as UTF-8.
+  const creds = JSON.parse(fs.readFileSync(credsFile, 'utf8'), BufferJSON.reviver) as unknown;
+  console.log('[seed] ✅ creds.json read and revived');
 
-  // All other files → flat key store.
-  // supabase-auth.ts stores keys as: { [`${type}-${id}`]: value }
-  // Baileys' useMultiFileAuthState names files: `${type}-${id}.json`
-  // So we strip the .json extension and that IS the flat key.
   const keys: Record<string, unknown> = {};
   let keyCount = 0;
 
   for (const file of files) {
     if (file === 'creds.json') continue;
-
-    const flatKey = file.replace(/\.json$/, ''); // e.g. "pre-key-1", "session-1972077863137_1.0"
+    const flatKey = file.replace(/\.json$/, '');
     try {
-      const content = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, file), 'utf8')) as unknown;
+      // Same reviver here — pre-keys, sessions, etc. also contain Buffer fields.
+      const content = JSON.parse(
+        fs.readFileSync(path.join(AUTH_DIR, file), 'utf8'),
+        BufferJSON.reviver,
+      ) as unknown;
       keys[flatKey] = content;
       keyCount++;
     } catch (err) {
-      console.warn(`[seed] ⚠️  Skipping ${file} (parse error): ${(err as Error).message}`);
+      console.warn(`[seed] ⚠️  Skipping ${file}: ${(err as Error).message}`);
     }
   }
 
-  console.log(`[seed] ✅ ${keyCount} signal keys read`);
+  console.log(`[seed] ✅ ${keyCount} signal keys revived`);
   return { creds, keys };
 }
 
-// ── Upload to Supabase ─────────────────────────────────────────────────────────
+// ── Upload ─────────────────────────────────────────────────────────────────────
 
 async function seed() {
-  console.log('[seed] 🌱 Starting session migration to Supabase…\n');
+  console.log('[seed] 🌱 Starting session migration…\n');
 
-  // 1. Read local auth directory.
   const { creds, keys } = readAuthDir();
 
-  // 2. Serialise using BufferJSON.replacer so Buffer objects survive JSONB round-trip.
+  // Encode: real Buffer instances → { type: 'Buffer', data: '<base64>' }
+  // This is the correct round-trip; reviver will restore them on the bot side.
   const payload = JSON.parse(
     JSON.stringify({ creds, keys }, BufferJSON.replacer),
   ) as Record<string, unknown>;
 
-  // 3. Upsert into Supabase.
   console.log('[seed] Uploading to Supabase…');
   const { error } = await supabase.from(TABLE).upsert(
     { id: SESSION_ID, data: payload, updated_at: new Date().toISOString() },
     { onConflict: 'id' },
   );
 
-  if (error) {
-    throw new Error(`[seed] ❌ Supabase upsert failed: ${error.message}`);
-  }
+  if (error) throw new Error(`Upsert failed: ${error.message}`);
 
-  // 4. Verify.
+  // Verify
   const { data: row, error: fetchErr } = await supabase
     .from(TABLE)
     .select('id, updated_at')
     .eq('id', SESSION_ID)
     .single();
 
-  if (fetchErr || !row) {
-    throw new Error(`[seed] ❌ Verification failed: ${fetchErr?.message ?? 'row not found'}`);
-  }
+  if (fetchErr || !row) throw new Error(`Verification failed: ${fetchErr?.message ?? 'row not found'}`);
 
-  console.log(`\n[seed] ✅ SUCCESS — session seeded to Supabase.`);
-  console.log(`       Row id      : ${(row as { id: string }).id}`);
-  console.log(`       Updated at  : ${(row as { updated_at: string }).updated_at}`);
+  const r = row as { id: string; updated_at: string };
+  console.log(`\n[seed] ✅ SUCCESS`);
+  console.log(`       Row id      : ${r.id}`);
+  console.log(`       Updated at  : ${r.updated_at}`);
   console.log(`       Signal keys : ${Object.keys(keys).length}`);
-  console.log('\n[seed] Next steps:');
-  console.log('  1. Deploy the bot to Render (git push or manual deploy).');
-  console.log('  2. Check Render logs — you should see "Session restored from Supabase — no QR needed."');
-  console.log('  3. Set up UptimeRobot to ping https://<your-render-url>/health every 5 minutes.');
+  console.log('\n[seed] Next step: trigger a Render redeploy.');
 }
 
 seed().catch(err => {
-  console.error('\n[seed] ❌ Fatal error:', err);
+  console.error('\n[seed] ❌ Fatal:', err);
   process.exit(1);
 });
