@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { processWhatsAppInboundMessage } from '@/lib/whatsapp/bridge';
 import { checkRateLimit } from '@/lib/rate-limiter';
 
+function verifyCoreSecret(request: NextRequest): boolean {
+  const secret = process.env.CORE_SECRET;
+  if (!secret) return false; // refuse all if not configured
+  return request.headers.get('x-core-secret') === secret;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function sendWhatsAppMessage(to: string, body: string) {
@@ -43,6 +49,11 @@ export async function GET(request: NextRequest) {
 // ── POST — incoming message ───────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // Only the Baileys bot (and our own internal callers) may POST here.
+  if (!verifyCoreSecret(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   let message = '';
   let phoneNumber = '';
 
@@ -57,6 +68,10 @@ export async function POST(request: NextRequest) {
       if (!msg) return NextResponse.json({ ok: true }); // delivery receipt, ignore
       message = msg.text?.body ?? msg.type ?? '';
       phoneNumber = msg.from ?? '';
+    } else if (body.phoneNumber) {
+      // Baileys bot direct format: { phoneNumber, message }
+      message = body.message ?? '';
+      phoneNumber = body.phoneNumber ?? '';
     } else {
       // Legacy / mock format
       message = body.message?.text ?? body.message ?? '';
@@ -86,12 +101,12 @@ export async function POST(request: NextRequest) {
     // ── Send reply via WhatsApp (no-op if credentials not configured) ────────
     await sendWhatsAppMessage(phoneNumber, replyText);
 
-    return NextResponse.json({ reply: replyText });
+    return NextResponse.json({ replyText });
 
   } catch (error) {
     console.error('[WhatsApp] Webhook error:', error);
     return NextResponse.json(
-      { reply: '❌ An error occurred. Please try again later.' },
+      { replyText: '❌ An error occurred. Please try again later.' },
       { status: 500 }
     );
   }
