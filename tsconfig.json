@@ -38,6 +38,8 @@
   ],
   "exclude": [
     "node_modules",
-    "eve-agent"
+    "eve-agent",
+    "src/scripts",
+    "services"
   ]
 }

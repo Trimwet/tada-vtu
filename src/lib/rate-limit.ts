@@ -69,9 +69,9 @@ export const RATE_LIMITS = {
   // Webhook - very relaxed
   webhook: { maxRequests: 100, windowMs: 60000 },
   
-  // OpenClaw endpoints - moderate (per user)
-  openclaw: { maxRequests: 20, windowMs: 60000 },
+  // Agent endpoints (WhatsApp bot, etc.) - moderate (per user)
+  agent: { maxRequests: 20, windowMs: 60000 },
   
-  // OpenClaw purchases - stricter (5 purchases per 10 minutes)
-  openclawPurchase: { maxRequests: 5, windowMs: 10 * 60000 },
+  // Agent purchases - stricter (5 purchases per 10 minutes)
+  agentPurchase: { maxRequests: 5, windowMs: 10 * 60000 },
 };
