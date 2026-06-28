@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     console.error('[WhatsApp] Webhook error:', error);
     return NextResponse.json(
       { replyText: '❌ An error occurred. Please try again later.' },
-      { status: 500 }
+      { status: 200 }  // always 200 so the bot sends the replyText
     );
   }
 }
