@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { ButtonLoading } from "@/components/loading-icons";
 import { toast } from "sonner";
 import { useSupabaseUser } from "@/hooks/useSupabaseUser";
 
-export default function LinkWhatsAppPage() {
+function LinkWhatsAppContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading, refreshUser } = useSupabaseUser();
@@ -66,6 +66,7 @@ export default function LinkWhatsAppPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border">
         <div className="container mx-auto px-4 lg:px-8">
@@ -171,5 +172,14 @@ export default function LinkWhatsAppPage() {
         </Card>
       </main>
     </div>
+    </>
+  );
+}
+
+export default function LinkWhatsAppPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <LinkWhatsAppContent />
+    </Suspense>
   );
 }
