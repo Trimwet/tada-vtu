@@ -28,19 +28,18 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Resolve phone numbers to Supabase UUIDs.
-      // Eve sends the WhatsApp phone number (e.g. "2349161125529") as userId;
-      // the profiles table keyed by UUID, but has a whatsapp_number column.
+      // Resolve phone numbers / WhatsApp LIDs to Supabase UUIDs.
+      // Eve sends the WhatsApp identifier (phone number or LID) as userId.
       let resolvedUserId = requestedUserId;
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedUserId);
       if (!isUUID) {
         const supabase = getSupabaseAdmin();
-        // Try whatsapp_number with and without leading +
         const normalised = requestedUserId.replace(/^\+/, '');
+        // Check whatsapp_number (real phone) AND whatsapp_lid (LID from Baileys)
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
-          .or(`whatsapp_number.eq.${normalised},whatsapp_number.eq.+${normalised}`)
+          .or(`whatsapp_number.eq.${normalised},whatsapp_number.eq.+${normalised},whatsapp_lid.eq.${normalised}`)
           .maybeSingle();
         if (profile) {
           resolvedUserId = profile.id;

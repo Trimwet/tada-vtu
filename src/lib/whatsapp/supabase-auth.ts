@@ -4,17 +4,13 @@
  * Drop-in replacement for Baileys' useMultiFileAuthState that persists the
  * WhatsApp session (creds + signal keys) as a single JSONB blob in Supabase.
  *
- * This lets the bot run on stateless hosts (Render free tier, Railway, etc.)
- * without needing a persistent filesystem. Once the user scans a QR code once,
- * the session lives in Supabase forever and survives every cold start.
+ * Design:
+ * - keys.set  → debounced 500 ms trailing-edge write (signal ratchet fires often)
+ * - saveCreds → IMMEDIATE write; cancels any pending debounce first
+ *               (creds update happens on QR scan / reconnect — must not be lost)
  *
- * Design notes:
- * - All state is kept in memory (same as useMultiFileAuthState).
- * - Writes to Supabase are debounced (500 ms trailing edge) to avoid hammering
- *   the DB on every message exchange (Baileys fires saveCreds very frequently).
- * - BufferJSON.replacer/reviver handles the Buffer instances inside creds/keys.
- * - proto.Message.AppStateSyncKeyData.fromObject mirrors what useMultiFileAuthState
- *   does for that specific key type.
+ * Never falls back to file auth. If Supabase is unreachable the function
+ * throws, which kills the process cleanly rather than silently degrading.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -50,11 +46,16 @@ export async function useSupabaseAuthState(): Promise<{
     .maybeSingle();
 
   if (fetchError) {
-    throw new Error(`[SupabaseAuth] Failed to fetch session: ${fetchError.message}`);
+    // Never fall back to file auth — fail loudly so the process dies cleanly.
+    throw new Error(
+      `[SupabaseAuth] Cannot reach Supabase (${fetchError.message}). ` +
+      `Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars.`,
+    );
   }
 
-  // Supabase returns JSONB as a plain JS object. Re-serialize so BufferJSON.reviver
-  // can restore any Buffer instances that were stored as { type:'Buffer', data:[...] }.
+  // Supabase returns JSONB as a plain JS object. Re-serialize so
+  // BufferJSON.reviver can restore Buffer instances stored as
+  // { type: 'Buffer', data: [...] }.
   const blob: { creds?: AuthenticationCreds; keys?: Record<string, unknown> } = row?.data
     ? (JSON.parse(JSON.stringify(row.data), BufferJSON.reviver) as typeof blob)
     : {};
@@ -62,36 +63,49 @@ export async function useSupabaseAuthState(): Promise<{
   // ── In-memory state ────────────────────────────────────────────────────────
   const creds: AuthenticationCreds = blob.creds ?? initAuthCreds();
 
-  // Keys are stored flat: "<type>-<id>" → value
+  if (blob.creds) {
+    console.log('[SupabaseAuth] Session restored from Supabase — no QR needed.');
+  } else {
+    console.log('[SupabaseAuth] No session found — QR code will print. Scan once to authenticate.');
+  }
+
+  // Keys stored flat: `${type}-${id}` → value
   const keysFlat: Record<string, unknown> = blob.keys ?? {};
 
-  // ── Debounced flush ────────────────────────────────────────────────────────
+  // ── Flush helpers ──────────────────────────────────────────────────────────
   let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** Write current creds + keys to Supabase right now. */
+  async function flushNow(): Promise<void> {
+    // Cancel any pending debounce — we're writing now.
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    try {
+      const payload = JSON.parse(
+        JSON.stringify({ creds, keys: keysFlat }, BufferJSON.replacer),
+      ) as Record<string, unknown>;
+
+      const { error: upsertError } = await supabase.from(TABLE).upsert(
+        { id: SESSION_ID, data: payload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' },
+      );
+
+      if (upsertError) {
+        console.error('[SupabaseAuth] Flush failed:', upsertError.message);
+      }
+    } catch (err) {
+      console.error('[SupabaseAuth] Flush error:', err);
+    }
+  }
+
+  /** Schedule a debounced flush — resets the 500 ms timer on every call. */
   function scheduleFlush(): void {
     if (flushTimer) clearTimeout(flushTimer);
     flushTimer = setTimeout(() => {
       flushTimer = null;
-      void (async () => {
-        try {
-          // Serialize with BufferJSON.replacer so Buffers survive the round-trip
-          const payload = JSON.parse(
-            JSON.stringify({ creds, keys: keysFlat }, BufferJSON.replacer),
-          ) as Record<string, unknown>;
-
-          const { error: upsertError } = await supabase.from(TABLE).upsert({
-            id: SESSION_ID,
-            data: payload,
-            updated_at: new Date().toISOString(),
-          });
-
-          if (upsertError) {
-            console.error('[SupabaseAuth] Flush failed:', upsertError.message);
-          }
-        } catch (err) {
-          console.error('[SupabaseAuth] Flush error:', err);
-        }
-      })();
+      void flushNow();
     }, FLUSH_DEBOUNCE_MS);
   }
 
@@ -102,9 +116,11 @@ export async function useSupabaseAuthState(): Promise<{
       for (const id of ids) {
         let value = keysFlat[`${type}-${id}`] as SignalDataTypeMap[T] | undefined;
 
-        // Mirror what useMultiFileAuthState does for this key type
+        // Mirror what useMultiFileAuthState does for this specific key type.
         if (type === 'app-state-sync-key' && value) {
-          value = proto.Message.AppStateSyncKeyData.fromObject(value) as SignalDataTypeMap[T];
+          value = proto.Message.AppStateSyncKeyData.fromObject(
+            value as object,
+          ) as SignalDataTypeMap[T];
         }
 
         if (value !== undefined) {
@@ -116,7 +132,10 @@ export async function useSupabaseAuthState(): Promise<{
 
     set: async (data) => {
       for (const category in data) {
-        const categoryData = data[category] as Record<string, SignalDataTypeMap[keyof SignalDataTypeMap] | null>;
+        const categoryData = data[category] as Record<
+          string,
+          SignalDataTypeMap[keyof SignalDataTypeMap] | null
+        >;
         for (const id in categoryData) {
           const value = categoryData[id];
           const flatKey = `${category}-${id}`;
@@ -127,17 +146,17 @@ export async function useSupabaseAuthState(): Promise<{
           }
         }
       }
+      // Debounce — signal ratchet fires on every message exchange.
       scheduleFlush();
     },
   };
 
   return {
     state: { creds, keys },
-    // saveCreds is called by Baileys on creds.update — the creds object is
-    // mutated in-place by Baileys before this fires, so scheduleFlush picks
-    // up the latest value automatically.
-    saveCreds: async () => {
-      scheduleFlush();
-    },
+
+    // saveCreds is called by Baileys on creds.update events (QR scan, reconnect,
+    // key rotation). These are low-frequency but critical — flush immediately so
+    // a container restart right after scan doesn't lose the session.
+    saveCreds: flushNow,
   };
 }
