@@ -22,8 +22,9 @@ services:
     region: oregon       # Pick the region closest to your users
     plan: free
 
-    buildCommand: bun install --frozen-lockfile
-    startCommand: bun run src/scripts/whatsapp-baileys.ts
+    rootDir: services/whatsapp
+    buildCommand: npm install
+    startCommand: node --experimental-strip-types whatsapp-baileys.ts
 
     # Health check keeps the Render free-tier container alive.
     # Pair this with UptimeRobot pinging /health every 5 minutes.
@@ -56,6 +57,5 @@ services:
       - key: NEXT_APP_URL
         value: https://tadavtu.com   # Update if your Vercel URL is different
 
-      # ── Health server port (Render injects PORT automatically) ────────────
-      - key: PORT
-        value: "3001"
+      # PORT is injected automatically by Render — do not set it here.
+      # The bot reads process.env.PORT at runtime.

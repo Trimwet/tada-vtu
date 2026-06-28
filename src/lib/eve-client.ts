@@ -113,27 +113,38 @@ async function getTransactionHistory(userId: string, limit = 5): Promise<string>
   try {
     const count = Math.min(Math.max(1, limit), 10);
     const res = await fetch(
-      `${getBase()}/api/transaction?userId=${encodeURIComponent(userId)}&limit=${count}`,
-      { headers: { 'x-core-secret': getCoreSecret() }, signal: AbortSignal.timeout(10000) }
+      `${getBase()}/api/agent/transactions?userId=${encodeURIComponent(userId)}&limit=${count}`,
+      {
+        headers: { 'x-core-secret': getCoreSecret() },
+        signal: AbortSignal.timeout(10000),
+      }
     );
-    const json = await res.json() as { status: boolean; data?: Array<Record<string, unknown>>; message?: string };
-    if (!json.status || !json.data || json.data.length === 0) {
-      return json.data?.length === 0 ? 'No transactions yet.' : (json.message || 'Could not fetch transactions.');
+    const json = await res.json() as { success: boolean; transactions?: Array<Record<string, unknown>>; message?: string; code?: string };
+    if (!json.success) {
+      console.error('[EVE] getTransactionHistory API error:', json.code, json.message);
+      return json.message || 'Could not fetch your transactions. Please try again.';
     }
-    const lines = json.data.map((tx) => {
+    const txns = json.transactions || [];
+    if (txns.length === 0) return 'No transactions yet.';
+
+    const DEBIT_TYPES = new Set(['airtime', 'data', 'cable', 'electricity', 'betting', 'debit']);
+    const lines = txns.map((tx) => {
       const amount = Number(tx['amount'] ?? 0);
-      const isDebit = amount < 0 || ['airtime', 'data', 'cable', 'electricity'].includes(String(tx['type'] ?? ''));
+      const type = String(tx['type'] ?? '').toLowerCase();
+      const isDebit = DEBIT_TYPES.has(type);
       const sign = isDebit ? '-' : '+';
       const abs = Math.abs(amount).toLocaleString('en-NG', { minimumFractionDigits: 2 });
-      const date = new Date(String(tx['created_at'] ?? '')).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+      const rawDate = String(tx['date'] || tx['created_at'] || '');
+      const date = rawDate ? new Date(rawDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }) : '?';
       const desc = String(tx['description'] || tx['type'] || '').replace(/\s+\(.*?\)$/, '');
-      const status = tx['status'] === 'success' ? '✓' : tx['status'] === 'failed' ? '✗' : '⏳';
+      const st = tx['status'];
+      const status = st === 'success' ? '✓' : st === 'failed' ? '✗' : '⏳';
       return `${status} ${date}  ${sign}₦${abs}  ${desc}`;
     });
-    return `Last ${json.data.length} transactions:\n${lines.join('\n')}`;
+    return `Last ${txns.length} transactions:\n${lines.join('\n')}`;
   } catch (err) {
     console.error('[EVE] getTransactionHistory error:', err);
-    return 'Could not fetch transactions. Please try again.';
+    return 'Could not fetch your transactions. Please try again.';
   }
 }
 
@@ -197,21 +208,29 @@ async function getDataPlans(network: string): Promise<string> {
     const display = (dataOnly.length > 0 ? dataOnly : plans).slice(0, 10);
 
     const lines = display.map((p, i) => {
-      const name = String(p['name'] || p['plan'] || `Plan ${i + 1}`);
+      const rawName = String(p['name'] || p['plan'] || `Plan ${i + 1}`);
       const size = String(p['size'] || '');
       const price = Number(p['price'] || p['amount'] || 0);
-      const validity = String(p['validity'] || p['duration'] || '');
+      const rawValidity = String(p['validity'] || p['duration'] || '');
       const type = String(p['type'] || '');
       const id = String(p['id'] || p['planId'] || i);
 
-      // Build display line: size is the key info, then price
-      const sizeStr = size ? `${size} ` : '';
-      const validStr = validity ? ` / ${validity}` : '';
-      const typeStr = type ? ` [${type}]` : '';
-      return `${i + 1}. ${sizeStr}${name} — ₦${price}${validStr}${typeStr} [ID:${id}]`;
+      // Avoid showing size twice if name already starts with it
+      const name = size && rawName.toUpperCase().startsWith(size.toUpperCase())
+        ? rawName
+        : size ? `${size} ${rawName}` : rawName;
+
+      // Normalise validity to "X Days" / "X Day" / "X Months" etc.
+      const validity = rawValidity
+        .replace(/\bdays?\b/gi, (m) => m.toLowerCase().startsWith('d') ? (m.endsWith('s') ? 'Days' : 'Day') : m)
+        .replace(/\bmonths?\b/gi, (m) => m.endsWith('s') ? 'Months' : 'Month');
+
+      const validStr = validity ? ` | ${validity}` : '';
+      const typeStr = type ? ` (${type})` : '';
+      return `${i + 1}. ${name} — ₦${price}${validStr}${typeStr} [ID:${id}]`;
     });
 
-    return `${net} data plans:\n${lines.join('\n')}\n\nWhich plan do you want? Reply with the number.`;
+    return `${net} data plans:\n${lines.join('\n')}\n\nReply with the plan number.`;
   } catch (err) {
     console.error('[EVE] getDataPlans error:', err);
     return `Could not fetch ${network} data plans. Please try again.`;
