@@ -200,6 +200,13 @@ async function connect(attempt = 0): Promise<void> {
     printQRInTerminal: false, // We'll do it ourselves for clarity.
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
     generateHighQualityLinkPreview: false,
+    // Skip the full chat/contact history sync on startup.
+    // This prevents the "Timed Out in init queries" noise on Render's free tier
+    // where network latency causes Baileys' sync requests to time out.
+    // The bot only needs to receive/send messages — it doesn't need chat history.
+    syncFullHistory: false,
+    shouldSyncHistoryMessage: () => false,
+    getMessage: async () => undefined,
     // Keep the socket quiet — only log warnings and above.
     logger: { level: "warn", child: () => ({ level: "warn", child: () => {}, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error }) as never, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error } as never,
     markOnlineOnConnect: false,
