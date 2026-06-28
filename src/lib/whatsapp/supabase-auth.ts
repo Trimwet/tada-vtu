@@ -120,7 +120,7 @@ export async function useSupabaseAuthState(): Promise<{
         if (type === 'app-state-sync-key' && value) {
           value = proto.Message.AppStateSyncKeyData.fromObject(
             value as object,
-          ) as SignalDataTypeMap[T];
+          ) as unknown as SignalDataTypeMap[T];
         }
 
         if (value !== undefined) {
