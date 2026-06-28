@@ -11,6 +11,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "whatsapp:baileys": "bun run src/scripts/whatsapp-baileys.ts",
+    "whatsapp:seed": "bun run src/scripts/seed-baileys-session.ts",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "type-check": "tsc --noEmit",

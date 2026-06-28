@@ -1,93 +1,61 @@
 # render.yaml
 #
-# Deploys the WhatsApp bot as a standalone Render Web Service.
-# The Next.js app (tada-vtu) is deployed separately (Vercel / Railway).
+# Deploys the TADAPAY WhatsApp bot as a Render Background Worker.
+# The Next.js app lives on Vercel — this only runs the Baileys process.
 #
-# Usage:
-#   1. Push this file to your repo root (or tada-vtu/ root).
-#   2. In the Render dashboard → "New Blueprint" → point to this file.
-#   3. Set the env vars marked (sync: false) — they are secret and NOT stored here.
+# Setup:
+#   1. Connect this repo to Render.
+#   2. Set the environment variables below in the Render dashboard.
+#   3. Run `bun run src/scripts/seed-baileys-session.ts` locally first
+#      to pre-seed your Supabase session (avoids showing QR on first deploy).
+#   4. Deploy. Render will log "Session restored from Supabase — no QR needed."
 #
-# UptimeRobot: add a monitor for https://<your-service>.onrender.com/health
-# so Render's free tier doesn't sleep the container between messages.
+# If you ever need to re-pair (session invalidated):
+#   - Delete the 'default' row in your Supabase baileys_sessions table.
+#   - Trigger a new Render deploy.
+#   - Watch the logs for the QR code and scan it.
 
 services:
-  - type: web
-    name: tadapay-core
-    runtime: go
-    region: oregon
-
-    rootDir: services/core
-    buildCommand: go build -o bin/server ./cmd/server
-    startCommand: ./bin/server
-
-    autoDeploy: true
-    healthCheckPath: /health
-    plan: free
-
-    envVars:
-      - key: CORE_PORT
-        value: "8080"
-
-      - key: SUPABASE_URL
-        sync: false   # set in Render dashboard
-
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false   # set in Render dashboard (fallback used by main.go)
-
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false   # set in Render dashboard — KEEP SECRET
-
-      - key: CORE_SECRET
-        sync: false   # shared with Next.js + Eve + WhatsApp bot
-
-  - type: web
+  - type: web           # "web" gives us a public /health URL for UptimeRobot
     name: tadapay-whatsapp-bot
     runtime: node
-    region: oregon          # closest to your Supabase region; change if needed
+    region: oregon       # Pick the region closest to your users
+    plan: free
 
-    # Build: install deps from the whatsapp service subfolder
-    rootDir: services/whatsapp
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: bun install --frozen-lockfile
+    startCommand: bun run src/scripts/whatsapp-baileys.ts
 
-    # Keep the container alive — Render will restart on non-zero exit.
-    # 401 (logged out) → process.exit(1) → Render restarts → QR shown again.
-    # Any other crash → Render restarts → exponential backoff reconnects.
-    autoDeploy: true
-
-    # Health check — must return 200 within 30s after deploy
+    # Health check keeps the Render free-tier container alive.
+    # Pair this with UptimeRobot pinging /health every 5 minutes.
     healthCheckPath: /health
 
-    # Render free tier sleeps after 15 min inactivity.
-    # UptimeRobot pings /health every 5 min to keep it warm.
-    # Alternatively, upgrade to Starter ($7/mo) for always-on.
-    plan: free              # change to "starter" for production
+    # Auto-deploy on every push to main.
+    autoDeploy: true
+
+    # Restart ONLY on non-zero exit codes.
+    # Exit 0 (loggedOut) means "session invalidated — don't restart".
+    # Exit 1 means something went wrong — restart.
 
     envVars:
-      # ── Next.js app URL (where Eve agent lives) ──────────────────────────
-      - key: NEXT_APP_URL
-        value: https://tadavtu.vercel.app   # update with your actual Vercel URL
-
-      # ── Supabase (service role — bypasses RLS) ───────────────────────────
+      # ── Supabase ──────────────────────────────────────────────────────────
       - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false    # set in Render dashboard
+        sync: false       # Set in Render dashboard
 
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false    # set in Render dashboard — KEEP SECRET
+        sync: false       # Set in Render dashboard (keep secret)
 
-      # ── Shared secret between Next.js and the bot ────────────────────────
+      # ── Eve / Groq ────────────────────────────────────────────────────────
+      - key: GROQ_API_KEY
+        sync: false
+
+      # ── Internal API auth ─────────────────────────────────────────────────
       - key: CORE_SECRET
-        sync: false    # must match CORE_SECRET in your Next.js env
+        sync: false
 
-      # ── Optional: bot's own phone number for self-message filtering ───────
-      - key: BOT_PHONE
-        sync: false    # e.g. 2347058748217 (digits only, no +)
+      # ── Next.js app URL (where Eve's API routes live — your Vercel URL) ──
+      - key: NEXT_APP_URL
+        value: https://tadavtu.com   # Update if your Vercel URL is different
 
-      # ── Port (Render sets this automatically; keep in sync with bot) ──────
+      # ── Health server port (Render injects PORT automatically) ────────────
       - key: PORT
         value: "3001"
-
-      # ── Node env ─────────────────────────────────────────────────────────
-      - key: NODE_ENV
-        value: production
