@@ -365,6 +365,7 @@ const TOOLS = [
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export async function sendEveMessage(userId: string, message: string): Promise<EveReply> {
+  try {
   const groqKey = process.env.GROQ_API_KEY;
   if (!groqKey) throw new Error('GROQ_API_KEY is not configured');
 
@@ -404,7 +405,15 @@ export async function sendEveMessage(userId: string, message: string): Promise<E
 
     if (!response.ok) {
       const err = await response.text().catch(() => '');
-      throw new Error(`Groq error ${response.status}: ${err}`);
+      console.error(`[EVE] Groq error ${response.status}:`, err.slice(0, 300));
+      // Rate limit — tell user to retry in a moment
+      if (response.status === 429) {
+        sessions.set(userId, session.slice(-MAX_SESSION_MESSAGES));
+        return { message: "I'm a bit busy right now. Please send your message again in a moment." };
+      }
+      // Other Groq errors — don't throw, return graceful message
+      sessions.set(userId, session.slice(-MAX_SESSION_MESSAGES));
+      return { message: "I ran into a problem. Please try again." };
     }
 
     const data = await response.json() as {
@@ -451,4 +460,8 @@ export async function sendEveMessage(userId: string, message: string): Promise<E
 
   sessions.set(userId, session.slice(-MAX_SESSION_MESSAGES));
   return { message: "I'm having trouble completing that. Please try again." };
+  } catch (err) {
+    console.error('[EVE] Unhandled error in sendEveMessage:', err);
+    return { message: "I ran into an unexpected problem. Please try again." };
+  }
 }
