@@ -132,10 +132,7 @@ export async function useSupabaseAuthState(): Promise<{
 
     set: async (data) => {
       for (const category in data) {
-        const categoryData = data[category] as Record<
-          string,
-          SignalDataTypeMap[keyof SignalDataTypeMap] | null
-        >;
+        const categoryData = (data as Record<string, Record<string, SignalDataTypeMap[keyof SignalDataTypeMap] | null>>)[category];
         for (const id in categoryData) {
           const value = categoryData[id];
           const flatKey = `${category}-${id}`;
