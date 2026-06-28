@@ -266,13 +266,48 @@ async function connect(attempt = 0): Promise<void> {
       if (!text?.trim()) continue;
 
       const senderJid = msg.key.remoteJid;
-      // Prefer the real phone number JID (s.whatsapp.net) over the LID.
-      // msg.key.participant is set in groups; for DMs the remoteJid IS the phone JID.
+
+      // ── Resolve the real phone number ──────────────────────────────────────
+      // Baileys on newer WhatsApp versions delivers DMs with a LID (@lid) as
+      // remoteJid instead of the real phone JID (@s.whatsapp.net).
+      // The real phone is exposed in several fallback locations — try them all:
+      //   1. msg.key.remoteJidAlt  — set by Baileys when addressingMode="lid"
+      //   2. msg.message?.senderKeyDistributionMessage (rare)
+      //   3. msg.key.participant   — real sender in group messages
+      //   4. remoteJid itself      — already a phone JID (older clients)
+      //   5. Last resort: use the LID digits (won't match Supabase, but at
+      //      least avoids crashing)
+      const key = msg.key as Record<string, unknown>;
+      const msgAttrs = (msg as unknown as Record<string, unknown>).messageStubParameters
+        ?? (msg as unknown as Record<string, unknown>).messageTimestamp; // unused, just for type
+
+      // remoteJidAlt is populated when Baileys knows the real JID alongside the LID
+      const remoteJidAlt = (key.remoteJidAlt as string | undefined)
+        ?? (key.participant as string | undefined);
+
+      // sender_pn comes from message attributes logged by Baileys internals
+      // It's accessible via the raw message object under various paths:
+      const rawMsg = msg as unknown as {
+        key: { remoteJidAlt?: string; participant?: string };
+        verifiedBizName?: string;
+      };
+
       const phoneJid =
-        msg.key.participant ?? // group sender
-        (senderJid.endsWith("@s.whatsapp.net") ? senderJid : null) ?? // DM phone jid
-        senderJid; // fallback (lid)
+        (rawMsg.key.remoteJidAlt?.endsWith("@s.whatsapp.net") ? rawMsg.key.remoteJidAlt : null) ??
+        (senderJid.endsWith("@s.whatsapp.net") ? senderJid : null) ??
+        (rawMsg.key.participant?.endsWith("@s.whatsapp.net") ? rawMsg.key.participant : null) ??
+        senderJid; // last resort — LID or whatever we have
+
       const senderPhone = jidToPhone(phoneJid);
+
+      // Log clearly so we can see which path resolved the phone
+      const resolvedVia = phoneJid === rawMsg.key.remoteJidAlt ? "remoteJidAlt"
+        : phoneJid === senderJid ? (senderJid.includes("@lid") ? "LID-fallback" : "remoteJid")
+        : phoneJid === rawMsg.key.participant ? "participant"
+        : "unknown";
+      if (resolvedVia === "LID-fallback") {
+        console.warn(`[bot] ⚠️  Using LID as phone — user lookup will fail. LID: ${senderJid}`);
+      }
 
       // Use the chat JID as the conversation ID for context continuity.
       const conversationId = senderJid;
