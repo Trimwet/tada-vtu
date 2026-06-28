@@ -36,9 +36,9 @@ const INLOMAX_NETWORK_IDS: Record<string, string> = {
 
 // Cache config
 const CACHE_CONFIG = {
-  freshTTL: 2 * 60 * 1000,      // 2 minutes - shorter TTL for faster updates
+  freshTTL: 2 * 60 * 1000,      // 2 minutes
   staleTTL: 10 * 60 * 1000,     // 10 minutes
-  fetchTimeout: 15 * 1000,      // 15 seconds
+  fetchTimeout: 7 * 1000,       // 7 seconds — must finish before Vercel's 10s limit
 };
 
 // Cache state
@@ -179,10 +179,10 @@ async function fetchInlomaxPlans(): Promise<Record<string, MergedDataPlan[]>> {
     const result = await withRetry(
       () => inlomax.getServices(),
       {
-        maxRetries: 3,
-        delayMs: 2000,
+        maxRetries: 1,   // one retry max — Vercel hobby limit is 10s total
+        delayMs: 500,
         onRetry: (attempt, error) => {
-          console.warn(`[INLOMAX FETCH] Retry ${attempt}/3 due to error:`, error.message);
+          console.warn(`[INLOMAX FETCH] Retry ${attempt}/1 due to error:`, error.message);
         }
       }
     );

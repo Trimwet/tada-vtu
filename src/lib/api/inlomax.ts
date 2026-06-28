@@ -64,9 +64,11 @@ export async function inlomaxRequest<T>(
   try {
     console.log(`[INLOMAX] Request: ${method} ${endpoint}`, data ? JSON.stringify(data) : '');
     
-    // Create AbortController for timeout (60 seconds for data purchases)
+    // Timeout: 7s for plan fetches (Vercel hobby = 10s limit), 55s for purchases
+    const isReadOnly = method === 'GET' || endpoint === '/services';
+    const timeoutMs = isReadOnly ? 7000 : 55000;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     const response = await fetch(`${INLOMAX_API_URL}${endpoint}`, {
       method,
