@@ -19,7 +19,11 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import qrcode from "qrcode-terminal";
+import pino from "pino";
 import { useSupabaseAuthState } from "./supabase-auth.ts";
+
+// Shared logger — warn level keeps logs clean; Baileys internals need a real pino instance.
+const logger = pino({ level: "warn" });
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -31,132 +35,40 @@ const BOT_PHONE = process.env.BOT_PHONE ?? ""; // e.g. "2347058748217"
 const MAX_RETRIES = 10;
 const BASE_DELAY_MS = 2_000;
 
-// ─── Eve agent bridge ─────────────────────────────────────────────────────────
-
-// Cache continuation tokens per user so Eve can resume the same session.
-// Key: senderPhone, Value: { token, expiresAt }
-const eveTokens = new Map<string, { token: string; expiresAt: number }>();
-const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes of inactivity → new session
-
-function getToken(phone: string): string | undefined {
-  const entry = eveTokens.get(phone);
-  if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
-    eveTokens.delete(phone);
-    return undefined;
-  }
-  return entry.token;
-}
-
-function setToken(phone: string, token: string) {
-  eveTokens.set(phone, { token, expiresAt: Date.now() + TOKEN_TTL_MS });
-}
+// ─── Eve agent bridge ───────────────────────────────────────────────────────
+// Calls bridge.ts on the Next.js app which handles user lookup + Eve reply.
+// One POST, one response — no streaming, no session tokens.
 
 async function askEve(
   message: string,
   senderPhone: string,
-  conversationId: string
 ): Promise<string> {
-  const headers = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${CORE_SECRET}`,
-    "x-tada-user-id": senderPhone,
-  };
-
   try {
-    // Step 1 — create or resume session (pass continuation token if we have one)
-    const existingToken = getToken(senderPhone);
-    const startBody: Record<string, string> = { message };
-    if (existingToken) {
-      startBody.token = existingToken;
-    } else {
-      startBody.conversationId = conversationId;
-    }
-
-    const startRes = await fetch(`${NEXT_APP_URL}/eve/v1/session`, {
+    const res = await fetch(`${NEXT_APP_URL}/api/whatsapp/webhook`, {
       method: "POST",
-      headers,
-      body: JSON.stringify(startBody),
+      headers: {
+        "Content-Type": "application/json",
+        "x-core-secret": CORE_SECRET,
+      },
+      body: JSON.stringify({ phoneNumber: senderPhone, message }),
+      signal: AbortSignal.timeout(45_000),
     });
 
-    if (!startRes.ok) {
-      const text = await startRes.text().catch(() => "");
-      console.error(`[eve-bridge] session start HTTP ${startRes.status}:`, text);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[bot] bridge HTTP ${res.status}:`, body.slice(0, 200));
       return "❌ Sorry, I ran into an issue. Please try again in a moment.";
     }
 
-    const startJson = (await startRes.json()) as { sessionId: string; continuationToken?: string };
-    const { sessionId } = startJson;
-    // Save the continuation token for the next message from this user
-    if (startJson.continuationToken) {
-      setToken(senderPhone, startJson.continuationToken);
-    }
-    console.log(`[eve-bridge] session ${existingToken ? "resumed" : "started"}: ${sessionId}`);
-
-    // Step 2 — stream the response (60s hard timeout to prevent infinite hangs)
-    const streamController = new AbortController();
-    const streamTimeout = setTimeout(() => streamController.abort(), 60_000);
-
-    const streamRes = await fetch(
-      `${NEXT_APP_URL}/eve/v1/session/${sessionId}/stream`,
-      { headers, signal: streamController.signal }
-    ).finally(() => clearTimeout(streamTimeout));
-
-    if (!streamRes.ok || !streamRes.body) {
-      console.error(`[eve-bridge] stream HTTP ${streamRes.status}`);
-      return "❌ Sorry, I ran into an issue. Please try again in a moment.";
-    }
-
-    // Collect Eve's NDJSON stream and extract the final message from step.completed
-    const reader = streamRes.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let finalMessage = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const event = JSON.parse(trimmed) as { type: string; data: Record<string, unknown>; continuationToken?: string };
-          // Grab updated continuation token from any event that carries one
-          if (event.continuationToken) {
-            setToken(senderPhone, event.continuationToken);
-          }
-          // step.completed: capture text from ANY step (tool-call steps may have no message;
-          // the LLM's final response step will have data.message)
-          if (event.type === "step.completed" && typeof event.data?.message === "string" && event.data.message) {
-            finalMessage = event.data.message as string;
-          }
-          // turn.completed may carry the assembled turn message
-          if (event.type === "turn.completed" && typeof (event.data as any)?.message === "string" && (event.data as any).message) {
-            finalMessage = (event.data as any).message as string;
-          }
-          // message.appended: keep updating so we always have the latest partial
-          if (event.type === "message.appended" && typeof event.data?.messageSoFar === "string" && event.data.messageSoFar) {
-            finalMessage = event.data.messageSoFar as string;
-          }
-        } catch {
-          // non-JSON line, skip
-        }
-      }
-    }
-
-    if (!finalMessage) {
-      console.error("[eve-bridge] no text extracted from stream");
+    const json = await res.json() as { replyText?: string; error?: string };
+    if (!json.replyText) {
+      console.error("[bot] bridge returned no replyText:", JSON.stringify(json));
       return "❌ Something went wrong. Please try again.";
     }
 
-    console.log(`[eve-bridge] reply: ${finalMessage.slice(0, 100)}`);
-    return finalMessage;
-
+    return json.replyText;
   } catch (err) {
-    console.error("[eve-bridge] Fetch error:", err);
+    console.error("[bot] bridge fetch error:", err);
     return "❌ Could not reach the assistant. Please try again shortly.";
   }
 }
@@ -194,8 +106,9 @@ async function connect(attempt = 0): Promise<void> {
     version,
     auth: {
       creds: state.creds,
-      // makeCacheableSignalKeyStore adds an in-memory LRU layer on top of our store.
-      keys: makeCacheableSignalKeyStore(state.keys, undefined),
+      // Pass the pino logger — Baileys' auth-utils.js calls logger.trace() internally
+      // and crashes with "undefined is not an object" if the logger is missing.
+      keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     printQRInTerminal: false, // We'll do it ourselves for clarity.
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
@@ -207,8 +120,7 @@ async function connect(attempt = 0): Promise<void> {
     syncFullHistory: false,
     shouldSyncHistoryMessage: () => false,
     getMessage: async () => undefined,
-    // Keep the socket quiet — only log warnings and above.
-    logger: { level: "warn", child: () => ({ level: "warn", child: () => {}, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error }) as never, trace: () => {}, debug: () => {}, info: () => {}, warn: console.warn, error: console.error, fatal: console.error } as never,
+    logger,
     markOnlineOnConnect: false,
   });
 
@@ -324,7 +236,7 @@ async function connect(attempt = 0): Promise<void> {
       // Show typing indicator.
       await sock.sendPresenceUpdate("composing", senderJid).catch(() => {});
 
-      const reply = await askEve(text, senderPhone, conversationId);
+      const reply = await askEve(text, senderPhone);
 
       await sock
         .sendMessage(senderJid, { text: reply }, { quoted: msg })
