@@ -366,8 +366,9 @@ const TOOLS = [
 
 export async function sendEveMessage(userId: string, message: string): Promise<EveReply> {
   try {
-  const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) throw new Error('GROQ_API_KEY is not configured');
+  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.GROQ_API_KEY;
+  const isDeepSeek = !!process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new Error('No LLM API key configured (set DEEPSEEK_API_KEY or GROQ_API_KEY)');
 
   // Get or create session (full groq message chain, no system prompt stored here)
   const session = sessions.get(userId) || [];
@@ -387,14 +388,19 @@ export async function sendEveMessage(userId: string, message: string): Promise<E
   while (iterations < MAX_ITERATIONS) {
     iterations++;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const llmEndpoint = isDeepSeek
+      ? 'https://api.deepseek.com/chat/completions'
+      : 'https://api.groq.com/openai/v1/chat/completions';
+    const llmModel = isDeepSeek ? 'deepseek-chat' : 'llama-3.3-70b-versatile';
+
+    const response = await fetch(llmEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${groqKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: llmModel,
         messages: groqMessages,
         tools: TOOLS,
         tool_choice: 'auto',
