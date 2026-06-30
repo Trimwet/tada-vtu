@@ -26,6 +26,7 @@ import { Spinner } from "@/components/loading-screen";
 import { LoadingIcon } from "@/components/loading-icons";
 import { EyeIcon } from "@/components/ui/eye-icon";
 import { EyeOffIcon } from "@/components/ui/eye-off-icon";
+import { useVirtualAccount } from "@/hooks/useVirtualAccount";
 
 // Clear old feature caches on app load
 import "@/lib/cache-invalidation";
@@ -95,6 +96,15 @@ export default function DashboardPage() {
   });
 
   const [showWithdrawal, setShowWithdrawal] = useState(false);
+
+  const { virtualAccount } = useVirtualAccount();
+  const [inlomaxBalance, setInlomaxBalance] = useState<number | null>(null);
+  useEffect(() => {
+    fetch("/api/inlomax/balance")
+      .then(r => r.json())
+      .then(d => { if (d.status === "success") setInlomaxBalance(d.balance ?? 0); })
+      .catch(() => {});
+  }, []);
   // Check if user needs to add phone number (for Google signups)
   useEffect(() => {
     if (user?.id && !user.phone_number) {
@@ -328,6 +338,26 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Inlomax Stock Warning — shown only for BVN-linked users */}
+        {virtualAccount && inlomaxBalance !== null && inlomaxBalance < 5000 && (
+          <div className="relative overflow-hidden bg-linear-to-r from-amber-500/5 via-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl p-4 backdrop-blur-md">
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
+            <div className="flex gap-3">
+              <IonIcon name="warning" size="20px" color="#f59e0b" className="shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-amber-500 mb-1">
+                  {inlomaxBalance <= 0 ? "Service Unavailable" : "Low Stock Notice"}
+                </p>
+                <p className="text-amber-200/80">
+                  {inlomaxBalance <= 0
+                    ? "Data and airtime services are currently out of stock. Please hold off on adding money until stock is restored."
+                    : "Service stock is running low. Please only add what you need right now and check back shortly for a restock."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Services */}
         <section>
