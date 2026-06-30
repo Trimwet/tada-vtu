@@ -11,6 +11,24 @@
  *                  other → exponential backoff reconnect, reload session.
  */
 
+// Load .env.local from project root (works with both Bun and Node)
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = resolve(__dirname, "../../.env.local");
+try {
+  for (const line of readFileSync(envPath, "utf-8").split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const i = t.indexOf("=");
+    if (i === -1) continue;
+    const k = t.slice(0, i).trim();
+    const v = t.slice(i + 1).trim().replace(/^["']|["']$/g, "");
+    if (!process.env[k]) process.env[k] = v;
+  }
+} catch { /* .env.local is optional */ }
+
 import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion,
