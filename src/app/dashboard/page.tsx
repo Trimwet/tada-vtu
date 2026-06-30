@@ -339,26 +339,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Inlomax Stock Warning — shown only for BVN-linked users */}
-        {virtualAccount && inlomaxBalance !== null && inlomaxBalance < 5000 && (
-          <div className="relative overflow-hidden bg-linear-to-r from-amber-500/5 via-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-2xl p-4 backdrop-blur-md">
-            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shine" />
-            <div className="flex gap-3">
-              <IonIcon name="warning" size="20px" color="#f59e0b" className="shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-amber-500 mb-1">
-                  {inlomaxBalance <= 0 ? "Service Unavailable" : "Low Stock Notice"}
-                </p>
-                <p className="text-amber-200/80">
-                  {inlomaxBalance <= 0
-                    ? "Data and airtime services are currently out of stock. Please hold off on adding money until stock is restored."
-                    : "Service stock is running low. Please only add what you need right now and check back shortly for a restock."}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Services */}
         <section>
           <div className="flex items-center justify-between mb-4">

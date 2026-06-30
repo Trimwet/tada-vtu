@@ -467,20 +467,6 @@ export default function FundWalletPage() {
                     </div>
                   </div>
 
-                  {/* Stock Warning for permanent account holders */}
-                  {inlomaxBalance !== null && inlomaxBalance <= 0 && (
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30">
-                      <IonIcon name="close-circle" size="18px" color="#ef4444" className="shrink-0 mt-0.5" />
-                      <p className="text-sm text-red-500 font-medium">Service stock is currently unavailable. Please hold off on depositing until stock is restored.</p>
-                    </div>
-                  )}
-                  {inlomaxBalance !== null && inlomaxBalance > 0 && inlomaxBalance < 5000 && (
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                      <IonIcon name="warning" size="18px" color="#f59e0b" className="shrink-0 mt-0.5" />
-                      <p className="text-sm text-amber-500 font-medium">Service stock is running low. Only deposit what you need right now.</p>
-                    </div>
-                  )}
-
                   {/* Quick Copy Button */}
                   <Button
                     onClick={handleCopyAccount}
