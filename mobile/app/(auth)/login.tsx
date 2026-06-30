@@ -1,13 +1,9 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { supabase } from '../../lib/supabase';
-import { theme } from '@/theme/colors';
-import { BACK_BUTTON_SIZE } from '@/theme/globals';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -45,69 +41,227 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ paddingHorizontal: 24 }} keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => router.back()}
-            style={{ width: BACK_BUTTON_SIZE, height: BACK_BUTTON_SIZE, borderRadius: BACK_BUTTON_SIZE / 2, backgroundColor: theme.colors.input, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 8 }}
-          >
-            <Ionicons name="chevron-back" size={22} color={theme.colors.textMuted} />
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <Pressable style={styles.skipButton} onPress={() => router.replace('/(app)/')}>
+            <Text style={styles.skipText}>Skip</Text>
           </Pressable>
 
-          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 28, color: theme.colors.foreground, marginBottom: 4 }}>
-            Welcome Back
-          </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.textMuted, marginBottom: 32 }}>
-            Enter your credentials to continue
-          </Text>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logo}>TADA</Text>
+          </View>
 
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={errors.email}
-          />
+          <Text style={styles.heading}>Welcome back</Text>
+          <Text style={styles.subtitle}>Let's get you in to TADA</Text>
 
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-            error={errors.password}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, errors.email && styles.inputError]}
+              placeholder="Your Email"
+              placeholderTextColor="#666666"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-          <Pressable style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: theme.colors.primary }}>
-              Forgot Password?
-            </Text>
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={[styles.input, errors.password && styles.inputError]}
+              placeholder="Your Password"
+              placeholderTextColor="#666666"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+          <Pressable style={styles.forgotPassword}>
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </Pressable>
 
           {serverError ? (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.destructive, marginBottom: 16, textAlign: 'center' }}>
-              {serverError}
-            </Text>
+            <Text style={styles.serverError}>{serverError}</Text>
           ) : null}
 
-          <Button label="Sign In" onPress={handleLogin} loading={loading} />
+          <Pressable style={styles.signInButton} onPress={handleLogin} disabled={loading}>
+            <Text style={styles.signInButtonText}>{loading ? 'Signing in...' : 'Sign in'}</Text>
+          </Pressable>
 
-          <Pressable onPress={() => router.push('/(auth)/signup')} style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.textMuted }}>
-              Don't have an account?{' '}
-              <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.primary }}>
-                Create one
-              </Text>
-            </Text>
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Pressable style={styles.socialButton}>
+            <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={styles.socialIcon} />
+            <Text style={styles.socialButtonText}>Sign In With Apple</Text>
+          </Pressable>
+
+          <Pressable style={styles.socialButton}>
+            <Ionicons name="call" size={20} color="#FFFFFF" style={styles.socialIcon} />
+            <Text style={styles.socialButtonText}>Sign In With Phone</Text>
+          </Pressable>
+
+          <Pressable onPress={() => router.push('/(auth)/signup')} style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account?</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  skipButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    padding: 8,
+  },
+  skipText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 24,
+  },
+  logo: {
+    fontFamily: 'Inter_800ExtraBold',
+    fontSize: 32,
+    color: '#FFFFFF',
+    letterSpacing: 2,
+  },
+  heading: {
+    fontFamily: 'Inter_700Bold',
+    fontSize: 28,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    color: '#888888',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    backgroundColor: 'transparent',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#FF4444',
+  },
+  errorText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: '#FF4444',
+    marginTop: -8,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  forgotPassword: {
+    alignSelf: 'center',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#888888',
+  },
+  serverError: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: '#FF4444',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  signInButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9999,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  signInButtonText: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    color: '#000000',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#333333',
+  },
+  dividerText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    color: '#666666',
+    marginHorizontal: 16,
+  },
+  socialButton: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A1A',
+    borderRadius: 9999,
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  socialIcon: {
+    marginRight: 8,
+  },
+  socialButtonText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  signupContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  signupText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    color: '#888888',
+  },
+});
