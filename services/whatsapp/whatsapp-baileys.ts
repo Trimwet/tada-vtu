@@ -29,7 +29,8 @@ try {
   }
 } catch { /* .env.local is optional */ }
 
-import makeWASocket, {
+import {
+  default as makeWASocket,
   DisconnectReason,
   fetchLatestBaileysVersion,
   isJidBroadcast,
