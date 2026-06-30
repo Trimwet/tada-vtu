@@ -14,6 +14,10 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+config.resolver.alias = {
+  '@': projectRoot,
+};
+
 config.resolver.unstable_enablePackageExports = true;
 config.maxWorkers = Math.max(require('os').cpus().length - 1, 2);
 
