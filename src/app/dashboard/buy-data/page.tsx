@@ -28,7 +28,6 @@ import dynamic from "next/dynamic";
 import { useDataPlans, DataPlan as MergedDataPlan } from "@/hooks/useDataPlans";
 import { useDataVault } from "@/hooks/useDataVault";
 import { useContacts, Contact } from "@/hooks/useContacts";
-import { useFrequentPlans } from "@/hooks/useFrequentPlans";
 import { TransactionConfirmationCard, type TransactionStatus } from "@/components/transaction-confirmation-card";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -104,7 +103,6 @@ export default function BuyDataPage() {
         autoRefresh: true
     });
 
-    const { plans: frequentPlans, loading: loadingFrequent } = useFrequentPlans();
 
     // Reset selections when network changes
     useEffect(() => {
@@ -479,32 +477,6 @@ export default function BuyDataPage() {
                             </div>
 
 
-                            {/* Frequent Plans Quick Recharge */}
-                            {!selectedNetwork && frequentPlans.length > 0 && !loadingFrequent && (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <IonIcon name="refresh-outline" size="16px" className="text-green-500" />
-                                        <Label className="text-sm font-medium">Frequent Plans</Label>
-                                    </div>
-                                    <div className="flex gap-2 overflow-x-auto pb-1 thin-scrollbar -mx-1 px-1">
-                                        {frequentPlans.slice(0, 5).map((plan) => (
-                                            <button
-                                                key={plan.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (plan.network) setSelectedNetwork(plan.network);
-                                                }}
-                                                className="shrink-0 bg-muted/30 border border-border hover:border-green-500/50 rounded-xl p-3 text-left min-w-[130px] transition-smooth"
-                                            >
-                                                <div className="text-xs text-muted-foreground font-medium">{plan.network}</div>
-                                                <div className="font-bold text-foreground text-sm truncate">{plan.plan_name}</div>
-                                                <div className="text-xs text-green-500 font-semibold">₦{plan.amount?.toLocaleString()}</div>
-                                                <div className="text-[10px] text-muted-foreground">Bought {plan.purchase_count}x</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Data Type Selection - Dynamic based on available plans */}
                             {selectedNetwork && (

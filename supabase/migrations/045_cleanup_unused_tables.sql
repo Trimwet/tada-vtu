@@ -43,6 +43,9 @@ DROP TABLE IF EXISTS public.performance_metrics CASCADE;
 -- From fix_virtual_accounts_bvn_validation.sql
 DROP TABLE IF EXISTS public.audit_log CASCADE;
 
+-- User-facing feature removed: frequent plans
+DROP TABLE IF EXISTS public.user_plan_preferences CASCADE;
+
 -- ── Phase 3: Verify nothing was accidentally broken ───────────
 -- The following tables are confirmed still intact:
 --   profiles, transactions, withdrawals, wallet_transactions,
