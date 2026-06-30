@@ -54,6 +54,14 @@ export default function FundWalletPage() {
   const { transactions, refreshTransactions } = useSupabaseTransactions(10);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [inlomaxBalance, setInlomaxBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/inlomax/balance")
+      .then(r => r.json())
+      .then(d => { if (d.status === "success") setInlomaxBalance(d.balance ?? 0); })
+      .catch(() => {});
+  }, []);
   const [feeInfo, setFeeInfo] = useState<FeeInfo | null>(null);
   const [loadingFees, setLoadingFees] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank");
@@ -179,6 +187,13 @@ export default function FundWalletPage() {
     }
     if (!user?.email) {
       toast.error("Please login to continue");
+      return;
+    }
+
+    if (inlomaxBalance !== null && fundAmount > inlomaxBalance) {
+      toast.warning(`Service stock is currently limited`, {
+        description: `We may not be able to fulfil this deposit amount right now. Please try a smaller amount or check back shortly.`,
+      });
       return;
     }
 

@@ -169,6 +169,19 @@ export default function BuyAirtimePage() {
       return;
     }
 
+    // Check Inlomax stock before proceeding
+    try {
+      const inlomaxRes = await fetch("/api/inlomax/balance");
+      const inlomaxData = await inlomaxRes.json();
+      if (inlomaxData.status !== "success" || (inlomaxData.balance ?? 0) < numAmount) {
+        toast.warning("Service temporarily unavailable", "Airtime stock is currently low. Please try again later or contact support.");
+        return;
+      }
+    } catch {
+      // If balance check fails, warn but don't block — server will handle it
+      toast.warning("Could not verify stock availability. Proceed with caution.");
+    }
+
     requirePin(executePurchase);
   };
 
