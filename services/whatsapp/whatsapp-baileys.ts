@@ -30,7 +30,7 @@ try {
 } catch { /* .env.local is optional */ }
 
 import {
-  default as makeWASocket,
+  makeWASocket,
   DisconnectReason,
   fetchLatestBaileysVersion,
   isJidBroadcast,
@@ -133,7 +133,7 @@ async function connect(attempt = 0): Promise<void> {
       // and crashes with "undefined is not an object" if the logger is missing.
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    printQRInTerminal: false,
+    printQRInTerminal: true,
     WebSocketClass: WebSocket, // force Node ws, bypasses Bun's broken shim
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
     generateHighQualityLinkPreview: false,
@@ -151,7 +151,11 @@ async function connect(attempt = 0): Promise<void> {
 
   // ── Connection handler ──────────────────────────────────────────────────────
   sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
+    const { connection, lastDisconnect, qr } = update;
+
+    if (qr) {
+      console.log("\n[bot] 📱 Scan this QR with WhatsApp (Linked Devices → Link a Device):\n");
+    }
 
     if (connection === "open") {
       console.log("[bot] ✅ WhatsApp connected and authenticated.");
