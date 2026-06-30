@@ -1,8 +1,6 @@
 import { View, Text, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import Button from '../components/ui/Button';
 
 export default function WelcomeScreen() {
@@ -10,29 +8,26 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
-      <LinearGradient
-        colors={['#052e16', '#0A0A0A']}
-        className="flex-1 items-center justify-center px-6"
-      >
-        <Animated.View entering={FadeIn.duration(600)} className="items-center mb-16">
+      <View className="flex-1 px-6">
+        <View className="flex-1 items-center justify-center">
           <Image
             source={require('../assets/splash-icon.png')}
-            className="w-20 h-20 mb-6"
+            style={{ width: 64, height: 64, marginBottom: 16 }}
             resizeMode="contain"
           />
-          <Text style={{ fontFamily: 'Inter_800ExtraBold' }} className="text-white text-4xl mb-2">
+          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 36, color: '#ffffff', letterSpacing: -0.5, marginBottom: 8 }}>
             TADAPAY
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-zinc-400 text-base text-center">
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#71717a', textAlign: 'center' }}>
             Fast, simple bill payments
           </Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.delay(300).duration(500)} className="w-full gap-3">
+        <View style={{ paddingBottom: 16, gap: 12 }}>
           <Button label="Create Account" onPress={() => router.push('/(auth)/signup')} />
           <Button label="Sign In" variant="outline" onPress={() => router.push('/(auth)/login')} />
-        </Animated.View>
-      </LinearGradient>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }

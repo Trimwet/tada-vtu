@@ -7,41 +7,47 @@ interface InputProps extends TextInputProps {
   error?: string;
 }
 
-export default function Input({ label, error, ...props }: InputProps) {
-  const [focused, setFocused] = useState(false);
+export default function Input({ label, error, style: _style, ...props }: InputProps) {
   const borderColor = useSharedValue('#27272A');
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const animatedBorderStyle = useAnimatedStyle(() => ({
     borderColor: borderColor.value,
   }));
 
   const handleFocus = () => {
-    setFocused(true);
     borderColor.value = withTiming('#22C55E', { duration: 150 });
   };
 
   const handleBlur = () => {
-    setFocused(false);
     borderColor.value = withTiming(error ? '#F87171' : '#27272A', { duration: 150 });
   };
 
   return (
-    <View className="mb-4">
-      <Text style={{ fontFamily: 'Inter_500Medium' }} className="text-zinc-400 text-sm mb-2">
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: '#a1a1aa', marginBottom: 8 }}>
         {label}
       </Text>
-      <Animated.View style={animatedStyle} className="bg-zinc-900 border rounded-xl px-4">
+      <Animated.View
+        style={[
+          {
+            backgroundColor: '#18181b',
+            borderWidth: 1,
+            borderRadius: 12,
+            paddingHorizontal: 16,
+          },
+          animatedBorderStyle,
+        ]}
+      >
         <TextInput
           {...props}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          style={{ fontFamily: 'Inter_400Regular' }}
-          className="text-white text-base py-4"
+          style={{ fontFamily: 'Inter_400Regular', fontSize: 15, color: '#ffffff', paddingVertical: 14 }}
           placeholderTextColor="#52525B"
         />
       </Animated.View>
       {error ? (
-        <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-red-400 text-xs mt-1">
+        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#f87171', marginTop: 4 }}>
           {error}
         </Text>
       ) : null}

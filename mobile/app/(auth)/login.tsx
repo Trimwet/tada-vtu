@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/ui/Input';
 import PinInput from '../../components/ui/PinInput';
@@ -45,62 +44,60 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
-        <ScrollView contentContainerClassName="flex-grow px-6 pt-4 pb-8" keyboardShouldPersistTaps="handled">
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <Pressable onPress={() => router.back()} className="flex-row items-center mb-6">
-              <Ionicons name="arrow-back" size={24} color="#a1a1aa" />
-              <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-zinc-300 text-lg ml-3">
-                Welcome Back
-              </Text>
-            </Pressable>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ paddingHorizontal: 24 }} keyboardShouldPersistTaps="handled">
+          <Pressable
+            onPress={() => router.back()}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181b', alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 8 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#a1a1aa" />
+          </Pressable>
 
-            <Text style={{ fontFamily: 'Inter_800ExtraBold' }} className="text-white text-2xl mb-1">
-              Sign In
+          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 28, color: '#ffffff', marginBottom: 4 }}>
+            Welcome Back
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa', marginBottom: 32 }}>
+            Enter your credentials to continue
+          </Text>
+
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={errors.email}
+          />
+
+          <PinInput label="4-digit PIN" value={pin} onChangeText={setPin} error={errors.pin} />
+
+          <Pressable style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: '#22C55E' }}>
+              Forgot PIN?
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-zinc-400 text-sm mb-8">
-              Enter your credentials to continue
+          </Pressable>
+
+          {serverError ? (
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#f87171', marginBottom: 16, textAlign: 'center' }}>
+              {serverError}
             </Text>
+          ) : null}
 
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={errors.email}
-            />
+          <Button label="Sign In" onPress={handleLogin} loading={loading} />
 
-            <PinInput label="PIN" value={pin} onChangeText={setPin} error={errors.pin} />
-
-            <Pressable className="self-end mb-6">
-              <Text style={{ fontFamily: 'Inter_500Medium' }} className="text-primary text-sm">
-                Forgot PIN?
+          <Pressable onPress={() => router.push('/(auth)/signup')} style={{ marginTop: 24, alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa' }}>
+              Don't have an account?{' '}
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#22C55E' }}>
+                Create one
               </Text>
-            </Pressable>
-
-            {serverError ? (
-              <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-red-400 text-sm mb-4 text-center">
-                {serverError}
-              </Text>
-            ) : null}
-
-            <Button label="Sign In" onPress={handleLogin} loading={loading} />
-
-            <Pressable onPress={() => router.push('/(auth)/signup')} className="mt-6 items-center">
-              <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-zinc-400 text-sm">
-                Don't have an account?{' '}
-                <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-primary">
-                  Create one
-                </Text>
-              </Text>
-            </Pressable>
-          </Animated.View>
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import Input from '../../components/ui/Input';
 import PinInput from '../../components/ui/PinInput';
@@ -52,78 +51,74 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        style={{ flex: 1 }}
       >
-        <ScrollView contentContainerClassName="flex-grow px-6 pt-4 pb-8" keyboardShouldPersistTaps="handled">
-          <Animated.View entering={FadeInDown.duration(400)}>
-            <Pressable onPress={() => router.back()} className="flex-row items-center mb-6">
-              <Ionicons name="arrow-back" size={24} color="#a1a1aa" />
-              <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-zinc-300 text-lg ml-3">
-                Create Account
-              </Text>
-            </Pressable>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ paddingHorizontal: 24 }} keyboardShouldPersistTaps="handled">
+          <Pressable
+            onPress={() => router.back()}
+            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181b', alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 8 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#a1a1aa" />
+          </Pressable>
 
-            <Text style={{ fontFamily: 'Inter_800ExtraBold' }} className="text-white text-2xl mb-1">
-              Join TADAPAY
+          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 28, color: '#ffffff', marginBottom: 4 }}>
+            Create Account
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa', marginBottom: 32 }}>
+            Create your account to get started
+          </Text>
+
+          <Input
+            label="Full Name"
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder="John Doe"
+            autoCapitalize="words"
+            error={errors.fullName}
+          />
+
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            error={errors.email}
+          />
+
+          <Input
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="08012345678"
+            keyboardType="phone-pad"
+            error={errors.phone}
+          />
+
+          <PinInput label="Create PIN" value={pin} onChangeText={setPin} error={errors.pin} />
+
+          <PinInput label="Confirm PIN" value={confirmPin} onChangeText={setConfirmPin} error={errors.confirmPin} />
+
+          {serverError ? (
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#f87171', marginBottom: 16, textAlign: 'center' }}>
+              {serverError}
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-zinc-400 text-sm mb-8">
-              Create your account to get started
+          ) : null}
+
+          <Button label="Create Account" onPress={handleSignup} loading={loading} />
+
+          <Pressable onPress={() => router.push('/(auth)/login')} style={{ marginTop: 24, alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa' }}>
+              Already have an account?{' '}
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#22C55E' }}>
+                Sign In
+              </Text>
             </Text>
-
-            <Input
-              label="Full Name"
-              value={fullName}
-              onChangeText={setFullName}
-              placeholder="John Doe"
-              autoCapitalize="words"
-              error={errors.fullName}
-            />
-
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              error={errors.email}
-            />
-
-            <Input
-              label="Phone Number"
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="08012345678"
-              keyboardType="phone-pad"
-              error={errors.phone}
-            />
-
-            <PinInput label="Create PIN" value={pin} onChangeText={setPin} error={errors.pin} />
-
-            <PinInput label="Confirm PIN" value={confirmPin} onChangeText={setConfirmPin} error={errors.confirmPin} />
-
-            {serverError ? (
-              <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-red-400 text-sm mb-4 text-center">
-                {serverError}
-              </Text>
-            ) : null}
-
-            <View className="mt-2">
-              <Button label="Create Account" onPress={handleSignup} loading={loading} />
-            </View>
-
-            <Pressable onPress={() => router.push('/(auth)/login')} className="mt-6 items-center">
-              <Text style={{ fontFamily: 'Inter_400Regular' }} className="text-zinc-400 text-sm">
-                Already have an account?{' '}
-                <Text style={{ fontFamily: 'Inter_600SemiBold' }} className="text-primary">
-                  Sign In
-                </Text>
-              </Text>
-            </Pressable>
-          </Animated.View>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

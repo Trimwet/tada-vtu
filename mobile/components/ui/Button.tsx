@@ -16,10 +16,11 @@ export default function Button({ label, onPress, variant = 'primary', loading = 
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    width: '100%',
   }));
 
-  const handlePressIn = () => { scale.value = withTiming(0.96, { duration: 100 }); };
-  const handlePressOut = () => { scale.value = withTiming(1, { duration: 100 }); };
+  const handlePressIn = () => { scale.value = withTiming(0.97, { duration: 80 }); };
+  const handlePressOut = () => { scale.value = withTiming(1, { duration: 80 }); };
 
   const isPrimary = variant === 'primary';
 
@@ -29,17 +30,31 @@ export default function Button({ label, onPress, variant = 'primary', loading = 
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled || loading}
-      style={animatedStyle}
-      className={`flex-row items-center justify-center rounded-xl py-4 px-6 ${
-        isPrimary ? 'bg-primary' : 'border border-zinc-700 bg-transparent'
-      } ${disabled ? 'opacity-50' : ''}`}
+      style={[
+        animatedStyle,
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 9999,
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          backgroundColor: isPrimary ? '#22C55E' : 'transparent',
+          borderWidth: isPrimary ? 0 : 1.5,
+          borderColor: isPrimary ? 'transparent' : '#3f3f46',
+          opacity: disabled ? 0.5 : 1,
+        }
+      ]}
     >
       {loading ? (
         <ActivityIndicator color={isPrimary ? '#fff' : '#a1a1aa'} />
       ) : (
         <Text
-          style={{ fontFamily: 'Inter_600SemiBold' }}
-          className={`text-base ${isPrimary ? 'text-white' : 'text-zinc-300'}`}
+          style={{
+            fontFamily: 'Inter_600SemiBold',
+            fontSize: 16,
+            color: isPrimary ? '#ffffff' : '#d4d4d8',
+          }}
         >
           {label}
         </Text>
