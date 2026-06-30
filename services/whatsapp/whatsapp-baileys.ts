@@ -20,6 +20,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
+import WebSocket from "ws";
 import { useSupabaseAuthState } from "./supabase-auth.ts";
 
 // Shared logger — warn level keeps logs clean; Baileys internals need a real pino instance.
@@ -114,6 +115,7 @@ async function connect(attempt = 0): Promise<void> {
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
     printQRInTerminal: false,
+    WebSocketClass: WebSocket, // force Node ws, bypasses Bun's broken shim
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
     generateHighQualityLinkPreview: false,
     // Skip the full chat/contact history sync on startup.
@@ -134,6 +136,10 @@ async function connect(attempt = 0): Promise<void> {
 
     if (connection === "open") {
       console.log("[bot] ✅ WhatsApp connected and authenticated.");
+    }
+
+    if (connection === "connecting") {
+      console.log("[bot] 🔄 WebSocket open — ready for pairing. Hit /pair now.");
     }
 
     if (connection === "close") {
@@ -289,14 +295,10 @@ createServer(async (req, res) => {
       return;
     }
 
-    // Check WebSocket is open before requesting pairing code
-    // readyState: 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
-    const wsState = sockRef.ws?.readyState;
-    if (wsState !== 1) {
+    if (!sockRef.ws?.isOpen) {
       res.writeHead(503, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
         error: "WebSocket not ready. Bot is still connecting — retry in 3-5 seconds.",
-        wsState,
       }));
       return;
     }
