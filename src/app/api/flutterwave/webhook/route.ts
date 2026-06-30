@@ -206,6 +206,19 @@ export async function POST(request: NextRequest) {
           refundSucceeded = true;
         } catch (refundError) {
           console.error('[FLW-WEBHOOK] Withdrawal refund failed — MANUAL ACTION REQUIRED:', refundError);
+          try {
+            await supabase.from('failed_refunds').insert({
+              user_id:            withdrawal.user_id,
+              amount:             totalRefund,
+              original_reference: reference,
+              refund_reference:   `REFUND_${reference}`,
+              description:        `Refund: Withdrawal failed (${reference})`,
+              source:             'webhook',
+              last_error:         refundError instanceof Error ? refundError.message : String(refundError),
+            });
+          } catch (queueError) {
+            console.error('[FLW-WEBHOOK] Could not enqueue failed_refunds row (non-blocking):', queueError);
+          }
         }
 
         const failureReason = data.complete_message || 'Declined';

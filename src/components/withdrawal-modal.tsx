@@ -24,9 +24,9 @@ interface WithdrawalModalProps {
   onSuccess: () => void;
 }
 
-const MIN_WITHDRAWAL = 500;
-const MAX_WITHDRAWAL = 50000;
-const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
+const MIN_WITHDRAWAL = 100;
+const MAX_WITHDRAWAL = 500000;
+const QUICK_AMOUNTS = [500, 1000, 5000, 10000, 50000, 100000];
 
 export function WithdrawalModal({
   isOpen,
@@ -48,9 +48,17 @@ export function WithdrawalModal({
   const [accountName, setAccountName] = useState("");
   const [pin, setPin] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [fee, setFee] = useState(0);
+  const [loadingFee, setLoadingFee] = useState(false);
+  const [successData, setSuccessData] = useState<{ netAmount?: number; reference?: string } | null>(null);
 
-  const fee = amount ? (parseFloat(amount) < 5000 ? 36 : 52) : 0;
   const totalDebit = parseFloat(amount || "0") + fee;
+
+  const fallbackFee = useCallback((amt: number) => {
+    if (amt <= 5000) return 10.75;
+    if (amt <= 50000) return 26.88;
+    return 53.75;
+  }, []);
 
   const filteredBanks = useMemo(() => {
     if (!bankSearch.trim()) return banks;
@@ -83,18 +91,52 @@ export function WithdrawalModal({
       setAccountName("");
       setPin("");
       setBankSearch("");
+      setSuccessData(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!amount || parseFloat(amount) < MIN_WITHDRAWAL) {
+      setFee(0);
+      return;
+    }
+    const amountNum = parseFloat(amount);
+    let cancelled = false;
+    setLoadingFee(true);
+    fetch("/api/flutterwave/fee-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: amountNum }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.status === "success" && typeof data.fee === "number") {
+          setFee(data.fee);
+        } else {
+          setFee(fallbackFee(amountNum));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFee(fallbackFee(amountNum));
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingFee(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [amount, fallbackFee]);
 
   const fetchBanks = async () => {
     setLoadingBanks(true);
     try {
       const res = await fetch("/api/withdrawal/banks");
       const data = await res.json();
-      if (data.banks) {
+      if (data.data) {
         const seenCodes = new Set<string>();
         const uniqueBanks: Bank[] = [];
-        data.banks.forEach((b: Bank, idx: number) => {
+        data.data.forEach((b: Bank, idx: number) => {
           if (!seenCodes.has(b.code)) {
             seenCodes.add(b.code);
             uniqueBanks.push({ ...b, id: b.id || idx });
@@ -183,11 +225,10 @@ export function WithdrawalModal({
     }
     setProcessing(true);
     try {
-      const res = await fetch("/api/withdrawal/initiate", {
+      const res = await fetch("/api/withdrawal/transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
           amount: parseFloat(amount),
           bankCode: selectedBank?.code,
           bankName: selectedBank?.name,
@@ -197,12 +238,13 @@ export function WithdrawalModal({
         }),
       });
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok && data.status === "success") {
+        setSuccessData(data.data ?? null);
         setStep("success");
         onSuccess();
       } else {
-        toast.error(data.error || "Withdrawal failed");
-        if (data.error?.includes("PIN")) setPin("");
+        toast.error(data.message || "Withdrawal failed");
+        if (data.message?.includes("PIN")) setPin("");
       }
     } catch {
       toast.error("An error occurred");
@@ -618,6 +660,12 @@ export function WithdrawalModal({
                     <span className="text-muted-foreground">Bank</span>
                     <span className="font-medium text-foreground">{selectedBank?.name}</span>
                   </div>
+                  {successData?.netAmount !== undefined && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">You&apos;ll receive</span>
+                      <span className="font-medium text-foreground">₦{successData.netAmount.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   This usually takes a few minutes. You&apos;ll receive a notification once complete.

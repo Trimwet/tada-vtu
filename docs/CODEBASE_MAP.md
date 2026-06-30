@@ -1,7 +1,7 @@
 # TADA VTU — Codebase Knowledge Graph Map
 
 **Generated from:** codebase-memory-mcp (3,537 nodes, 8,106 edges)  
-**Last updated:** 2026-06-29
+**Last updated:** 2026-06-30 (withdrawal/initiate route deleted; deposit_holds + failed_refunds tables added; release-deposit-holds + retry-failed-refunds crons added)
 
 ---
 
@@ -190,6 +190,8 @@ The codebase-memory graph classifies code into layers:
 | Method | Route | Frequency | Description |
 |--------|-------|-----------|-------------|
 | GET | `/api/cron/reconcile` | 15min (via bot) / daily (Vercel) | Reconcile stuck pending txns |
+| GET | `/api/cron/release-deposit-holds` | Daily 1:00 AM UTC | Mark expired 3-day deposit holds as released |
+| GET | `/api/cron/retry-failed-refunds` | Daily 2:00 AM UTC | Retry refunds that failed after a withdrawal/transfer failure |
 | GET | `/api/cron/process-pending-transactions` | Daily | Process pending transactions |
 | GET | `/api/cron/process-transfers` | Daily | Process pending transfers |
 | GET | `/api/cron/process-vault-expiry` | Daily | Process expired vault items |
@@ -208,8 +210,7 @@ The codebase-memory graph classifies code into layers:
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| POST | `/api/withdrawal/initiate` | Initiate withdrawal |
-| POST | `/api/withdrawal/transfer` | Execute transfer |
+| POST | `/api/withdrawal/transfer` | Execute transfer (hardened: bcrypt PIN, daily caps, deposit hold check) |
 | GET | `/api/withdrawal/banks` | List banks |
 | POST | `/api/withdrawal/verify-account` | Verify bank account |
 

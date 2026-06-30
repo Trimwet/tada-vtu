@@ -61,6 +61,7 @@ async function flutterwaveRequest<T>(
       'Authorization': `Bearer ${secretKey}`,
     },
     body: method === 'POST' && data ? JSON.stringify(data) : undefined,
+    signal: AbortSignal.timeout(8000),
   });
 
   const result = await response.json();
@@ -220,6 +221,37 @@ export async function getTransferFee(amount: number): Promise<number> {
   }
 
   return result.data[0].fee;
+}
+
+/**
+ * Returns the available NGN balance in the Flutterwave payout account.
+ * Used by the withdrawal route to pre-check before debiting the user.
+ * Returns null on error (treat as unknown — do not block withdrawal on error).
+ */
+export async function getPayoutBalance(): Promise<number | null> {
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) return null;
+
+  try {
+    const response = await fetch('https://api.flutterwave.com/v3/balances', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${secretKey}`,
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const ngnEntry = (data.data as Array<{ currency: string; available_balance: number }> | undefined)
+      ?.find((b) => b.currency === 'NGN');
+
+    return ngnEntry?.available_balance ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // Retry failed transfer
