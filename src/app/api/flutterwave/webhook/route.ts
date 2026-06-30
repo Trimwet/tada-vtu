@@ -191,8 +191,10 @@ export async function POST(request: NextRequest) {
           title: 'Withdrawal Successful',
           message: `Your withdrawal of ₦${withdrawal.amount.toLocaleString()} has been completed.`,
         });
+        await logWebhook(supabase, 'flutterwave', event, payload, 'processed');
       } else if (status === 'FAILED' && withdrawal.status !== 'failed') {
         const totalRefund = Number(withdrawal.amount) + Number(withdrawal.fee || 0);
+        let refundSucceeded = false;
         try {
           await coreRefund({
             userId: withdrawal.user_id,
@@ -201,13 +203,29 @@ export async function POST(request: NextRequest) {
             originalReference: reference,
             description: `Refund: Withdrawal failed (${reference})`,
           });
+          refundSucceeded = true;
         } catch (refundError) {
-          console.error('[FLW-WEBHOOK] Withdrawal refund failed:', refundError);
+          console.error('[FLW-WEBHOOK] Withdrawal refund failed — MANUAL ACTION REQUIRED:', refundError);
         }
+
+        const failureReason = data.complete_message || 'Declined';
         await supabase
           .from('withdrawals')
-          .update({ status: 'failed', failure_reason: data.complete_message || 'Declined' })
+          .update({
+            status: 'failed',
+            failure_reason: refundSucceeded ? failureReason : `REFUND FAILED: ${failureReason}`,
+          })
           .eq('reference', reference);
+
+        if (!refundSucceeded) {
+          await supabase.from('notifications').insert({
+            user_id: withdrawal.user_id,
+            type: 'error',
+            title: 'Action Required — Withdrawal Refund Failed',
+            message: `Your withdrawal of ₦${withdrawal.amount.toLocaleString()} failed and the automatic refund could not be processed. Please contact support with reference: ${reference}`,
+          });
+        }
+        await logWebhook(supabase, 'flutterwave', event, payload, 'processed');
       }
     }
 

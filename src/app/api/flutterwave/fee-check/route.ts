@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  calculateServiceCharge, 
+import {
+  calculateServiceCharge,
   calculateBankTransferFee,
   getBankTransferFeeTier,
-  BANK_TRANSFER_FEE_THRESHOLD 
+  BANK_TRANSFER_FEE_THRESHOLD,
 } from '@/lib/api/flutterwave';
+import { getTransferFee } from '@/lib/api/flutterwave-transfer';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
       // Bank transfer fee structure
       const bankFee = calculateBankTransferFee(amount);
       const feeTier = getBankTransferFeeTier(amount);
-      
+
       return NextResponse.json({
         status: 'success',
         data: {
@@ -57,6 +58,32 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Fee check error:', error);
+    return NextResponse.json(
+      { status: 'error', message: 'Failed to check fees' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { amount } = await request.json();
+
+    if (!amount || amount < 100) {
+      return NextResponse.json(
+        { status: 'error', message: 'Valid amount required' },
+        { status: 400 }
+      );
+    }
+
+    const fee = await getTransferFee(amount);
+
+    return NextResponse.json({
+      status: 'success',
+      fee,
+    });
+  } catch (error) {
+    console.error('Fee check POST error:', error);
     return NextResponse.json(
       { status: 'error', message: 'Failed to check fees' },
       { status: 500 }
