@@ -242,6 +242,13 @@ export default function FundWalletPage() {
       toast.error("Please enter a valid amount (minimum ₦100)");
       return;
     }
+
+    if (inlomaxBalance !== null && amt > inlomaxBalance) {
+      toast.warning("Service stock is currently limited", {
+        description: "We may not be able to fulfil this deposit amount right now. Please try a smaller amount or check back shortly.",
+      });
+      return;
+    }
     const result = await createTempAccount(amt);
     if (result) {
       toast.success("Temporary account created!", { description: "Transfer within 1 hour to fund your wallet" });
