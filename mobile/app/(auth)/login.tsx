@@ -104,13 +104,8 @@ export default function LoginScreen() {
           </View>
 
           <Pressable style={styles.socialButton}>
-            <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>Sign In With Apple</Text>
-          </Pressable>
-
-          <Pressable style={styles.socialButton}>
-            <Ionicons name="call" size={20} color="#FFFFFF" style={styles.socialIcon} />
-            <Text style={styles.socialButtonText}>Sign In With Phone</Text>
+            <Ionicons name="logo-google" size={20} color="#FFFFFF" style={styles.socialIcon} />
+            <Text style={styles.socialButtonText}>Sign In With Google</Text>
           </Pressable>
 
           <Pressable onPress={() => router.push('/(auth)/signup')} style={styles.signupContainer}>
