@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/components/ui/input';
-import { InputOTP } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { supabase } from '../../lib/supabase';
 import { theme } from '@/theme/colors';
@@ -15,8 +14,8 @@ export default function SignupScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -27,8 +26,9 @@ export default function SignupScreen() {
     if (!email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email';
     if (!phone.trim()) e.phone = 'Phone number is required';
-    if (pin.length !== 4) e.pin = 'PIN must be 4 digits';
-    if (pin !== confirmPin) e.confirmPin = 'PINs do not match';
+    if (!password) e.password = 'Password is required';
+    else if (password.length < 6) e.password = 'Password must be at least 6 characters';
+    if (password !== confirmPassword) e.confirmPassword = 'Passwords do not match';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -40,7 +40,7 @@ export default function SignupScreen() {
 
     const { error } = await supabase.auth.signUp({
       email,
-      password: pin,
+      password,
       options: { data: { full_name: fullName, phone } },
     });
 
@@ -101,31 +101,23 @@ export default function SignupScreen() {
             error={errors.phone}
           />
 
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: errors.pin ? theme.colors.destructive : theme.colors.textMuted, marginBottom: 12 }}>
-              Create PIN
-            </Text>
-            <InputOTP
-              length={4}
-              value={pin}
-              onChangeText={setPin}
-              masked
-              error={errors.pin}
-            />
-          </View>
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Create a password"
+            secureTextEntry
+            error={errors.password}
+          />
 
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: errors.confirmPin ? theme.colors.destructive : theme.colors.textMuted, marginBottom: 12 }}>
-              Confirm PIN
-            </Text>
-            <InputOTP
-              length={4}
-              value={confirmPin}
-              onChangeText={setConfirmPin}
-              masked
-              error={errors.confirmPin}
-            />
-          </View>
+          <Input
+            label="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            placeholder="Confirm your password"
+            secureTextEntry
+            error={errors.confirmPassword}
+          />
 
           {serverError ? (
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.destructive, marginBottom: 16, textAlign: 'center' }}>
