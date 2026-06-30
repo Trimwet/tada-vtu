@@ -1,24 +1,25 @@
 import { View, Text, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Button from '../components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { theme } from '@/theme/colors';
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0A0A0A]">
-      <View className="flex-1 px-6">
-        <View className="flex-1 items-center justify-center">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <View style={{ flex: 1, paddingHorizontal: 24 }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Image
             source={require('../assets/splash-icon.png')}
             style={{ width: 64, height: 64, marginBottom: 16 }}
             resizeMode="contain"
           />
-          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 36, color: '#ffffff', letterSpacing: -0.5, marginBottom: 8 }}>
+          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 36, color: theme.colors.foreground, letterSpacing: -0.5, marginBottom: 8 }}>
             TADAPAY
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#71717a', textAlign: 'center' }}>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.textMuted, textAlign: 'center' }}>
             Fast, simple bill payments
           </Text>
         </View>

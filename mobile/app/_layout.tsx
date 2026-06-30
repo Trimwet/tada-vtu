@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { ThemeProvider } from '@/theme/theme-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,8 +25,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' } }} />
+      <ThemeProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0A' } }} />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

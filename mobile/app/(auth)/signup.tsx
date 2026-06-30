@@ -3,10 +3,12 @@ import { View, Text, ScrollView, KeyboardAvoidingView, Platform, Pressable } fro
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Input from '../../components/ui/Input';
-import PinInput from '../../components/ui/PinInput';
-import Button from '../../components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { InputOTP } from '@/components/ui/input-otp';
+import { Button } from '@/components/ui/button';
 import { supabase } from '../../lib/supabase';
+import { theme } from '@/theme/colors';
+import { BACK_BUTTON_SIZE } from '@/theme/globals';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -51,7 +53,7 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -59,15 +61,15 @@ export default function SignupScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ paddingHorizontal: 24 }} keyboardShouldPersistTaps="handled">
           <Pressable
             onPress={() => router.back()}
-            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181b', alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 8 }}
+            style={{ width: BACK_BUTTON_SIZE, height: BACK_BUTTON_SIZE, borderRadius: BACK_BUTTON_SIZE / 2, backgroundColor: theme.colors.input, alignItems: 'center', justifyContent: 'center', marginTop: 8, marginBottom: 8 }}
           >
-            <Ionicons name="chevron-back" size={22} color="#a1a1aa" />
+            <Ionicons name="chevron-back" size={22} color={theme.colors.textMuted} />
           </Pressable>
 
-          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 28, color: '#ffffff', marginBottom: 4 }}>
+          <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 28, color: theme.colors.foreground, marginBottom: 4 }}>
             Create Account
           </Text>
-          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa', marginBottom: 32 }}>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.textMuted, marginBottom: 32 }}>
             Create your account to get started
           </Text>
 
@@ -99,12 +101,34 @@ export default function SignupScreen() {
             error={errors.phone}
           />
 
-          <PinInput label="Create PIN" value={pin} onChangeText={setPin} error={errors.pin} />
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: errors.pin ? theme.colors.destructive : theme.colors.textMuted, marginBottom: 12 }}>
+              Create PIN
+            </Text>
+            <InputOTP
+              length={4}
+              value={pin}
+              onChangeText={setPin}
+              masked
+              error={errors.pin}
+            />
+          </View>
 
-          <PinInput label="Confirm PIN" value={confirmPin} onChangeText={setConfirmPin} error={errors.confirmPin} />
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: errors.confirmPin ? theme.colors.destructive : theme.colors.textMuted, marginBottom: 12 }}>
+              Confirm PIN
+            </Text>
+            <InputOTP
+              length={4}
+              value={confirmPin}
+              onChangeText={setConfirmPin}
+              masked
+              error={errors.confirmPin}
+            />
+          </View>
 
           {serverError ? (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#f87171', marginBottom: 16, textAlign: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.destructive, marginBottom: 16, textAlign: 'center' }}>
               {serverError}
             </Text>
           ) : null}
@@ -112,9 +136,9 @@ export default function SignupScreen() {
           <Button label="Create Account" onPress={handleSignup} loading={loading} />
 
           <Pressable onPress={() => router.push('/(auth)/login')} style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#a1a1aa' }}>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: theme.colors.textMuted }}>
               Already have an account?{' '}
-              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#22C55E' }}>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: theme.colors.primary }}>
                 Sign In
               </Text>
             </Text>
