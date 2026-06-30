@@ -4,9 +4,9 @@
  * Main WhatsApp bot. Connects Baileys → Eve agent (via NEXT_APP_URL API routes).
  *
  * Lifecycle (mirrors the architecture diagram):
- *   1. Load session from Supabase (or show QR on first run).
+ *   1. Load session from Supabase (or request pairing code on first run).
  *   2. Receive messages → call Eve agent → reply.
- *   3. Disconnect: 401 → log + exit (admin must delete row & re-scan).
+ *   3. Disconnect: 401 → log + exit (admin must delete row & re-deploy).
  *                  other → exponential backoff reconnect, reload session.
  */
 
@@ -18,7 +18,6 @@ import makeWASocket, {
   type WAMessage,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
-import qrcode from "qrcode-terminal";
 import pino from "pino";
 import { useSupabaseAuthState } from "./supabase-auth.ts";
 
@@ -34,6 +33,9 @@ const BOT_PHONE = process.env.BOT_PHONE ?? ""; // e.g. "2347058748217"
 // Reconnect settings
 const MAX_RETRIES = 10;
 const BASE_DELAY_MS = 2_000;
+
+// Module-level socket reference for the /pair endpoint
+let sockRef: any = null;
 
 // ─── Eve agent bridge ───────────────────────────────────────────────────────
 // Calls bridge.ts on the Next.js app which handles user lookup + Eve reply.
@@ -110,7 +112,7 @@ async function connect(attempt = 0): Promise<void> {
       // and crashes with "undefined is not an object" if the logger is missing.
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    printQRInTerminal: false, // We'll do it ourselves for clarity.
+    printQRInTerminal: false,
     browser: ["TADAPAY Bot", "Chrome", "1.0.0"],
     generateHighQualityLinkPreview: false,
     // Skip the full chat/contact history sync on startup.
@@ -123,21 +125,23 @@ async function connect(attempt = 0): Promise<void> {
     logger,
     markOnlineOnConnect: false,
   });
+  sockRef = sock;
 
-  // ── QR code ────────────────────────────────────────────────────────────────
+  // ── Request pairing code if not registered ──────────────────────────────────
+  if (BOT_PHONE && !sock.authState.creds.registered) {
+    sock.requestPairingCode(BOT_PHONE).then((code) => {
+      console.log(`[bot] 📱 Pairing code for ${BOT_PHONE}: ${code}`);
+    }).catch((err) => {
+      console.error("[bot] Failed to request pairing code:", err);
+    });
+  }
+
+  // ── Connection handler ──────────────────────────────────────────────────────
   sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr) {
-      console.log(
-        "\n[bot] 📱 Scan this QR with WhatsApp (Linked Devices → Link a Device):\n"
-      );
-      qrcode.generate(qr, { small: true });
-    }
+    const { connection, lastDisconnect } = update;
 
     if (connection === "open") {
-      console.log("[bot] ✅ Connected to WhatsApp.");
-      // Reset retry counter on successful connection.
+      console.log("[bot] ✅ WhatsApp connected and authenticated.");
     }
 
     if (connection === "close") {
@@ -148,9 +152,10 @@ async function connect(attempt = 0): Promise<void> {
       if (code === DisconnectReason.loggedOut) {
         console.error(
           "[bot] ❌ WhatsApp returned 401 (logged out). " +
-            "Delete the Supabase row (id = 'default') and re-deploy to re-scan QR."
+            "Delete the Supabase row (id = 'default') and re-deploy to re-pair. " +
+            "Pairing code will appear in logs or fetch from /pair endpoint."
         );
-        process.exit(1); // Clean exit — Render will not restart (ON_FAILURE only).
+        process.exit(1);
       }
 
       // Any other error → exponential backoff reconnect.
@@ -258,15 +263,56 @@ import { createServer } from "node:http";
 const PORT = Number(process.env.PORT ?? 3001);
 
 createServer((req, res) => {
-  if (req.url === "/health" && (req.method === "GET" || req.method === "HEAD")) {
+  const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
+
+  if (url.pathname === "/health" && (req.method === "GET" || req.method === "HEAD")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", ts: Date.now() }));
-  } else {
-    res.writeHead(404);
-    res.end("Not Found");
+    return;
   }
+
+  if (url.pathname === "/pair" && req.method === "GET") {
+    const token = url.searchParams.get("token");
+    if (token !== CORE_SECRET) {
+      res.writeHead(401);
+      res.end("Unauthorized");
+      return;
+    }
+
+    if (!sockRef) {
+      res.writeHead(503);
+      res.end(JSON.stringify({ error: "Socket not initialized" }));
+      return;
+    }
+
+    if (sockRef.authState.creds.registered) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "connected", code: null }));
+      return;
+    }
+
+    if (!BOT_PHONE) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: "BOT_PHONE not set" }));
+      return;
+    }
+
+    sockRef.requestPairingCode(BOT_PHONE).then((code) => {
+      console.log(`[bot] 📱 Pairing code refreshed: ${code}`);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "awaiting_pair", code }));
+    }).catch((err) => {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: String(err) }));
+    });
+    return;
+  }
+
+  res.writeHead(404);
+  res.end("Not Found");
 }).listen(PORT, () => {
   console.log(`[bot] 🩺 Health endpoint → http://localhost:${PORT}/health`);
+  console.log(`[bot] 📱 Pair endpoint → http://localhost:${PORT}/pair?token=<CORE_SECRET>`);
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
