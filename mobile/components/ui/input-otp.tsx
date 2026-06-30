@@ -17,6 +17,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 export interface InputOTPProps
   extends Omit<TextInputProps, 'style' | 'value' | 'onChangeText'> {

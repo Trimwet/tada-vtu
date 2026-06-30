@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/components/ui/input';
-import { InputOTP } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { supabase } from '../../lib/supabase';
 import { theme } from '@/theme/colors';
@@ -13,7 +12,7 @@ import { BACK_BUTTON_SIZE } from '@/theme/globals';
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -22,7 +21,7 @@ export default function LoginScreen() {
     const e: Record<string, string> = {};
     if (!email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email';
-    if (pin.length !== 4) e.pin = 'PIN must be 4 digits';
+    if (!password) e.password = 'Password is required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -34,7 +33,7 @@ export default function LoginScreen() {
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password: pin,
+      password,
     });
 
     setLoading(false);
@@ -76,22 +75,18 @@ export default function LoginScreen() {
             error={errors.email}
           />
 
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: errors.pin ? theme.colors.destructive : theme.colors.textMuted, marginBottom: 12 }}>
-              4-digit PIN
-            </Text>
-            <InputOTP
-              length={4}
-              value={pin}
-              onChangeText={setPin}
-              masked
-              error={errors.pin}
-            />
-          </View>
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            secureTextEntry
+            error={errors.password}
+          />
 
           <Pressable style={{ alignSelf: 'flex-end', marginBottom: 24 }}>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 13, color: theme.colors.primary }}>
-              Forgot PIN?
+              Forgot Password?
             </Text>
           </Pressable>
 
