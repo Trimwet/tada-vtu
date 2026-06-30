@@ -9,6 +9,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -73,14 +74,19 @@ export default function LoginScreen() {
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
-              placeholder="Your Password"
-              placeholderTextColor="#666666"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+              <TextInput
+                style={styles.inputField}
+                placeholder="Your Password"
+                placeholderTextColor="#666666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="#666666" />
+              </Pressable>
+            </View>
           </View>
 
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
@@ -175,6 +181,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 16,
     color: '#FFFFFF',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+  },
+  inputField: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  eyeButton: {
+    paddingHorizontal: 16,
   },
   inputError: {
     borderColor: '#FF4444',
